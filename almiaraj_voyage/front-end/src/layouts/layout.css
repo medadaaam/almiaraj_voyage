@@ -1,0 +1,50 @@
+/* Reset basique */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2c3e50;
+    padding: 10px 30px;
+}
+
+/* Logo */
+header img {
+    height: 80px;
+}
+
+/* Navbar */
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+/* Links */
+.aa {
+    text-decoration: none;
+    color: white;
+    font-size: 18px;
+    transition: 0.3s;
+}
+
+/* Hover */
+.aa:hover {
+    color: #1abc9c;
+}
+
+/* Active link */
+.aa.active {
+    border-bottom: 2px solid #1abc9c;
+}
+
+/* Main content */
+main {
+    padding: 20px;
+}

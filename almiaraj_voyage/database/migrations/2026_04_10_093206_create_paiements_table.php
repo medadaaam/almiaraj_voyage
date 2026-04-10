@@ -12,14 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::create('services', function (Blueprint $table) {
+        Schema::create('paiements', function (Blueprint $table) {
             $table->id();
-            $table->string('nomServ',50);
-            $table->string('description',150);
-            $table->decimal('prix',10,2);
-            $table->integer('capaciteTotal');
-            $table->integer('placesDisponibles');
-            $table->string('image',255)->nullable();
+            $table->decimal('montant',10,2);
+            $table->date('dateP');
+            $table->string('methode', 50);
+            $table->string('status', 50);
+            $table->foreignId('reservation_id')
+                ->constrained('reservations')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }
@@ -29,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('services');
+        Schema::dropIfExists('paiements');
     }
 };

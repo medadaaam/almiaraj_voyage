@@ -12,13 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::create('hotels', function (Blueprint $table) {
+        Schema::create('hajj_omras', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
-            $table->string('villeHotel', 50);
-            $table->date('checkIn');
-            $table->date('checkOut');
-            $table->string('typeChambre', 50);
-            $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
+            $table->string('type');
+            $table->string('formule');
+            $table->string('typeChambre');
+            $table->foreignId('service_id')
+                ->constrained('services')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('hotels');
+        Schema::dropIfExists('hajj_omras');
     }
 };

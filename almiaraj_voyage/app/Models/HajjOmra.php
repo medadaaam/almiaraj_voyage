@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Hotel extends Model
+class HajjOmra extends Model
 {
-    protected $fillable = ['villeHotel', 'checkIn', 'checkOut', 'typeChambre', 'service_id'];
+    protected $fillable = ['type', 'formule', 'typeChambre', 'service_id'];
     public function service()
     {
         return $this->belongsTo(Service::class);

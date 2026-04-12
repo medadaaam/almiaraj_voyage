@@ -1,17 +1,27 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
+import { useEffect } from "react";
 
-export default function Layout() {
-  const { authenticated, logout } = useAuth();
+export default function LayoutClient() {
+  const { logout, authenticated, loading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !authenticated) {
+      navigate(LOGIN_ROUTE);
+    }
+  }, [authenticated, loading]);
+
   const logoutCallback = async () => {
     await logout();
     navigate(LOGIN_ROUTE);
   };
-
-
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -108,26 +118,11 @@ export default function Layout() {
         <div>
           <nav>
             <ul>
-              {!authenticated ? (
-                <>
-                  <li>
-                    <NavLink to="/register" className="aa">
-                      S'inscrire
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink to="/login" className="aa">
-                      Se connecter
-                    </NavLink>
-                  </li>
-                </>
-              ) : (
-                <li>
-                  <button onClick={logoutCallback} className="aa">
-                    Logout
-                  </button>
-                </li>
-              )}
+              <li>
+                <button onClick={logoutCallback} className="aa">
+                  Logout
+                </button>
+              </li>
             </ul>
           </nav>
         </div>

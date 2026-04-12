@@ -1,17 +1,20 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
-import { LOGIN_ROUTE } from "@/router";
+import { useEffect } from "react";
 
-export default function Layout() {
-  const { authenticated, logout } = useAuth();
+export default function LayoutGuest() {
   const navigate = useNavigate();
-  const logoutCallback = async () => {
-    await logout();
-    navigate(LOGIN_ROUTE);
-  };
+  const { authenticated, loading } = useAuth();
 
-
+  useEffect(() => {
+    if (!loading && authenticated) {
+      navigate("/");
+    }
+  }, [authenticated, loading]);
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -38,7 +41,6 @@ export default function Layout() {
               <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 group-hover:bg-[#fb923c] transition duration-300">
                 <i className="fa-solid fa-phone text-sm group-hover:text-white"></i>
               </span>
-
               <span className="relative text-white group-hover:text-[#fb923c] transition duration-300">
                 05 35 65 79 79
                 <span className="absolute left-0 -bottom-1 w-0 h-[2px] bg-[#fb923c] group-hover:w-full transition-all duration-300"></span>
@@ -108,26 +110,16 @@ export default function Layout() {
         <div>
           <nav>
             <ul>
-              {!authenticated ? (
-                <>
-                  <li>
-                    <NavLink to="/register" className="aa">
-                      S'inscrire
-                    </NavLink>
-                  </li>
-                  <li>
-                    <NavLink to="/login" className="aa">
-                      Se connecter
-                    </NavLink>
-                  </li>
-                </>
-              ) : (
-                <li>
-                  <button onClick={logoutCallback} className="aa">
-                    Logout
-                  </button>
-                </li>
-              )}
+              <li>
+                <NavLink to="/register" className="aa">
+                  S'inscrire
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/login" className="aa">
+                  Se connecter
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </div>

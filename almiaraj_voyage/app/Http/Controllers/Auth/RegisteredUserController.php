@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -22,16 +23,31 @@ class RegisteredUserController extends Controller
     public function store(Request $request): Response
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'nom' => ['required'],
+            'prenom' => ['required'],
+            'nat' => ['required'],
+            'numTel' => ['required'],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
+            'name' => $request->nom . ' ' . $request->prenom,
             'email' => $request->email,
-            'password' => Hash::make($request->string('password')),
+            'password' => Hash::make($request->password),
+
         ]);
+
+        Client::create([
+            'user_id' => $user->id,
+            'nomCl' => $request->nom,
+            'prenomCl' => $request->prenom,
+            'natCl' => $request->nat,
+            'numTelCl' => $request->numTel,
+            'email' => $request->email,
+            'dateInscription' => now(),
+        ]);
+
 
         event(new Registered($user));
 

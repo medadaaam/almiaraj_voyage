@@ -1,39 +1,86 @@
-import { createBrowserRouter } from 'react-router-dom'
-import Layout from '../layouts/layout'
-import Home from '../pages/home'
-import Contact from '../pages/contact'
-import About from '../pages/about'
-import NotFound from '../pages/notFound'
+import { createBrowserRouter } from "react-router-dom";
+import Layout from "../layouts/layout";
+import Home from "../pages/home";
+import Contact from "../pages/contact";
+import About from "../pages/about";
+import NotFound from "../pages/notFound";
+import LayoutGuest from "@/layouts/layoutGuest";
+import Login from "@/pages/login";
+import LayoutClient from "@/layouts/layoutClient";
+import GuestRoute from "@/components/ProRoutes/GuestRoute";
+import ProtectedRoute from "@/components/ProRoutes/ProtectedRoute";
+import LayoutRoute from "@/components/ProRoutes/LayoutRoute";
+import Register from "@/pages/register";
+
+export const LOGIN_ROUTE = "/login";
+
 export const route = createBrowserRouter([
-    {
-        element: <Layout />,
-        children: [
-            {
-                path: '/',
-                element: <Home />
-            }, {
-                path: '/login',
-                element: <h1>Hi  login</h1>
-            }, {
-                path: '/register',
-                element: <h1>hi register</h1>
-            }, {
-                path: '/services',
-                element: <h1>Hi services </h1>
-            }, {
-                path: '/about',
-                element: <About/>
-            }, {
-                path: '/contact',
-                element: <Contact/>
-            },{
-            
-                path: '*',
-                element: <NotFound />
-            },
-        ]
-    }
+  {
+    element: (
+    <LayoutRoute>
+        <Layout />
+    </LayoutRoute>
+    ),
+    children: [
+      {
+        path: "/",
+        element: <Home />,
+      },
+      {
+        path: "/services",
+        element: <h1>Hi services </h1>,
+      },
+      {
+        path: "/about",
+        element: <About />,
+      },
+      {
+        path: "/contact",
+        element: <Contact />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
+    ],
+  },
+  {
+    element: (
+        <GuestRoute>
+           <LayoutGuest />
+        </GuestRoute>
 
-]
-
-)
+    ),
+    children: [
+      {
+        path: LOGIN_ROUTE,
+        element: <Login />,
+      },
+      {
+        path: "/register",
+        element: <Register />,
+      },
+    ],
+  },
+  {
+    element: (
+    <ProtectedRoute>
+        <LayoutClient />
+    </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "/client/dashboard",
+        element: <h1>dashboard client </h1>,
+      },
+      {
+        path: "/client/profile",
+        element: <h1>Client Profile</h1>,
+      },
+      {
+        path: "/client/orders",
+        element: <h1>My Orders</h1>,
+      },
+    ],
+  },
+]);

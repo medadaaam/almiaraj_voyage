@@ -22,10 +22,7 @@ return new class extends Migration
             $table->string('prenomCl', 30);
             $table->string('numTelCl', 20);
             $table->string('email', 100)->unique();
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+            $table->foreign('id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }

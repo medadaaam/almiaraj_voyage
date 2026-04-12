@@ -39,7 +39,7 @@ class RegisteredUserController extends Controller
         ]);
 
         Client::create([
-            'user_id' => $user->id,
+            'id' => $user->id,
             'nomCl' => $request->nom,
             'prenomCl' => $request->prenom,
             'natCl' => $request->nat,

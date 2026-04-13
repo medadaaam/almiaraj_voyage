@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Client;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
@@ -19,17 +23,46 @@ class ClientController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
-        //
+        // $request->validate([
+        //     'nom' => ['required'],
+        //     'prenom' => ['required'],
+        //     'email' => ['required', 'email', 'unique:users'],
+        //     'password' => ['required', 'confirmed'],
+        //     'nat' => ['required'],
+        //     'numTel' => ['required'],
+        // ]);
+
+
+        // $user = User::create([
+        //     'name' => $request->nom . ' ' . $request->prenom,
+        //     'email' => $request->email,
+        //     'password' => Hash::make($request->password),
+        // ]);
+
+
+        // Client::create([
+        //     'user_id' => $user->id,
+        //     'nomCl' => $request->nom,
+        //     'prenomCl' => $request->prenom,
+        //     'natCl' => $request->nat,
+        //     'numTelCl' => $request->numTel,
+        //     'email' => $request->email,
+        //     'dateInscription' => now(),
+        // ]);
+
+        // Auth::login($user);
+
+        // return response()->json([
+        //     'user' => $user
+        // ]);
     }
 
     /**

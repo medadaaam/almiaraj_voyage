@@ -47,6 +47,9 @@ export default function Register() {
       prenom: "",
       telephone: "",
       nationalite: "",
+      terms: z.literal(true, {
+        errorMap: () => ({ message: "You must accept the terms" }),
+      }),
     },
   });
 
@@ -56,7 +59,6 @@ export default function Register() {
     { value: "es", label: "Espagne 🇪🇸" },
   ];
 
-
   const onSubmit = async (values) => {
     if (values.password !== values.ConfirmePassword) {
       form.setError("root", {
@@ -64,20 +66,18 @@ export default function Register() {
       });
       return;
     }
-      const data = {
-        nom: values.nom,
-        prenom: values.prenom,
-        email: values.email,
-        password: values.password,
-        password_confirmation: values.ConfirmePassword,
-        nat: values.nationalite,
-        numTel: values.telephone,
-      };
+    const data = {
+      nom: values.nom,
+      prenom: values.prenom,
+      email: values.email,
+      password: values.password,
+      password_confirmation: values.ConfirmePassword,
+      nat: values.nationalite,
+      numTel: values.telephone,
+    };
 
-      console.log("Sending data:", data);
+    console.log("Sending data:", data);
     await register(data);
-
-
 
     // try {
     //   await AuthApi.getCsrfToken();
@@ -267,6 +267,35 @@ export default function Register() {
                   <Input placeholder="********" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="terms"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center space-x-2">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="w-4 h-4 border border-gray-300 rounded"
+                    />
+                  </FormControl>
+
+                  <FormLabel className="text-sm font-medium">
+                    I agree with the{" "}
+                    <a href="/terms" className="text-blue-600 hover:underline">
+                      Terms and Conditions
+                    </a>
+                  </FormLabel>
+                </div>
+                <FieldDescription>
+                  By clicking this checkbox, you agree to the terms and
+                  conditions.
+                </FieldDescription>
               </FormItem>
             )}
           />

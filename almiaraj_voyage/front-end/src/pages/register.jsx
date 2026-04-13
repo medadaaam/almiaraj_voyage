@@ -26,7 +26,7 @@ import AuthApi from "@/services/Api/AuthApi";
 
 const formSchema = z.object({
   nom: z.string().min(4).max(30),
-  prenom: z.string().min(8).max(30),
+  prenom: z.string().min(2).max(30),
   email: z.string().email().min(2).max(30),
   password: z.string().min(8).max(30),
   ConfirmePassword: z.string().min(8).max(30),
@@ -73,7 +73,7 @@ export default function Register() {
         nat: values.nationalite,
         numTel: values.telephone,
       };
-    
+
       console.log("Sending data:", data);
     await register(data);
 

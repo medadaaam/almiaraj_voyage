@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -16,16 +17,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AuthApi from "@/services/Api/AuthApi";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
+import { useState } from "react";
 
 const formSchema = z.object({
   email: z.string().email().min(2).max(30),
   password: z.string().min(8).max(30),
-  terms: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the terms" }),
-  }),
 });
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const { login, setAuthenticated } = useAuth();
   const navigate = useNavigate();
   const form = useForm({
@@ -80,7 +80,9 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-10 p-6 border rounded-lg">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <h3 className="text-center text-[#2f6f85]"> AL MIARAJ VOYAGES</h3>
+          <h1 className="text-center text-[#2f6f85]">
+            Se connecter ou créer un compte
+          </h1>
           {form.formState.errors.root && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
               {form.formState.errors.root.message}
@@ -120,49 +122,39 @@ export default function Login() {
                       Forgot Password?
                     </a>
                   </div>
+
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="********"
+                        {...field}
+                        className="pr-10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
           </FieldGroup>
-          <FormField
-            control={form.control}
-            name="terms"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center space-x-2">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={field.onChange}
-                      className="w-4 h-4 border border-gray-300 rounded"
-                    />
-                  </FormControl>
-
-                  <FormLabel className="text-sm font-medium">
-                    I agree with the{" "}
-                    <a href="/terms" className="text-blue-600 hover:underline">
-                      Terms and Conditions
-                    </a>
-                  </FormLabel>
-                </div>
-                <FieldDescription>
-                  By clicking this checkbox, you agree to the terms and
-                  conditions.
-                </FieldDescription>
-
-
-              </FormItem>
-            )}
-          />
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="w-full"
+            className="w-full bg-blue-500 hover:bg-blue-800"
           >
             {form.formState.isSubmitting && (
               <Loader className="mx-2 my-2 animate-spin" />
@@ -172,8 +164,15 @@ export default function Login() {
         </form>
       </Form>
       <p className="mt-6 text-sm/6 text-center">
-      <span className="text-gray-600  dark:text-gray-400">Don't have an account? </span>
-      <Link to='/register' className="font-semibold hover:text-orange-700 text-orange-500">S'inscrire</Link>
+        <span className="text-gray-600  dark:text-gray-400">
+          Don't have an account?{" "}
+        </span>
+        <Link
+          to="/register"
+          className="font-semibold hover:text-orange-700 text-orange-500"
+        >
+          S'inscrire
+        </Link>
       </p>
     </div>
   );

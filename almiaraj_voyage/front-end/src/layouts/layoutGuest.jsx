@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
+import Footer from "@/pages/footer";
 
 export default function LayoutGuest() {
   const navigate = useNavigate();
@@ -127,6 +128,7 @@ export default function LayoutGuest() {
       <main>
         <Outlet />
       </main>
+      <Footer />
     </>
   );
 }

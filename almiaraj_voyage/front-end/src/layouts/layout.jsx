@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
+import Footer from "@/pages/footer";
 
 export default function Layout() {
   const { authenticated, logout } = useAuth();
@@ -135,6 +136,7 @@ export default function Layout() {
       <main>
         <Outlet />
       </main>
+      <Footer />
     </>
   );
 }

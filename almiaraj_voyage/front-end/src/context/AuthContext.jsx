@@ -14,23 +14,22 @@ const stateContext = createContext({
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [authenticated, _setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const setAuthenticated = (isAuthenticated) => {
-    _setAuthenticated(isAuthenticated);
-    localStorage.setItem("ATHENTIFCATED", isAuthenticated);
-  };
-
-  useEffect(() => {
+  useEffect(() => { 
     AuthApi.getUser()
       .then(({ data }) => {
-        setUser(data);
-        _setAuthenticated(true);
+        if (data) {
+          setUser(data);
+          setAuthenticated(true);
+        }
       })
-      .catch(() => {
-        _setAuthenticated(false);
-        setUser(null);
+      .catch((error) => {
+        if (error.response?.status === 401) {
+          setAuthenticated(false);
+          setUser(null);
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -41,11 +40,11 @@ export function AuthProvider({ children }) {
     try {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.login(email, password);
+
       if (response.status === 200 || response.status === 204) {
+        const userResponse = await AuthApi.getUser();
+        setUser(userResponse.data);
         setAuthenticated(true);
-        if (response.data.user) {
-          setUser(response.data.user);
-        }
       }
       return response;
     } catch (error) {
@@ -58,15 +57,16 @@ export function AuthProvider({ children }) {
     try {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.register(data);
-      if (response.status === 200 || response.status === 204) {
+
+      if (response.status === 200 || response.status === 201 || response.status === 204) {
+
+        const userResponse = await AuthApi.getUser();
+        setUser(userResponse.data);
         setAuthenticated(true);
-        if (response.data.user) {
-          setUser(response.data.user);
-        }
       }
       return response;
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Register error:", error);
       throw error;
     }
   };
@@ -78,7 +78,6 @@ export function AuthProvider({ children }) {
       console.error("Logout error:", error);
     } finally {
       setAuthenticated(false);
-      localStorage.removeItem("ATHENTIFCATED");
       setUser(null);
     }
   };

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Eye, EyeOff } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AuthApi from "@/services/Api/AuthApi";
 import { FieldDescription, FieldGroup } from "@/components/ui/field";
+import { useState } from "react";
 
 const formSchema = z.object({
   email: z.string().email().min(2).max(30),
@@ -23,6 +25,7 @@ const formSchema = z.object({
 });
 
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const { login, setAuthenticated } = useAuth();
   const navigate = useNavigate();
   const form = useForm({
@@ -77,7 +80,9 @@ export default function Login() {
     <div className="max-w-md mx-auto mt-10 p-6 border rounded-lg">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <h3 className="text-center text-[#2f6f85]"> AL MIARAJ VOYAGES</h3>
+          <h1 className="text-center text-[#2f6f85]">
+            Se connecter ou créer un compte
+          </h1>
           {form.formState.errors.root && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
               {form.formState.errors.root.message}
@@ -117,19 +122,39 @@ export default function Login() {
                       Forgot Password?
                     </a>
                   </div>
+
                   <FormControl>
-                    <Input placeholder="********" type="password" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="********"
+                        {...field}
+                        className="pr-10"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} />
+                        ) : (
+                          <Eye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
+
                   <FormMessage />
                 </FormItem>
               )}
             />
           </FieldGroup>
-
           <Button
             type="submit"
             disabled={form.formState.isSubmitting}
-            className="w-full"
+            className="w-full bg-blue-500 hover:bg-blue-800"
           >
             {form.formState.isSubmitting && (
               <Loader className="mx-2 my-2 animate-spin" />

@@ -10,8 +10,17 @@ const AuthApi = {
   login: async (email, password) => {
     return await axiosClient.post("/login", { email, password });
   },
-    register: async (data) => {
+
+  register: async (data) => {
     return await axiosClient.post("/register", data);
+  },
+
+  forgotPassword: async (email) => {
+    return await axiosClient.post("/forgot-password", { email });
+  },
+
+  resetPassword: async (data) => {
+    return await axiosClient.post("/reset-password", data);
   },
 
   logout: async () => {

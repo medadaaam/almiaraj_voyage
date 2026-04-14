@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
 import { useEffect } from "react";
+import Footer from "@/pages/footer";
 
 export default function LayoutClient() {
   const { logout, authenticated, loading } = useAuth();
@@ -130,6 +131,7 @@ export default function LayoutClient() {
       <main>
         <Outlet />
       </main>
+      <Footer />
     </>
   );
 }

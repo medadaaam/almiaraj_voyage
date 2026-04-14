@@ -11,15 +11,33 @@ import GuestRoute from "@/components/ProRoutes/GuestRoute";
 import ProtectedRoute from "@/components/ProRoutes/ProtectedRoute";
 import LayoutRoute from "@/components/ProRoutes/LayoutRoute";
 import Register from "@/pages/register";
+import ResetPassword from "@/pages/resetPassword";
+import ForgotPassword from "@/pages/forgetPassword";
 
 export const LOGIN_ROUTE = "/login";
 
 export const route = createBrowserRouter([
   {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password/:token",
+    element: <ResetPassword />,
+  },
+  {
+    path: "/password-reset/:token",
+    element: <ResetPassword />,
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+  {
     element: (
-    <LayoutRoute>
+      <LayoutRoute>
         <Layout />
-    </LayoutRoute>
+      </LayoutRoute>
     ),
     children: [
       {
@@ -38,18 +56,13 @@ export const route = createBrowserRouter([
         path: "/contact",
         element: <Contact />,
       },
-      {
-        path: "*",
-        element: <NotFound />,
-      },
     ],
   },
   {
     element: (
-        <GuestRoute>
-           <LayoutGuest />
-        </GuestRoute>
-
+      <GuestRoute>
+        <LayoutGuest />
+      </GuestRoute>
     ),
     children: [
       {
@@ -64,9 +77,9 @@ export const route = createBrowserRouter([
   },
   {
     element: (
-    <ProtectedRoute>
+      <ProtectedRoute>
         <LayoutClient />
-    </ProtectedRoute>
+      </ProtectedRoute>
     ),
     children: [
       {

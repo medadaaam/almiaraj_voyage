@@ -13,6 +13,7 @@ import LayoutRoute from "@/components/ProRoutes/LayoutRoute";
 import Register from "@/pages/register";
 import ResetPassword from "@/pages/resetPassword";
 import ForgotPassword from "@/pages/forgetPassword";
+import { Hotel } from "@/pages/services/hotel";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -46,7 +47,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/services",
-        element: <h1>Hi services </h1>,
+        element: <Hotel/>
       },
       {
         path: "/about",

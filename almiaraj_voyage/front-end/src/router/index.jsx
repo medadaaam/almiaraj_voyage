@@ -14,6 +14,9 @@ import Register from "@/pages/register";
 import ResetPassword from "@/pages/resetPassword";
 import ForgotPassword from "@/pages/forgetPassword";
 import { Hotel } from "@/pages/services/hotel";
+import Hotels from "@/pages/services/hotels";
+import AdminLayout from "@/layouts/AdminLayout";
+import AjouterHotel from "@/pages/adminDashboard/hotel/ajouter";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -47,7 +50,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/services",
-        element: <Hotel/>
+        element: <Hotels />
       },
       {
         path: "/about",
@@ -79,12 +82,49 @@ export const route = createBrowserRouter([
   {
     element: (
       <ProtectedRoute>
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        path: "/admin",
+        element: <h1>Dashboard Admin</h1>,
+      },
+      {
+        path: "/admin/users",
+        element: <Contact/>
+      },
+      {
+        path: "/admin/reservations",
+        element: <h1>Gestion réservations</h1>,
+      },
+      {
+        path: "/admin/voyages",
+        element: <h1>Voyages</h1>,
+      },
+      {
+        path: "/admin/hotels",
+        element: <AjouterHotel/>,
+      },
+      {
+        path: "/admin/hajj-omra",
+        element: <h1>Hajj & Omra</h1>,
+      },
+      {
+        path: "/admin/billets",
+        element: <h1>Billets</h1>,
+      },
+    ],
+  },
+  {
+    element: (
+      <ProtectedRoute>
         <LayoutClient />
       </ProtectedRoute>
     ),
     children: [
       {
-        path: "/client/dashboard",
+        path: "/client",
         element: <h1>dashboard client </h1>,
       },
       {

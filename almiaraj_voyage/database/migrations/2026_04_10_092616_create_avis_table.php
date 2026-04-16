@@ -14,15 +14,24 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
         Schema::create('avis', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('client_id');
             $table->string('commentaire');
             $table->string('note');
             $table->string('dateAv');
-            $table->foreignId('service_id')
-                ->constrained('services')
+            $table->timestamps();
+            $table->foreign('service_id')
+                ->references('id')
+                ->on('services')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-            $table->timestamps();
+
+            $table->foreign('client_id')
+                ->references('id')
+                ->on('client')
+                ->cascadeOnDelete();
         });
+        Schema::enableForeignKeyConstraints();
     }
 
     /**

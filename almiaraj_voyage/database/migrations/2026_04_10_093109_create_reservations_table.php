@@ -14,19 +14,15 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('service_id');
+            $table->unsignedBigInteger('client_id');
             $table->integer('nbPers');
             $table->date('dateRes');
             $table->string('statusRes');
             $table->date('dateAnnulation')->nullable();
             $table->boolean('voucherGenere')->default(false);
-            $table->foreignId('service_id')
-                ->constrained('services')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
-            $table->foreignId('client_id')
-                ->constrained('clients')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+            $table->foreign('service_id')->references('id')->on('services')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreign('client_id')->references('id')->on('clients')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
         });
     }

@@ -8,11 +8,13 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import { Star } from "lucide-react"
 
 export function Hotel() {
     const oldPrice = 14000.99
     const newPrice = 12000.99
     const discount = Math.round(((oldPrice - newPrice) / oldPrice) * 100)
+    const rating = 4
     return (
         <Card className="relative mx-auto w-full max-w-sm pt-0">
             <div className="absolute inset-0 z-30 aspect-video " />
@@ -25,6 +27,15 @@ export function Hotel() {
                 <CardAction>
                     <Badge variant="secondary" className="text-[#2f6f85] border-[#2f6f85] rounded-full bg-[#2f708512]">disponible</Badge>
                 </CardAction>
+                <div className="flex items-center gap-1 mt-1">
+                    {[...Array(5)].map((_, i) => (
+                        <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                }`}
+                        />
+                    ))}
+                </div>
                 <CardTitle>nom de l'hotel</CardTitle>
                 <CardDescription>
                     cet hotel se trouve dans le maroc, il a 5 etoils...

@@ -78,7 +78,7 @@ export default function Layout() {
             <ul>
               <li>
                 <NavLink to="/" className="aa">
-                  Home
+                  Accueil
                 </NavLink>
               </li>
               <li>
@@ -102,6 +102,11 @@ export default function Layout() {
                   <option value="fr">Français</option>
                   <option value="en">English</option>
                 </select>
+              </li>
+              <li>
+                <NavLink to="/admin" className="aa">
+                  Dashboard
+                </NavLink>
               </li>
             </ul>
           </nav>

@@ -29,7 +29,25 @@ class HotelController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->validate([
+            'nom' => 'required',
+            'ville' => 'required',
+            'prix' => 'required|numeric',
+            'etoiles' => 'required|integer',
+            'description' => 'nullable',
+            'image' => 'nullable|image'
+        ]);
+
+        // upload image
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('hotels', 'public');
+        }
+
+        Hotel::create($data);
+
+        return response()->json([
+            'message' => 'Hotel ajouté avec succès'
+        ]);
     }
 
     /**

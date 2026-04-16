@@ -9,9 +9,9 @@ export default function ProtectedRoute({ children }) {
   }
 
 
-  if (!authenticated) {
-    return <Navigate to={LOGIN_ROUTE} />;
-  }
+  // if (!authenticated) {
+  //   return <Navigate to={LOGIN_ROUTE} />;
+  // }
 
   return children;
 }

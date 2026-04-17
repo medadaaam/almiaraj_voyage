@@ -135,7 +135,7 @@ export default function Layout() {
           </nav>
         </div>
       </header>
-      <main>
+      <main className="flex-grow p-0">
         <Outlet />
       </main>
       <Footer />

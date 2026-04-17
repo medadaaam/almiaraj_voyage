@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import * as React from "react"
-import { format } from "date-fns"
+// import { format } from "date-fns"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon } from "lucide-react"
@@ -68,13 +68,6 @@ export default function Search() {
     return (
         <div className="max-w-4xl mx-auto p-6">
             {/* Title Section */}
-            <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold mb-2">Trouvez votre prochain séjour</h1>
-                <p className="text-gray-600 text-sm">
-                    Recherchez des offres sur des hôtels, des hébergements indépendants et plus encore
-                </p>
-            </div>
-
             {/* Search Form */}
             <div className="form">
 

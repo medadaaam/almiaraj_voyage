@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
 import { useEffect } from "react";
 import Footer from "@/pages/footer";
+import EmailWarning from "@/components/EmailWarning";
 
 export default function LayoutClient() {
   const { logout, authenticated, loading } = useAuth();
@@ -76,7 +77,6 @@ export default function LayoutClient() {
           </button>
         </div>
       </div>
-
       <header>
         <div>
           <a href="/">

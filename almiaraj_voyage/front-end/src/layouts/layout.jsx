@@ -3,6 +3,8 @@ import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
 import Footer from "@/pages/footer";
+import EmailWarning from "@/components/EmailWarning";
+import { NavigationMenuDemo } from "./navigationMenuDemo";
 
 export default function Layout() {
   const { authenticated, logout } = useAuth();
@@ -67,6 +69,7 @@ export default function Layout() {
         </div>
       </div>
 
+        <EmailWarning />
       <header>
         <div>
           <a href="/">
@@ -81,11 +84,7 @@ export default function Layout() {
                   Home
                 </NavLink>
               </li>
-              <li>
-                <NavLink to="/services" className="aa">
-                  Services
-                </NavLink>
-              </li>
+    
               <li>
                 <NavLink to="/about" className="aa">
                   A propos

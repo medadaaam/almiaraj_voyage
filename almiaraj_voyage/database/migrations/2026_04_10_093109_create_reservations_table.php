@@ -19,6 +19,9 @@ return new class extends Migration
             $table->integer('nbPers');
             $table->date('dateRes');
             $table->string('statusRes');
+            $table->date('checkIn')->nullable();
+            $table->date('checkOut')->nullable();
+            $table->string('typeChambre')->nullable();
             $table->date('dateAnnulation')->nullable();
             $table->boolean('voucherGenere')->default(false);
             $table->foreign('service_id')->references('id')->on('services')->cascadeOnDelete()->cascadeOnUpdate();

@@ -2,65 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use App\Models\Voyage;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class VoyageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
-    }
+        $validated = $request->validate([
+            'nomServ' => 'required|string',
+            'prix' => 'required|numeric',
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Voyage $voyage)
-    {
-        //
-    }
+            // voyage fields
+            'destination' => 'required|string',
+            'dateDepart' => 'required|date',
+            'dateRetour' => 'required|date',
+        ]);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Voyage $voyage)
-    {
-        //
-    }
+        $service = Service::create([
+            'nomServ' => $validated['nomServ'],
+            'prix' => $validated['prix'],
+        ]);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Voyage $voyage)
-    {
-        //
-    }
+        $voyage = Voyage::create([
+            'service_id' => $service->id,
+            'destination' => $validated['destination'],
+            'dateDepart' => $validated['dateDepart'],
+            'dateRetour' => $validated['dateRetour'],
+        ]);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Voyage $voyage)
-    {
-        //
+        return response()->json([$service, $voyage], 201);
     }
 }

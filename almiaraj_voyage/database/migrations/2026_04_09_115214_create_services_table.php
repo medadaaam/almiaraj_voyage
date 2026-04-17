@@ -17,8 +17,6 @@ return new class extends Migration
             $table->string('nomServ',50);
             $table->string('description',150);
             $table->decimal('prix',10,2);
-            $table->integer('capaciteTotal');
-            $table->integer('placesDisponibles');
             $table->string('image',255)->nullable();
             $table->timestamps();
         });

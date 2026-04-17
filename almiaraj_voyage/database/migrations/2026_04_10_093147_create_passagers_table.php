@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::disableForeignKeyConstraints();
         Schema::create('passagers', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('reservation_id'); 
             $table->string('nomPas', 50);
             $table->string('prenomPas', 50);
             $table->string('cinPas', 50)->nullable();
             $table->string('passportPas', 50)->nullable();
-            $table->foreign('id')
+            $table->foreign('reservation_id')
                 ->references('id')
                 ->on('reservations')
                 ->cascadeOnDelete()

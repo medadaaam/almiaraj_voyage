@@ -17,6 +17,7 @@ import { Hotel } from "@/pages/services/hotel";
 import Hotels from "@/pages/services/hotels";
 import AdminLayout from "@/layouts/AdminLayout";
 import AjouterHotel from "@/pages/adminDashboard/hotel/ajouter";
+import Reservation from "@/pages/reservation";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -60,6 +61,10 @@ export const route = createBrowserRouter([
         path: "/contact",
         element: <Contact />,
       },
+       {
+        path: "/services/reservation",
+        element: <Reservation />,
+      },
     ],
   },
   {
@@ -92,7 +97,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/users",
-        element: <Contact/>
+        element: <Contact />
       },
       {
         path: "/admin/reservations",
@@ -104,7 +109,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/hotels",
-        element: <AjouterHotel/>,
+        element: <AjouterHotel />,
       },
       {
         path: "/admin/hajj-omra",
@@ -135,6 +140,7 @@ export const route = createBrowserRouter([
         path: "/client/orders",
         element: <h1>My Orders</h1>,
       },
+      
     ],
   },
 ]);

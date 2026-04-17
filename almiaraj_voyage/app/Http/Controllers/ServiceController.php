@@ -29,35 +29,43 @@ class ServiceController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        // Validate and store the service + hotel data
-        $validated = $request->validate([
-            'nomServ' => 'required|string',
-            'description' => 'nullable|string',
-            'prix' => 'required|numeric',
-            'capaciteTotal' => 'required|integer',
-            'placeDisponibles' => 'required|integer',
-            'villeHotel' => 'required|string',
-            'checkIn' => 'required|date',
-            'checkOut' => 'required|date',
-            'typeChambre' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+{
+    $validated = $request->validate([
+        'nomServ' => 'required|string',
+        'description' => 'nullable|string',
+        'prix' => 'required|numeric',
 
-        // Create service
-        $service = Service::create($validated);
+        // hotel
+        'villeHotel' => 'required|string',
 
-        // Create hotel associated with the service
-        $hotel = Hotel::create([
-            'service_id' => $service->id,
-            'villeHotel' => $validated['villeHotel'],
-            'checkIn' => $validated['checkIn'],
-            'checkOut' => $validated['checkOut'],
-            'typeChambre' => $validated['typeChambre'],
-        ]);
+        'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+    ]);
 
-        return response()->json(['service' => $service, 'hotel' => $hotel], 201);
+    // 1. Create service
+    $service = Service::create([
+        'nomServ' => $validated['nomServ'],
+        'description' => $validated['description'],
+        'prix' => $validated['prix'],
+    ]);
+
+    // 2. image upload
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('services', 'public/images');
+        $service->image = $path;
+        $service->save();
     }
+
+    // 3. Create hotel
+    $hotel = Hotel::create([
+        'service_id' => $service->id,
+        'villeHotel' => $validated['villeHotel'],
+    ]);
+
+    return response()->json([
+        'service' => $service,
+        'hotel' => $hotel
+    ], 201);
+}
     
     /**
      * Display the specified resource.

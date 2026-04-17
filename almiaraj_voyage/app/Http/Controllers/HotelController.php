@@ -2,83 +2,85 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Service;
 use App\Models\Hotel;
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class HotelController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $hotels = Hotel::with('service')->get();
+        return response()->json($hotels);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'nom' => 'required',
-            'ville' => 'required',
+        $validated = $request->validate([
+            // service
+            'nomServ' => 'required|string',
+            'description' => 'nullable|string',
             'prix' => 'required|numeric',
-            'etoiles' => 'required|integer',
-            'description' => 'nullable',
-            'image' => 'nullable|image'
+
+            // hotel
+            'villeHotel' => 'required|string',
+
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // upload image
+        // 1. create service
+        $service = Service::create([
+            'nomServ' => $validated['nomServ'],
+            'description' => $validated['description'] ?? null,
+            'prix' => $validated['prix'],
+        ]);
+
+        // 2. upload image
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('hotels', 'public');
+            $path = $request->file('image')->store('services', 'public/images');
+            $service->image = $path;
+            $service->save();
         }
 
-        Hotel::create($data);
+        // 3. create hotel
+        $hotel = Hotel::create([
+            'service_id' => $service->id,
+            'villeHotel' => $validated['villeHotel'],
+        ]);
 
         return response()->json([
-            'message' => 'Hotel ajouté avec succès'
+            'service' => $service,
+            'hotel' => $hotel
+        ], 201);
+    }
+
+    public function show($id)
+    {
+        $hotel = Hotel::with('service')->findOrFail($id);
+        return response()->json($hotel);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $hotel = Hotel::findOrFail($id);
+        $service = $hotel->service;
+
+        $validated = $request->validate([
+            'nomServ' => 'required|string',
+            'prix' => 'required|numeric',
         ]);
+
+        $service->update($validated);
+
+        return response()->json(['message' => 'Updated']);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Hotel $hotel)
+    public function destroy($id)
     {
-        //
-    }
+        $hotel = Hotel::findOrFail($id);
+        $hotel->service()->delete(); // حذف service
+        $hotel->delete();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Hotel $hotel)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Hotel $hotel)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Hotel $hotel)
-    {
-        //
+        return response()->json(['message' => 'Deleted']);
     }
 }

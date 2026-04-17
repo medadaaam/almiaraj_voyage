@@ -4,81 +4,88 @@ import { Link } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
 
 export default function AjouterHotel() {
-  const [isSubmitting, setIsSubmiting] = useState(false)
   const [form, setForm] = useState({
     nomServ: "",
     description: "",
     prix: "",
-    capaciteTotal: "",
-    placeDisponibles: "",
-
     villeHotel: "",
-    checkIn: "",
-    checkOut: "",
     typeChambre: "",
-
     image: null,
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
-      setForm({ ...form, image: files[0] });
+      const file = files[0];
+      if (file) {
+        setForm({ ...form, image: file });
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreview(previewUrl);
+      }
     } else {
       setForm({ ...form, [name]: value });
     }
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmiting(true);
-  
-  // Create FormData for file upload
-  const formData = new FormData();
-  formData.append('nomServ', form.nomServ);
-  formData.append('description', form.description);
-  formData.append('prix', form.prix);
-  formData.append('capaciteTotal', form.capaciteTotal);
-  formData.append('placeDisponibles', form.placeDisponibles);
-  formData.append('villeHotel', form.villeHotel);
-  formData.append('checkIn', form.checkIn);
-  formData.append('checkOut', form.checkOut);
-  formData.append('typeChambre', form.typeChambre);
-  
-  // Debug: Log the image file info
-  if (form.image) {
-    console.log('Image file:', form.image);
-    console.log('Image type:', form.image.type);
-    console.log('Image size:', form.image.size);
-    formData.append('image', form.image);
-  } else {
-    console.log('No image selected');
-  }
-  
-  try {
-    const response = await axiosClient.post('/services', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    console.log('Success:', response.data);
-    // Optionally redirect or show success message
-  } catch (error) {
-    console.log('Error Response:', error.response);
-    console.log('Validation Errors:', error.response?.data?.errors);
-    console.log('Error Message:', error.response?.data?.message);
-  } finally {
-    setIsSubmiting(false);
-  }
-}
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Create FormData object
+    const formData = new FormData();
+
+    // Append all form fields - using the correct variable names from your form state
+    formData.append('nomServ', form.nomServ);
+    formData.append('description', form.description);
+    formData.append('prix', form.prix);
+    formData.append('villeHotel', form.villeHotel);
+    formData.append('typeChambre', form.typeChambre);
+    
+    // Append the image file if it exists
+    if (form.image) {
+      formData.append('image', form.image);
+    }
+
+    try {
+      const response = await axiosClient.post('/hotels', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Success:', response.data);
+      
+      // Reset form after successful submission
+      setForm({
+        nomServ: "",
+        description: "",
+        prix: "",
+        villeHotel: "",
+        typeChambre: "",
+        image: null,
+      });
+      setImagePreview(null);
+      
+      // Optional: Show success message or redirect
+      alert('Hôtel ajouté avec succès!');
+      
+    } catch (error) {
+      console.error('Error:', error.response?.data || error.message);
+      alert('Erreur lors de l\'ajout de l\'hôtel');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="form-container">
-      <h2>Ajouter Service + Hotel</h2>
+      <h2>Ajouter un hotel</h2>
 
       <form onSubmit={handleSubmit}>
-
         {/* SERVICE */}
         <div className="form-group">
           <label>Nom de l'hotel</label>
@@ -97,6 +104,7 @@ export default function AjouterHotel() {
             name="description"
             value={form.description}
             onChange={handleChange}
+            required
           />
         </div>
 
@@ -110,29 +118,6 @@ export default function AjouterHotel() {
             required
           />
         </div>
-
-        <div className="form-group">
-          <label>Capacité Total</label>
-          <input
-            type="number"
-            name="capaciteTotal"
-            value={form.capaciteTotal}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Places Disponibles</label>
-          <input
-            type="number"
-            name="placeDisponibles"
-            value={form.placeDisponibles}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
         <hr />
 
         {/* HOTEL */}
@@ -146,50 +131,26 @@ export default function AjouterHotel() {
             required
           />
         </div>
-
-        <div className="form-group">
-          <label>Check In</label>
-          <input
-            type="date"
-            name="checkIn"
-            value={form.checkIn}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Check Out</label>
-          <input
-            type="date"
-            name="checkOut"
-            value={form.checkOut}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Type Chambre</label>
-          <select
-            name="typeChambre"
-            value={form.typeChambre}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Choisir</option>
-            <option value="single">Single</option>
-            <option value="double">Double</option>
-            <option value="suite">Suite</option>
-          </select>
-        </div>
-
+    
         <div className="form-group">
           <label>Image</label>
-          <input type="file" name="image" onChange={handleChange} />
+          <input 
+            type="file" 
+            name="image" 
+            onChange={handleChange}
+            accept="image/*"
+          />
+          {imagePreview && (
+            <div className="image-preview">
+              <img src={imagePreview} alt="Preview" style={{ maxWidth: '200px', marginTop: '10px' }} />
+            </div>
+          )}
         </div>
+        
         <div className="btns">
-          <button type="submit">Ajouter</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Ajout en cours..." : "Ajouter"}
+          </button>
           <Link to="/admin" className="cancel-btn">
             Annuler
           </Link>

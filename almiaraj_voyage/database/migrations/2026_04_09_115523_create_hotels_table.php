@@ -15,9 +15,6 @@ return new class extends Migration
         Schema::create('hotels', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
             $table->string('villeHotel', 50);
-            $table->date('checkIn');
-            $table->date('checkOut');
-            $table->string('typeChambre', 50);
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();
         });

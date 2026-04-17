@@ -2,13 +2,14 @@ import axios from "axios";
 
 export const axiosClient = axios.create({
   baseURL:
-    import.meta.env.VITE_BACKEND_URL + "/api" || "http://localhost:8000/api",
+    import.meta.env.VITE_BACKEND_URL
+      ? import.meta.env.VITE_BACKEND_URL + "/api"
+      : "http://localhost:8000/api",
   withCredentials: true,
   headers: {
     Accept: "application/json",
-    "Content-Type": "application/json",
     "X-Requested-With": "XMLHttpRequest",
-  },
+  }
 });
 
 // Interceptor لإضافة CSRF token

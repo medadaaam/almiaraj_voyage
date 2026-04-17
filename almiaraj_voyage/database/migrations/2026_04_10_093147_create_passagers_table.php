@@ -18,8 +18,9 @@ return new class extends Migration
             $table->string('prenomPas', 50);
             $table->string('cinPas', 50)->nullable();
             $table->string('passportPas', 50)->nullable();
-            $table->foreignId('reservation_id')
-                ->constrained('reservations')
+            $table->foreign('id')
+                ->references('id')
+                ->on('reservations')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->timestamps();

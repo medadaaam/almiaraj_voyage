@@ -8,5 +8,5 @@ export default function App() {
             <RouterProvider router={route} />
         </AuthProvider>
 
-    )
+    )   
 }

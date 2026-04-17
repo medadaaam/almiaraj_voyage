@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Http\Controllers\Controller;
+use App\Models\Hotel;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
@@ -29,9 +30,35 @@ class ServiceController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        // Validate and store the service + hotel data
+        $validated = $request->validate([
+            'nomServ' => 'required|string',
+            'description' => 'nullable|string',
+            'prix' => 'required|numeric',
+            'capaciteTotal' => 'required|integer',
+            'placeDisponibles' => 'required|integer',
+            'villeHotel' => 'required|string',
+            'checkIn' => 'required|date',
+            'checkOut' => 'required|date',
+            'typeChambre' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
 
+        // Create service
+        $service = Service::create($validated);
+
+        // Create hotel associated with the service
+        $hotel = Hotel::create([
+            'service_id' => $service->id,
+            'villeHotel' => $validated['villeHotel'],
+            'checkIn' => $validated['checkIn'],
+            'checkOut' => $validated['checkOut'],
+            'typeChambre' => $validated['typeChambre'],
+        ]);
+
+        return response()->json(['service' => $service, 'hotel' => $hotel], 201);
+    }
+    
     /**
      * Display the specified resource.
      */

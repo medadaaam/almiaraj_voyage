@@ -18,9 +18,7 @@ return new class extends Migration
             $table->date('dateDepartV');
             $table->date('dateRetourV');
             $table->text('programme');
-            $table->foreignId('service_id')
-                ->constrained('services')
-                ->cascadeOnDelete();
+            $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
 
             $table->timestamps();
         });

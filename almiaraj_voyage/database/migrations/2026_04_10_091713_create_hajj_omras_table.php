@@ -17,10 +17,7 @@ return new class extends Migration
             $table->string('type');
             $table->string('formule');
             $table->string('typeChambre');
-            $table->foreignId('service_id')
-                ->constrained('services')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+            $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();
         });
     }

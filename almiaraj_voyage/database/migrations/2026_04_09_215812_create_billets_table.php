@@ -19,7 +19,7 @@ return new class extends Migration
             $table->date('dateDepartBi');
             $table->date('dateRetourBi');
             $table->string('bagage');
-            $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
+            $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();
         });
     }

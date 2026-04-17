@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
         Schema::create('paiements', function (Blueprint $table) {
             $table->id();
-            $table->decimal('montant',10,2);
+            $table->decimal('montant', 10, 2);
             $table->date('dateP');
             $table->string('methode', 50);
             $table->string('status', 50);
-            $table->foreignId('reservation_id')
-                ->constrained('reservations')
+            $table->foreign('id')
+                ->references('id')
+                ->on('reservations')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->timestamps();

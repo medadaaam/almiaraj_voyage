@@ -18,8 +18,9 @@ return new class extends Migration
             $table->date('dateP');
             $table->string('urlPDF');
             $table->date('dateExpiration');
-            $table->foreignId('reservation_id')
-                ->constrained('reservations')
+            $table->foreign('id')
+                ->references('id')
+                ->on('reservations')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
             $table->timestamps();

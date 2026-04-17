@@ -13,21 +13,23 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
         Schema::create('messages', function (Blueprint $table) {
-            $table->id();
+            $table->id(); // Primary key
             $table->string('nomM', 50);
             $table->string('numTelM', 20);
             $table->string('emailM', 150)->unique();
             $table->text('contenu');
             $table->date('dateM');
             $table->string('statusM', 50);
-            $table->foreignId('client_id')
-                ->nullable()
-                ->constrained('clients')
-                ->nullOnDelete()
-                ->cascadeOnDelete()
-                ->cascadeOnDelete();
+            $table->unsignedBigInteger('client_id')->nullable(); // Foreign key column
             $table->timestamps();
+            
+            // Add foreign key constraint
+            $table->foreign('client_id')
+                  ->references('id')
+                  ->on('clients')
+                  ->nullOnDelete();
         });
+        Schema::enableForeignKeyConstraints();
     }
 
     /**

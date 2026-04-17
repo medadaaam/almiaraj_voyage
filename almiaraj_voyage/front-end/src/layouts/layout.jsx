@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
 import Footer from "@/pages/footer";
 
+
 export default function Layout() {
   const { authenticated, logout } = useAuth();
   const navigate = useNavigate();
@@ -81,11 +82,7 @@ export default function Layout() {
                   Accueil
                 </NavLink>
               </li>
-              <li>
-                <NavLink to="/services" className="aa">
-                  Services
-                </NavLink>
-              </li>
+
               <li>
                 <NavLink to="/about" className="aa">
                   A propos
@@ -138,7 +135,7 @@ export default function Layout() {
           </nav>
         </div>
       </header>
-      <main>
+      <main className="flex-grow p-0">
         <Outlet />
       </main>
       <Footer />

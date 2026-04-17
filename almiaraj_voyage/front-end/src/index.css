@@ -59,3 +59,31 @@
   }
 }
 
+/* إصلاح الـ layout العام */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* إصلاح مشكل الـ footer */
+footer {
+  position: relative;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* إصلاح مشكل الـ hero */
+.hero-section {
+  position: relative;
+  min-height: 100vh;
+  margin-top: -96px;
+  padding-top: 96px;
+  z-index: 1;
+}

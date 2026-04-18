@@ -148,7 +148,7 @@ export default function AjouterHotel() {
         </div>
         
         <div className="btns">
-          <button type="submit" disabled={isSubmitting}>
+          <button className="btn" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Ajout en cours..." : "Ajouter"}
           </button>
           <Link to="/admin" className="cancel-btn">

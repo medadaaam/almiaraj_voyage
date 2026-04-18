@@ -41,7 +41,7 @@
 }
 
 /* BUTTON AJOUTER */
-button {
+.btn {
     width: 50%;
     padding: 10px;
     background: #2f6f85;
@@ -52,7 +52,7 @@ button {
     transition: 0.3s;
 }
 
-button:hover {
+.btn:hover {
     background: #fb923c;
 }
 

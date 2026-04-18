@@ -84,6 +84,12 @@ export default function Layout() {
               </li>
 
               <li>
+                <NavLink to="/services" className="aa">
+                  Services
+                </NavLink>
+              </li>
+
+              <li>
                 <NavLink to="/about" className="aa">
                   A propos
                 </NavLink>

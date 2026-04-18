@@ -37,44 +37,64 @@ export default function Login() {
   });
 
   const onSubmit = async (values) => {
-    try {
-      await AuthApi.getCsrfToken();
-      const response = await login(values.email, values.password);
-      if (response.status === 200 || response.status === 204) {
-        setAuthenticated(true);
-        navigate("/");
-      }
-    } catch (error) {
-      if (error.response?.status === 422) {
-        const errors = error.response.data.errors;
-        if (errors.email) {
-          form.setError("email", {
-            message: errors.email.join(", "),
-          });
-        }
-        if (errors.password) {
-          form.setError("password", {
-            message: errors.password.join(", "),
-          });
-        }
-        if (!errors.email && !errors.password) {
-          form.setError("root", {
-            message: error.response.data.message || "Données incorrectes",
-          });
-        }
-      } else if (error.response?.status === 419) {
-        form.setError("root", {
-          message: "La session est terminée, veuillez actualiser la page.",
-        });
-      } else {
-        form.setError("root", {
-          message:
-            error.response?.data?.message ||
-            "Une erreur inattendue s'est produite.",
-        });
-      }
+  try {
+    // First, get fresh CSRF token
+    await AuthApi.getCsrfToken();
+    
+    // Small delay to ensure cookie is set
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Then attempt login
+    const response = await login(values.email, values.password);
+    
+    if (response.status === 200 || response.status === 204) {
+      setAuthenticated(true);
+      navigate("/");
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+    
+    if (error.response?.status === 419) {
+      form.setError("root", {
+        message: "Session expired. Please try again.",
+      });
+      // Retry once with new token
+      try {
+        await AuthApi.getCsrfToken();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const retryResponse = await login(values.email, values.password);
+        if (retryResponse.status === 200 || retryResponse.status === 204) {
+          setAuthenticated(true);
+          navigate("/");
+          return;
+        }
+      } catch (retryError) {
+        console.error("Retry failed:", retryError);
+      }
+    } else if (error.response?.status === 422) {
+      const errors = error.response.data.errors;
+      if (errors.email) {
+        form.setError("email", {
+          message: errors.email.join(", "),
+        });
+      }
+      if (errors.password) {
+        form.setError("password", {
+          message: errors.password.join(", "),
+        });
+      }
+      if (!errors.email && !errors.password) {
+        form.setError("root", {
+          message: error.response.data.message || "Données incorrectes",
+        });
+      }
+    } else {
+      form.setError("root", {
+        message: error.response?.data?.message || "Une erreur inattendue s'est produite.",
+      });
+    }
+  }
+};
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 border rounded-lg">

@@ -1,13 +1,21 @@
-import { axiosClient } from "@/api/axios";
+import { axiosClient, csrfClient } from "@/api/axios";
+
 
 const AuthApi = {
+  
   getCsrfToken: async () => {
-    return await axiosClient.get("/sanctum/csrf-cookie", {
-      baseURL: import.meta.env.VITE_BACKEND_URL,
-    });
+    try {
+      const response = await csrfClient.get("/sanctum/csrf-cookie");
+      return response;
+    } catch (error) {
+      console.error("CSRF token error:", error);
+      throw error;
+    }
   },
 
   login: async (email, password) => {
+    // Make sure we have a fresh CSRF token before login
+    await AuthApi.getCsrfToken();
     return await axiosClient.post("/login", { email, password });
   },
 

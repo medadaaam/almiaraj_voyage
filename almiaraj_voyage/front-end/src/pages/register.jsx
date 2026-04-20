@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import axios from 'axios';
 import {
   Form,
   FormControl,
@@ -82,57 +83,108 @@ export default function Register() {
     setLoading(true);
     setError("");
 
+    if (values.passagers.length === 0) {
+      setError("Veuillez ajouter au moins un passager");
+      setLoading(false);
+      return;
+    }
+
+    // Check if all passagers are confirmed
+    const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
+    if (!allConfirmed) {
+      setError("Veuillez confirmer tous les passagers avant de continuer");
+      setLoading(false);
+      return;
+    }
+
+    if (!isNombrePassagersValide()) {
+      const chambre = typesChambre.find(c => c.value === watchTypeChambre);
+      setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const data = {
-        nom: values.nom,
-        prenom: values.prenom,
-        email: values.email,
-        password: values.password,
-        password_confirmation: values.ConfirmePassword,
-        nat: values.nationalite,
-        numTel: values.telephone,
-        terms: false,
+      // Get auth token from your AuthContext
+      const token = localStorage.getItem('token'); // Adjust based on your auth implementation
+
+      const reservationData = {
+        hotel_id: hotelId,
+        client_principal: {
+          nom: values.nom,
+          prenom: values.prenom,
+          email: values.email,
+          telephone: values.telephone,
+          cin: values.cin,
+        },
+        reservation: {
+          check_in: values.checkIn,
+          check_out: values.checkOut,
+          type_chambre: values.typeChambre,
+          nombre_passagers: values.passagers.length,
+          prix_total: calculerPrixTotal(),
+          demandes_speciales: values.demandesSpeciales || "",
+        },
+        passagers: values.passagers.map(p => ({
+          nom: p.nom,
+          prenom: p.prenom,
+          cin: p.cin,
+          nationalite: p.nationalite || null
+        })),
       };
 
-      const response = await registerUser(data);
+      const response = await axios.post('/api/reservations', reservationData, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+        }
+      });
 
-      if (
-        response.status === 200 ||
-        response.status === 201 ||
-        response.status === 204
-      ) {
-        setAuthenticated(true);
-        navigate("/");
+      if (response.status === 201 || response.status === 200) {
+        navigate("/reservation-confirmation", {
+          state: {
+            reservation: reservationData,
+            hotel: hotelData,
+            reservationId: response.data.reservation.id
+          }
+        });
       }
+
     } catch (err) {
-      console.error("Error:", err.response?.data);
+      console.error("Erreur:", err);
 
       if (err.response?.status === 422) {
         const errors = err.response.data.errors;
-
-        if (errors.email) {
-          form.setError("email", { message: errors.email[0] });
+        // Handle validation errors
+        if (errors['client_principal.nom']) {
+          form.setError("nom", { message: errors['client_principal.nom'][0] });
         }
-        if (errors.password) {
-          form.setError("password", { message: errors.password[0] });
+        if (errors['client_principal.prenom']) {
+          form.setError("prenom", { message: errors['client_principal.prenom'][0] });
         }
-        if (errors.nom) {
-          form.setError("nom", { message: errors.nom[0] });
+        if (errors['client_principal.email']) {
+          form.setError("email", { message: errors['client_principal.email'][0] });
         }
-        if (errors.prenom) {
-          form.setError("prenom", { message: errors.prenom[0] });
+        if (errors['client_principal.telephone']) {
+          form.setError("telephone", { message: errors['client_principal.telephone'][0] });
         }
-        if (errors.numTel) {
-          form.setError("telephone", { message: errors.numTel[0] });
+        if (errors['client_principal.cin']) {
+          form.setError("cin", { message: errors['client_principal.cin'][0] });
         }
-        if (errors.nat) {
-          form.setError("nationalite", { message: errors.nat[0] });
+        if (errors['reservation.check_in']) {
+          form.setError("checkIn", { message: errors['reservation.check_in'][0] });
         }
-        if (Object.keys(errors).length === 0) {
-          setError(err.response.data.message || "Données incorrectes");
+        if (errors['reservation.check_out']) {
+          form.setError("checkOut", { message: errors['reservation.check_out'][0] });
         }
-      } else if (err.response?.status === 419) {
-        setError("Session expirée, veuillez actualiser la page");
+        if (errors['reservation.type_chambre']) {
+          form.setError("typeChambre", { message: errors['reservation.type_chambre'][0] });
+        }
+        if (errors.passagers) {
+          setError("Veuillez vérifier les informations des passagers");
+        }
+        setError(err.response.data.message || "Données incorrectes");
       } else {
         setError(err.response?.data?.message || "Une erreur s'est produite");
       }

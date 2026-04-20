@@ -17,7 +17,7 @@ import { Hotel } from "@/pages/services/hotel";
 import Hotels from "@/pages/services/hotels";
 import AdminLayout from "@/layouts/AdminLayout";
 import AjouterHotel from "@/pages/adminDashboard/hotel/ajouter";
-import Reservation from "@/pages/reservation";
+import Reservation from "@/pages/hotelReservation";
 
 export const LOGIN_ROUTE = "/login";
 

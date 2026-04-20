@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Hotel extends Model
 {
-    protected $fillable = ['villeHotel', 'checkIn', 'checkOut', 'typeChambre', 'service_id'];
+    public $incrementing = false;
+    protected $keyType = 'int';
+    protected $fillable = ['id', 'villeHotel' ];
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class,'id', 'id');
     }
 }

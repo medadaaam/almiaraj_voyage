@@ -5,82 +5,57 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Hotel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class HotelController extends Controller
 {
-    public function index()
-    {
-        $hotels = Hotel::with('service')->get();
-        return response()->json($hotels);
-    }
-
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            // service
-            'nomServ' => 'required|string',
-            'description' => 'nullable|string',
-            'prix' => 'required|numeric',
+        try {
+            DB::beginTransaction();
+            
+            // 1. Create service first (this gets an auto-increment ID)
+            $service = Service::create([
+                'nomServ' => $request->nomServ,
+                'description' => $request->description,
+                'prix' => $request->prix,
+                'image' => null,
+            ]);
 
-            // hotel
-            'villeHotel' => 'required|string',
+            // 2. Create hotel with the SAME ID as the service
+            $hotel = Hotel::create([
+                'id' => $service->id,  // CRITICAL: Use the service's ID
+                'villeHotel' => $request->villeHotel,
+            ]);
 
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+            // 3. Handle image if exists
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imagePath = $image->store('hotels', 'public');
+                $service->image = $imagePath;
+                $service->save();
+            }
+            
+            DB::commit();
 
-        // 1. create service
-        $service = Service::create([
-            'nomServ' => $validated['nomServ'],
-            'description' => $validated['description'] ?? null,
-            'prix' => $validated['prix'],
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Hotel created successfully',
+                'data' => [
+                    'service' => $service,
+                    'hotel' => $hotel
+                ]
+            ], 201);
 
-        // 2. upload image
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('services', 'public/images');
-            $service->image = $path;
-            $service->save();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create hotel',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // 3. create hotel
-        $hotel = Hotel::create([
-            'service_id' => $service->id,
-            'villeHotel' => $validated['villeHotel'],
-        ]);
-
-        return response()->json([
-            'service' => $service,
-            'hotel' => $hotel
-        ], 201);
-    }
-
-    public function show($id)
-    {
-        $hotel = Hotel::with('service')->findOrFail($id);
-        return response()->json($hotel);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $hotel = Hotel::findOrFail($id);
-        $service = $hotel->service;
-
-        $validated = $request->validate([
-            'nomServ' => 'required|string',
-            'prix' => 'required|numeric',
-        ]);
-
-        $service->update($validated);
-
-        return response()->json(['message' => 'Updated']);
-    }
-
-    public function destroy($id)
-    {
-        $hotel = Hotel::findOrFail($id);
-        $hotel->service()->delete(); // حذف service
-        $hotel->delete();
-
-        return response()->json(['message' => 'Deleted']);
     }
 }

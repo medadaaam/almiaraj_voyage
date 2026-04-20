@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reservation extends Model
 {
-    protected $fillable = ['nbPers','dateRes','statusRes','dateAnnulation','voucherGenere'];
+    protected $fillable = ['nbPers','dateRes','statusRes','checkIn','checkOut','typeChambre','dateAnnulation','voucherGenere','service_id','client_id'];
     public function service(){
         return $this->belongsTo(Service::class,'service_id');
     }

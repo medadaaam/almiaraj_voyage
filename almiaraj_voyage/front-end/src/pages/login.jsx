@@ -40,20 +40,20 @@ export default function Login() {
   try {
     // First, get fresh CSRF token
     await AuthApi.getCsrfToken();
-    
+
     // Small delay to ensure cookie is set
     await new Promise(resolve => setTimeout(resolve, 100));
-    
+
     // Then attempt login
     const response = await login(values.email, values.password);
-    
+
     if (response.status === 200 || response.status === 204) {
       setAuthenticated(true);
       navigate("/");
     }
   } catch (error) {
     console.error("Login error:", error);
-    
+
     if (error.response?.status === 419) {
       form.setError("root", {
         message: "Session expired. Please try again.",

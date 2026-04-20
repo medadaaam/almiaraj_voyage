@@ -1,27 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./hero.css";
-import Search from "./search";
 
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fade, setFade] = useState(true);
+  const heroRef = useRef(null);
 
   const slides = [
     {
-      image:
-        "https://webfol.travedeus.com/storage//01KDH98HZXCQBKZE1Q69PNKM9C.webp",
-      title:
-        "Réservez votre prochain voyage vers diverses destinations touristiques",
+      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
+      title: "Réservez votre prochain voyage vers diverses destinations touristiques",
       subtitle: "Rejoignez-nous pour des voyages qui allient luxe et confort.",
     },
     {
-      image:
-        "https://webfol.travedeus.com/storage//01KDH9NJXN8BETZVAWBG8TJH8C.webp",
+      image: "https://images.pexels.com/photos/417344/pexels-photo-417344.jpeg",
       title: "Découvrez des expériences uniques à travers le monde",
       subtitle: "Des circuits sur mesure pour des souvenirs inoubliables.",
     },
+    {
+      image: "https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg",
+      title: "Explorez les trésors cachés des médinas ancestrales",
+      subtitle: "Imprégnez-vous de l'authenticité et de la culture locale.",
+    },
+    {
+      image: "https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg",
+      title: "Vivez des aventures inoubliables en pleine nature",
+      subtitle: "Des expériences uniques qui resteront gravées dans votre mémoire.",
+    }
   ];
 
+  // Auto slide
   useEffect(() => {
     const interval = setInterval(() => {
       setFade(false);
@@ -34,36 +42,47 @@ export default function Hero() {
     return () => clearInterval(interval);
   }, [slides.length]);
 
+  // 3D Tilt Effect
+  const handleMouseMove = (e) => {
+    if (!heroRef.current) return;
+    const { width, height, left, top } = heroRef.current.getBoundingClientRect();
+    const x = (e.clientX - left) / width - 0.5;
+    const y = (e.clientY - top) / height - 0.5;
+
+    heroRef.current.style.transform = `
+      rotateY(${x * 8}deg)
+      rotateX(${-y * 8}deg)
+    `;
+  };
+
+  const resetTilt = () => {
+    if (heroRef.current) {
+      heroRef.current.style.transform = "rotateY(0deg) rotateX(0deg)";
+    }
+  };
+
   return (
-    <section className="relative w-screen top-0 flex flex-col items-center justify-center w-full min-h-screen -mt-24 bg-[#f9fafb] -ml-[1vw] -mr-[80vw]">
-      {/* Slides */}
+    <section
+      className="hero-section"
+      ref={heroRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={resetTilt}
+    >
       {slides.map((slide, index) => (
         <div
           key={index}
-          className={`hero-bg-slide absolute inset-0 bg-center bg-cover bg-no-repeat transition-opacity duration-1000 opacity-100 ${
-            currentSlide === index && fade ? "opacity-100" : "opacity-0"
-          }`}
+          className={`hero-slide ${currentSlide === index && fade ? "active" : ""}`}
           style={{ backgroundImage: `url('${slide.image}')` }}
         >
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <div className="max-w-4xl mx-auto text-center">
-              <h1 className="hero-text text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-gray-100 animate-fade-in-down">
-                {slide.title}
-              </h1>
-              <p className="hero-text mx-auto mt-5 text-xl md:text-2xl font-normal text-gray-300 max-w-2xl animate-fade-in-up">
-                {slide.subtitle}
-              </p>
-              <div className="hero-text flex flex-col sm:flex-row gap-4 justify-center mt-8 animate-fade-in-up animation-delay-500">
-                <a
-                  href="#trips"
-                  className="bg-[#fb923c] text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-[#2f6f85] transform hover:scale-105 transition-all duration-300 shadow-lg"
-                >
+          <div className="hero-overlay">
+            <div className="hero-content">
+              <h1 className="hero-title">{slide.title}</h1>
+              <p className="hero-subtitle">{slide.subtitle}</p>
+              <div className="hero-buttons">
+                <a href="#trips" className="hero-btn-primary">
                   Explorer les voyages
                 </a>
-                <a
-                  href="/customize-tour"
-                  className="text-center border-2 border-white text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-white hover:text-[#2f6f85] transform hover:scale-105 transition-all duration-300"
-                >
+                <a href="/customize-tour" className="hero-btn-secondary">
                   Personnaliser le circuit
                 </a>
               </div>
@@ -72,8 +91,7 @@ export default function Hero() {
         </div>
       ))}
 
-      {/* Dots indicators */}
-      {/* <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-10">
+      <div className="hero-dots">
         {slides.map((_, index) => (
           <button
             key={index}
@@ -84,16 +102,11 @@ export default function Hero() {
                 setFade(true);
               }, 500);
             }}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              currentSlide === index
-                ? "w-8 bg-[#fb923c]"
-                : "bg-white/50 hover:bg-white/80"
-            }`}
+            className={`hero-dot ${currentSlide === index ? "active" : ""}`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
-      </div> */}
-
+      </div>
     </section>
   );
 }

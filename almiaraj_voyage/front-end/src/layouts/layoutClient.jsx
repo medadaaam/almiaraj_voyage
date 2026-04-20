@@ -1,17 +1,14 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
-import { useEffect, useState } from "react"; // ✅ AJOUTER useState
+import { useEffect, useState } from "react";
 import Footer from "@/pages/footer";
-import EmailWarning from "@/components/EmailWarning";
 
 export default function LayoutClient() {
   const { logout, authenticated, loading } = useAuth();
   const navigate = useNavigate();
 
-  // ✅ AJOUTER CES STATES
   const [showSticky, setShowSticky] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,7 +18,7 @@ export default function LayoutClient() {
     }
   }, [authenticated, loading]);
 
-  // ✅ AJOUTER CET EFFECT
+  // Sticky header scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setShowSticky(window.scrollY > 150);
@@ -31,7 +28,7 @@ export default function LayoutClient() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ AJOUTER CET EFFECT
+  // Mobile menu effect
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.classList.add("overflow-hidden");
@@ -52,8 +49,8 @@ export default function LayoutClient() {
 
   return (
     <>
-      {/* Top Bar - votre code existant */}
-      <div className="w-full bg-[#2f6f85] text-white text-sm border-b border-[#25596b]">
+      {/* Top Bar - yekhtafi ki yban sticky header */}
+      <div className={`top-bar-fixed ${showSticky ? 'top-bar-hidden' : ''}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-2">
           <div className="flex items-center gap-6">
             <a
@@ -98,27 +95,30 @@ export default function LayoutClient() {
               <i className="fa-brands fa-x-twitter text-white text-sm"></i>
             </div>
           </div>
-          <button style={{ width:"250px" }} className="bg-[#fb923c] text-white px-4 py-1 rounded-md font-medium hover:bg-orange-600 transition">
+          <button className="bg-[#fb923c] text-white px-4 py-1 rounded-md font-medium hover:bg-orange-600 transition">
             Personnaliser un voyage →
           </button>
         </div>
       </div>
 
-      {/* Header Principal */}
-      <header className="main-header">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <div>
+      {/* Main Header - Space Between */}
+      <header className={`main-header ${showSticky ? 'main-header-hidden' : ''}`}>
+        <div className="max-w-7xl mx-auto header-container px-6 py-4">
+          {/* Logo - Left */}
+          <div className="logo-container">
             <a href="/">
               <img src="/images/logo.png" alt="logo" className="h-14" />
             </a>
           </div>
-          <div className="hidden lg:block">
+
+          {/* Navigation Links - Center */}
+          <div className="nav-container hidden lg:block">
             <nav>
               <ul className="flex gap-6">
-                <li><NavLink to="/" className="aa">Home</NavLink></li>
+                <li><NavLink to="/" className="aa">Accueil</NavLink></li>
                 <li><NavLink to="/services" className="aa">Services</NavLink></li>
-                <li><NavLink to="/about" className="aa">A propos</NavLink></li>
-                <li><NavLink to="/contact" className="aa">contact</NavLink></li>
+                <li><NavLink to="/about" className="aa">À propos</NavLink></li>
+                <li><NavLink to="/contact" className="aa">Contact</NavLink></li>
                 <li>
                   <select className="lang-select">
                     <option value="ar">العربية</option>
@@ -129,19 +129,21 @@ export default function LayoutClient() {
               </ul>
             </nav>
           </div>
-          <div className="hidden lg:block">
+
+          {/* Auth Buttons - Right */}
+          <div className="auth-container hidden lg:block">
             <nav>
               <ul className="flex gap-4">
                 <li>
-                  <button onClick={logoutCallback} className="aa">
-                    Logout
+                  <button onClick={logoutCallback} className="">
+                    Déconnexion
                   </button>
                 </li>
               </ul>
             </nav>
           </div>
 
-          {/* Menu Mobile Button */}
+          {/* Mobile Menu Button */}
           <div className="lg:hidden">
             <button onClick={() => setMobileMenuOpen(true)} className="text-gray-700">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,23 +155,23 @@ export default function LayoutClient() {
       </header>
 
       {/* Mobile Menu */}
-      <div className={`fixed top-0 left-0 right-0 bottom-0 bg-white z-50 transition-transform duration-300 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`}>
-        <div className="flex justify-end p-4 border-b">
-          <button onClick={() => setMobileMenuOpen(false)} className="text-gray-700">
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-header">
+          <button onClick={() => setMobileMenuOpen(false)} className="close-btn">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        <nav className="p-6">
-          <ul className="flex flex-col gap-4">
-            <li><NavLink to="/" className="aa block py-2" onClick={() => setMobileMenuOpen(false)}>Home</NavLink></li>
-            <li><NavLink to="/services" className="aa block py-2" onClick={() => setMobileMenuOpen(false)}>Services</NavLink></li>
-            <li><NavLink to="/about" className="aa block py-2" onClick={() => setMobileMenuOpen(false)}>A propos</NavLink></li>
-            <li><NavLink to="/contact" className="aa block py-2" onClick={() => setMobileMenuOpen(false)}>contact</NavLink></li>
-            <li className="pt-4 border-t mt-2">
-              <button onClick={() => { logoutCallback(); setMobileMenuOpen(false); }} className="aa text-left py-2">
-                Logout
+        <nav className="mobile-nav">
+          <ul>
+            <li><NavLink to="/" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Accueil</NavLink></li>
+            <li><NavLink to="/services" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Services</NavLink></li>
+            <li><NavLink to="/about" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>À propos</NavLink></li>
+            <li><NavLink to="/contact" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Contact</NavLink></li>
+            <li className="mobile-auth-section">
+              <button onClick={() => { logoutCallback(); setMobileMenuOpen(false); }} className="mobile-nav-link">
+                Déconnexion
               </button>
             </li>
           </ul>
@@ -177,26 +179,30 @@ export default function LayoutClient() {
       </div>
 
       {/* Sticky Header */}
-      <div className={`fixed top-0 left-0 right-0 bg-white shadow-md z-50 transition-all duration-300 ${showSticky ? 'translate-y-0' : '-translate-y-full'}`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
-          <a href="/">
-            <img src="/images/logo.png" alt="logo" className="h-10" />
-          </a>
-          <div className="hidden md:flex gap-6">
-            <NavLink to="/" className="aa text-sm">Home</NavLink>
-            <NavLink to="/services" className="aa text-sm">Services</NavLink>
-            <NavLink to="/about" className="aa text-sm">A propos</NavLink>
-            <NavLink to="/contact" className="aa text-sm">contact</NavLink>
+      <div className={`sticky-header ${showSticky ? 'visible' : ''}`}>
+        <div className="max-w-7xl mx-auto header-container px-6 py-3">
+          <div className="logo-container">
+            <a href="/">
+              <img src="/images/logo.png" alt="logo" className="h-10" />
+            </a>
           </div>
-          <div>
+          <div className="nav-container hidden md:flex">
+            <div className="flex gap-6">
+              <NavLink to="/" className="aa text-sm">Accueil</NavLink>
+              <NavLink to="/services" className="aa text-sm">Services</NavLink>
+              <NavLink to="/about" className="aa text-sm">À propos</NavLink>
+              <NavLink to="/contact" className="aa text-sm">Contact</NavLink>
+            </div>
+          </div>
+          <div className="auth-container">
             <button onClick={logoutCallback} className="bg-[#fb923c] text-white px-4 py-1.5 rounded-md text-sm hover:bg-orange-600 transition">
-              Logout
+              Déconnexion
             </button>
           </div>
         </div>
       </div>
 
-      <main>
+      <main className="main-content">
         <Outlet />
       </main>
       <Footer />

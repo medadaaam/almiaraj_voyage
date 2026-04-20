@@ -1,15 +1,16 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Footer from "@/pages/footer";
-import EmailWarning from "@/components/EmailWarning";
 
 export default function LayoutClient() {
   const { logout, authenticated, loading } = useAuth();
   const navigate = useNavigate();
+
+  const [showSticky, setShowSticky] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !authenticated) {
@@ -17,17 +18,39 @@ export default function LayoutClient() {
     }
   }, [authenticated, loading]);
 
+  // Sticky header scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowSticky(window.scrollY > 150);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Mobile menu effect
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => document.body.classList.remove("overflow-hidden");
+  }, [mobileMenuOpen]);
+
   const logoutCallback = async () => {
     await logout();
     navigate(LOGIN_ROUTE);
   };
+
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
     <>
-      <div className="w-full bg-[#2f6f85] text-white text-sm border-b border-[#25596b]">
+      {/* Top Bar - yekhtafi ki yban sticky header */}
+      <div className={`top-bar-fixed ${showSticky ? 'top-bar-hidden' : ''}`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-2">
           <div className="flex items-center gap-6">
             <a
@@ -77,58 +100,109 @@ export default function LayoutClient() {
           </button>
         </div>
       </div>
-      <header>
-        <div>
-          <a href="/">
-            <img src="/images/logo.png" alt="logo" />
-          </a>
-        </div>
-        <div>
-          <nav>
-            <ul>
-              <li>
-                <NavLink to="/" className="aa">
-                  Home
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/services" className="aa">
-                  Services
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/about" className="aa">
-                  A propos
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/contact" className="aa">
-                  contact
-                </NavLink>
-              </li>
-              <li>
-                <select className="lang-select">
-                  <option value="ar">العربية</option>
-                  <option value="fr">Français</option>
-                  <option value="en">English</option>
-                </select>
-              </li>
-            </ul>
-          </nav>
-        </div>
-        <div>
-          <nav>
-            <ul>
-              <li>
-                <button onClick={logoutCallback} className="aa">
-                  Logout
-                </button>
-              </li>
-            </ul>
-          </nav>
+
+      {/* Main Header - Space Between */}
+      <header className={`main-header ${showSticky ? 'main-header-hidden' : ''}`}>
+        <div className="max-w-7xl mx-auto header-container px-6 py-4">
+          {/* Logo - Left */}
+          <div className="logo-container">
+            <a href="/">
+              <img src="/images/logo.png" alt="logo" className="h-14" />
+            </a>
+          </div>
+
+          {/* Navigation Links - Center */}
+          <div className="nav-container hidden lg:block">
+            <nav>
+              <ul className="flex gap-6">
+                <li><NavLink to="/" className="aa">Accueil</NavLink></li>
+                <li><NavLink to="/services" className="aa">Services</NavLink></li>
+                <li><NavLink to="/about" className="aa">À propos</NavLink></li>
+                <li><NavLink to="/contact" className="aa">Contact</NavLink></li>
+                <li>
+                  <select className="lang-select">
+                    <option value="ar">العربية</option>
+                    <option value="fr">Français</option>
+                    <option value="en">English</option>
+                  </select>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          {/* Auth Buttons - Right */}
+          <div className="auth-container hidden lg:block">
+            <nav>
+              <ul className="flex gap-4">
+                <li>
+                  <button onClick={logoutCallback} className="">
+                    Déconnexion
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden">
+            <button onClick={() => setMobileMenuOpen(true)} className="text-gray-700">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
-      <main>
+
+      {/* Mobile Menu */}
+      <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-menu-header">
+          <button onClick={() => setMobileMenuOpen(false)} className="close-btn">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <nav className="mobile-nav">
+          <ul>
+            <li><NavLink to="/" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Accueil</NavLink></li>
+            <li><NavLink to="/services" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Services</NavLink></li>
+            <li><NavLink to="/about" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>À propos</NavLink></li>
+            <li><NavLink to="/contact" className="mobile-nav-link" onClick={() => setMobileMenuOpen(false)}>Contact</NavLink></li>
+            <li className="mobile-auth-section">
+              <button onClick={() => { logoutCallback(); setMobileMenuOpen(false); }} className="mobile-nav-link">
+                Déconnexion
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      {/* Sticky Header */}
+      <div className={`sticky-header ${showSticky ? 'visible' : ''}`}>
+        <div className="max-w-7xl mx-auto header-container px-6 py-3">
+          <div className="logo-container">
+            <a href="/">
+              <img src="/images/logo.png" alt="logo" className="h-10" />
+            </a>
+          </div>
+          <div className="nav-container hidden md:flex">
+            <div className="flex gap-6">
+              <NavLink to="/" className="aa text-sm">Accueil</NavLink>
+              <NavLink to="/services" className="aa text-sm">Services</NavLink>
+              <NavLink to="/about" className="aa text-sm">À propos</NavLink>
+              <NavLink to="/contact" className="aa text-sm">Contact</NavLink>
+            </div>
+          </div>
+          <div className="auth-container">
+            <button onClick={logoutCallback} className="bg-[#fb923c] text-white px-4 py-1.5 rounded-md text-sm hover:bg-orange-600 transition">
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <main className="main-content">
         <Outlet />
       </main>
       <Footer />

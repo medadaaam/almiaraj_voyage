@@ -85,8 +85,8 @@ export const route = createBrowserRouter([
     ],
   },
   {
-    element: (
-      <ProtectedRoute>
+     element: (
+      <ProtectedRoute role="admin">
         <AdminLayout />
       </ProtectedRoute>
     ),
@@ -123,7 +123,7 @@ export const route = createBrowserRouter([
   },
   {
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute role="user">
         <LayoutClient />
       </ProtectedRoute>
     ),
@@ -140,7 +140,7 @@ export const route = createBrowserRouter([
         path: "/client/orders",
         element: <h1>My Orders</h1>,
       },
-      
+
     ],
   },
 ]);

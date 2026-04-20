@@ -19,7 +19,7 @@ export default function LayoutGuest() {
 
   return (
     <>
-      <div className="w-full bg-[#2f6f85] text-white text-sm border-b border-[#25596b]">
+      {/* <div className="w-full bg-[#2f6f85] text-white text-sm border-b border-[#25596b]">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-2">
           <div className="flex items-center gap-6">
             <a
@@ -63,13 +63,13 @@ export default function LayoutGuest() {
               <i className="fa-brands fa-x-twitter text-white text-sm"></i>
             </div>
           </div>
-          <button className="bg-[#fb923c] text-white px-4 py-1 rounded-md font-medium hover:bg-orange-600 transition">
+          <button  className="bg-[#fb923c] text-white px-4 py-1 rounded-md font-medium hover:bg-orange-600 transition">
             Personnaliser un voyage →
           </button>
         </div>
-      </div>
+      </div> */}
 
-      <header>
+      <header className="absolute w-full">
         <div>
           <a href="/">
             <img src="/images/logo.png" alt="logo" />
@@ -112,14 +112,14 @@ export default function LayoutGuest() {
           <nav>
             <ul>
               <li>
-                <NavLink to="/register" className="aa">
+                <a href="/register" className="btn-primary">
                   S'inscrire
-                </NavLink>
+                </a>
               </li>
               <li>
-                <NavLink to="/login" className="aa">
+                <a href="/login" className="btn-outline">
                   Se connecter
-                </NavLink>
+                </a>
               </li>
             </ul>
           </nav>
@@ -128,7 +128,7 @@ export default function LayoutGuest() {
       <main>
         <Outlet />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </>
   );
 }

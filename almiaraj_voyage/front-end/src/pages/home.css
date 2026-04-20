@@ -1,0 +1,47 @@
+/* ================= HOME PAGE STYLES ================= */
+
+/* Scroll reveal initial state */
+.reveal-top,
+.reveal-bottom,
+.reveal-left,
+.reveal-right,
+.reveal-zoom {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Stagger children */
+.stagger-children > * {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Search wrapper custom */
+.search-wrapper-custom {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Section spacing */
+.scroll-section {
+  scroll-margin-top: 100px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .search-wrapper-custom {
+    padding: 16px;
+  }
+
+  .scroll-section {
+    scroll-margin-top: 80px;
+  }
+}

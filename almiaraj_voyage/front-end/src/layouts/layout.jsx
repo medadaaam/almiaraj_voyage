@@ -205,16 +205,23 @@ export default function Layout() {
               <a
                 key={index}
                 href={service.link}
-                className="block p-4 rounded-lg hover:bg-gray-50 transition"
+                className="group block p-4 rounded-xl bg-white border border-transparent 
+             transition-all duration-300 
+             hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center" 
               >
-                <div className="mb-3 text-[#fb923c]">
+                {/* Icon */}
+                <div className="mb-3 text-[#fb923c] text-2xl transition-all duration-300 
+                  group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center">
                   {service.icon}
                 </div>
 
-                <h4 className="font-semibold text-gray-800 text-sm mb-1">
+                {/* Title */}
+                <h4 className="font-semibold text-gray-800 text-sm mb-1 
+                 transition-colors duration-300 ">
                   {service.title}
                 </h4>
 
+                {/* Description */}
                 <p className="text-xs text-gray-500 leading-relaxed">
                   {service.desc}
                 </p>

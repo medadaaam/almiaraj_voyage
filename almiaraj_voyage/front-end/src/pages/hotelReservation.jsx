@@ -1,5 +1,6 @@
 // src/pages/reservation.jsx
 import { Button } from "@/components/ui/button";
+
 import {
   Form,
   FormControl,
@@ -23,15 +24,16 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { LOGIN_ROUTE } from "@/router";
+import { axiosClient } from "@/api/axios";
 
 // Schéma pour un passager individuel
 const passagerSchema = z.object({
   nom: z.string().min(2, "Nom doit contenir au moins 2 caractères"),
   prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères"),
-  dateNaissance: z.string().min(1, "Date de naissance requise"),
   cin: z.string().min(6, "CIN doit contenir au moins 6 caractères").max(20, "CIN trop long"),
-  nationalite: z.string().min(1, "Nationalité requise"),
+  nationalite: z.string().optional(), // Make nationalite optional
 });
 
 // Schéma principal pour la réservation
@@ -57,12 +59,20 @@ const formSchema = z.object({
 });
 
 export default function Reservation() {
+    const { authenticated } = useAuth();
+    const navigate = useNavigate();
+    useEffect(()=>{
+      if (!authenticated){
+      navigate(LOGIN_ROUTE);
+    };
+    },[authenticated]);
+    
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedPassagers, setExpandedPassagers] = useState({});
   const [confirmedPassagers, setConfirmedPassagers] = useState({});
   const { user } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   
   const hotelId = location.state?.hotelId || new URLSearchParams(location.search).get('hotelId');
@@ -140,7 +150,6 @@ export default function Reservation() {
     append({
       nom: "",
       prenom: "",
-      dateNaissance: "",
       cin: "",
       nationalite: "",
     });
@@ -218,63 +227,111 @@ export default function Reservation() {
     setLoading(true);
     setError("");
 
-    if (values.passagers.length === 0) {
-      setError("Veuillez ajouter au moins un passager");
-      setLoading(false);
-      return;
-    }
-
     // Check if all passagers are confirmed
     const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
     if (!allConfirmed) {
-      setError("Veuillez confirmer tous les passagers avant de continuer");
-      setLoading(false);
-      return;
+        setError("Veuillez confirmer tous les passagers avant de continuer");
+        setLoading(false);
+        return;
     }
 
     if (!isNombrePassagersValide()) {
-      const chambre = typesChambre.find(c => c.value === watchTypeChambre);
-      setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
-      setLoading(false);
-      return;
+        const chambre = typesChambre.find(c => c.value === watchTypeChambre);
+        setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
+        setLoading(false);
+        return;
     }
 
     try {
-      const reservationData = {
-        hotel_id: hotelId,
-        client_principal: {
-          nom: values.nom,
-          prenom: values.prenom,
-          email: values.email,
-          telephone: values.telephone,
-          cin: values.cin,
-        },
-        reservation: {
-          check_in: values.checkIn,
-          check_out: values.checkOut,
-          type_chambre: values.typeChambre,
-          nombre_passagers: values.passagers.length,
-          prix_total: calculerPrixTotal(),
-          demandes_speciales: values.demandesSpeciales,
-        },
-        passagers: values.passagers,
-      };
+        const reservationData = {
+            hotel_id: parseInt(hotelId), // Ensure it's a number
+            client_principal: {
+                nom: values.nom,
+                prenom: values.prenom,
+                email: values.email,
+                telephone: values.telephone,
+                cin: values.cin,
+                nationalite: values.nationalite,
+            },
+            reservation: {
+                check_in: values.checkIn,
+                check_out: values.checkOut,
+                type_chambre: values.typeChambre,
+                nombre_passagers: values.passagers.length,
+                prix_total: calculerPrixTotal(),
+                demandes_speciales: values.demandesSpeciales || "",
+            },
+            passagers: values.passagers.map(p => ({
+                nom: p.nom,
+                prenom: p.prenom,
+                cin: p.cin,
+                nationalite: p.nationalite || null
+            })),
+        };
 
-      console.log("Données de réservation:", reservationData);
-      
-      setTimeout(() => {
-        setLoading(false);
-        navigate("/reservation-confirmation", { 
-          state: { reservation: reservationData, hotel: hotelData }
-        });
-      }, 2000);
-      
+        const response = await axiosClient.post('/reservations', reservationData );
+
+        if (response.status === 201 || response.status === 200) {
+            navigate("/reservation-confirmation", { 
+                state: { 
+                    reservation: reservationData, 
+                    hotel: hotelData,
+                    reservationId: response.data.reservation.id
+                }
+            });
+        }
+        
     } catch (err) {
-      console.error("Erreur:", err);
-      setError(err.response?.data?.message || "Une erreur s'est produite");
-      setLoading(false);
+        console.error("Erreur:", err);
+        
+        if (err.response?.status === 401) {
+            setError("Vous devez être connecté pour effectuer une réservation");
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+                navigate(LOGIN_ROUTE);
+            }, 2000);
+        } else if (err.response?.status === 422) {
+            const errors = err.response.data.errors;
+            
+            // Handle validation errors
+            if (errors['client_principal.nom']) {
+                form.setError("nom", { message: errors['client_principal.nom'][0] });
+            }
+            if (errors['client_principal.prenom']) {
+                form.setError("prenom", { message: errors['client_principal.prenom'][0] });
+            }
+            if (errors['client_principal.email']) {
+                form.setError("email", { message: errors['client_principal.email'][0] });
+            }
+            if (errors['client_principal.telephone']) {
+                form.setError("telephone", { message: errors['client_principal.telephone'][0] });
+            }
+            if (errors['client_principal.cin']) {
+                form.setError("cin", { message: errors['client_principal.cin'][0] });
+            }
+            if (errors['reservation.check_in']) {
+                form.setError("checkIn", { message: errors['reservation.check_in'][0] });
+            }
+            if (errors['reservation.check_out']) {
+                form.setError("checkOut", { message: errors['reservation.check_out'][0] });
+            }
+            if (errors['reservation.type_chambre']) {
+                form.setError("typeChambre", { message: errors['reservation.type_chambre'][0] });
+            }
+            if (errors.passagers) {
+                setError("Veuillez vérifier les informations des passagers");
+            }
+            
+            if (Object.keys(errors).length === 0) {
+                setError(err.response.data.message || "Données incorrectes");
+            }
+        } else {
+            setError(err.response?.data?.message || "Une erreur s'est produite");
+        }
+    } finally {
+        setLoading(false);
     }
-  };
+};
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
@@ -549,47 +606,6 @@ export default function Reservation() {
                                   <FormControl>
                                     <Input placeholder="Nom du passager" {...field} />
                                   </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 mt-4">
-                            <FormField
-                              control={form.control}
-                              name={`passagers.${index}.dateNaissance`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Date de naissance <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input type="date" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name={`passagers.${index}.nationalite`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Nationalité <span className="text-red-500">*</span></FormLabel>
-                                  <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Choisir nationalité" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {countries.map((c) => (
-                                        <SelectItem key={c.value} value={c.value}>
-                                          {c.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}

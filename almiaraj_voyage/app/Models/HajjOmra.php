@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class HajjOmra extends Model
 {
-    protected $fillable = ['type', 'formule', 'typeChambre', 'service_id'];
+    protected $table = 'hajj_omras';
+    public $incrementing = false;
+    protected $keyType = 'int';
+    protected $fillable = ['id', 'type', 'formule', 'dateDepartHO', 'dateRetourHO', 'duree', 'typeChambre'];
+    
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class, 'id', 'id');
     }
 }

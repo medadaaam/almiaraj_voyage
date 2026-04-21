@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('villeDepartBi');
             $table->string('destinationBi');
             $table->date('dateDepartBi');
-            $table->date('dateRetourBi');
-            $table->string('bagage');
+            $table->date('dateRetourBi')->nullable();
+            // $table->string('bagage');
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();
         });

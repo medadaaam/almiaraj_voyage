@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Service extends Model
 {
-    protected $fillable = ['nomServ', 'description', 'prix', 'capaciteTotal', 'placesDisponibles', 'image'];
+    protected $fillable = ['nomServ', 'description', 'prix', 'image'];
 
     public function reservations(){
         return $this->hasMany(Reservation::class);
     }
     public function hotels(){
-        return $this->hasMany(Hotel::class);
+        return $this->hasOne(Hotel::class);
     }
     public function voyages(){
         return $this->hasMany(Voyage::class);

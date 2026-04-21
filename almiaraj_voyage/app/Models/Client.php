@@ -30,7 +30,7 @@ class Client extends Model
     }
     public function reservations()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(Reservation::class, 'client_id');
     }
     public function avis()
     {

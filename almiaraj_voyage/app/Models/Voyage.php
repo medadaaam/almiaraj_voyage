@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Voyage extends Model
 {
-    protected $fillable = ['destinationV', 'dateDepartV', 'dateRetourV', 'programme', 'service_id'];
+    public $incrementing = false;
+    protected $keyType = 'int';
+    protected $fillable = ['id', 'destinationV', 'dateDepartV', 'dateRetourV', 'programme'];
+    
     public function service()
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Service::class, 'id', 'id');
     }
 }

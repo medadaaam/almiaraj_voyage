@@ -16,6 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('id')->primary();
             $table->string('type');
             $table->string('formule');
+            $table->date('dateDepartHO');
+            $table->date('dateRetourHO');
+            $table->integer('duree');
             $table->string('typeChambre');
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();

@@ -380,7 +380,7 @@ export default function Layout() {
                 </>
               ) : (
                 <>
-                  <NavLink to="/dashboard" className="btn-outline">
+                  <NavLink to="/admin" className="btn-outline">
                     Dashboard
                   </NavLink>
                   <button onClick={logoutCallback} className="btn-outline">

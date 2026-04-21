@@ -20,12 +20,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 });
-// For testing only - remove in production
-Route::post('/services', [ServiceController::class, 'store'])->withoutMiddleware(['auth:sanctum']); 
-Route::apiResource('hotels', HotelController::class);
-Route::apiResource('voyages', VoyageController::class);
-Route::apiResource('billets', BilletController::class);
-Route::apiResource('hajj-omra', HajjOmraController::class);
-Route::apiResource('reservations', ReservationController::class);
+Route::post('/services', [ServiceController::class, 'store']); 
+Route::post('/hotels', [HotelController::class, 'store']);
+Route::post('/voyages', [VoyageController::class, 'store']);
+Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
+Route::post('/billets', [BilletController::class, 'store']);
 
 require __DIR__.'/auth.php';

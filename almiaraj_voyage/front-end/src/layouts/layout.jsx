@@ -205,9 +205,9 @@ export default function Layout() {
               <a
                 key={index}
                 href={service.link}
-                className="block p-4 rounded-lg hover:bg-gray-50 transition"
+                className="block p-4 rounded-lg hover:bg-gray-50 text-center transition"
               >
-                <div className="mb-3 text-[#fb923c]">
+                <div className="flex justify-center mb-3 text-[#fb923c]">
                   {service.icon}
                 </div>
 

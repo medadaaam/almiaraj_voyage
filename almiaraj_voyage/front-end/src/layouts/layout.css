@@ -416,7 +416,9 @@ main {
 }
 
 .mobile-nav-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap:1px ;
   padding: 14px 0;
   text-decoration: none;
   color: #1f2937;

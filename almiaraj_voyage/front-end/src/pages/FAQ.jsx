@@ -16,7 +16,7 @@ export default function FAQ() {
     },
     {
       question: "Quelles sont les options de paiement acceptées ?",
-      answer: "Nous acceptons les paiements en ligne (carte bancaire, PayPal) et les virements bancaires. Consultez notre page de réservation pour tous les détails."
+      answer: "Nous acceptons les paiements en ligne (carte bancaire) et les virements bancaires. Consultez notre page de réservation pour tous les détails."
     },
     {
       question: "Puis-je annuler ou modifier ma réservation ?",

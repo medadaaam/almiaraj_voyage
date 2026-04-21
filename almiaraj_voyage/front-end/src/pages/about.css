@@ -1,5 +1,6 @@
 /* ================= ABOUT SECTION ================= */
 .about-section {
+    border-top:1px solid  #d1ddea;
   position: relative;
   width: 100%;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);

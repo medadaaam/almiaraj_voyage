@@ -186,32 +186,46 @@ export default function Layout() {
   ];
 
   // Mega menu component
-  const MegaMenu = ({ isOpen, onClose }) => (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose}></div>
-      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-screen max-w-5xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-        <div className="grid grid-cols-5 divide-x divide-gray-100">
-          {services.map((service, index) => (
-            <a
-              key={index}
-              href={service.link}
-              className="block p-6 hover:bg-gray-50 transition-colors group text-center"
-            >
-              <div className="flex justify-center mb-3 text-[#fb923c] group-hover:scale-105 transition-transform">
-                {service.icon}
-              </div>
-              <h4 className="font-bold text-gray-800 text-sm mb-2">
-                {service.title}
-              </h4>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {service.desc}
-              </p>
-            </a>
-          ))}
+  const MegaMenu = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+      <>
+        {/* Overlay */}
+        <div
+          className="fixed inset-0 bg-black/20 z-40"
+          onClick={onClose}
+        />
+
+        {/* Menu */}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
+            {services.map((service, index) => (
+              <a
+                key={index}
+                href={service.link}
+                className="block p-4 rounded-lg hover:bg-gray-50 transition"
+              >
+                <div className="mb-3 text-[#fb923c]">
+                  {service.icon}
+                </div>
+
+                <h4 className="font-semibold text-gray-800 text-sm mb-1">
+                  {service.title}
+                </h4>
+
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {service.desc}
+                </p>
+              </a>
+            ))}
+          </div>
+
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <>

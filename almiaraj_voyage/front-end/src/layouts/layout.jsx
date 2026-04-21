@@ -111,7 +111,7 @@ export default function Layout() {
       ),
       title: "Vols & billets",
       desc: "Réservez facilement vos billets d'avion aux meilleurs prix avec notre assistance complète.",
-      link: "/services/flights",
+      link: "/services/billets",
     },
     {
       icon: (
@@ -137,7 +137,7 @@ export default function Layout() {
       ),
       title: "Circuits touristiques",
       desc: "Découvrez des destinations uniques à travers des circuits organisés et inoubliables.",
-      link: "/services/tours",
+      link: "/services/voyages",
     },
     {
       icon: (
@@ -153,7 +153,7 @@ export default function Layout() {
       ),
       title: "Voyages sur mesure",
       desc: "Créez votre voyage personnalisé selon vos envies et votre budget.",
-      link: "/services/custom",
+      link: "/services/customVoyage",
     },
     {
       icon: (
@@ -168,7 +168,7 @@ export default function Layout() {
       ),
       title: "Hajj & Omra",
       desc: "Organisez votre pèlerinage dans les meilleures conditions avec un accompagnement complet.",
-      link: "/services/hajj-omra",
+      link: "/services/hajj-omras",
     },
   ];
 

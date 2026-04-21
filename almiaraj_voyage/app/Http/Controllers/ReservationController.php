@@ -9,53 +9,40 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
+        // Log the incoming request for debugging
+        Log::info('Reservation request received', [
+            'data' => $request->all()
+        ]);
         
         // Validate the request data
         $validator = Validator::make($request->all(), [
-            'hotel_id' => 'required|exists:services,id', // Assuming hotels are in services table
+            'service_id' => 'required|exists:services,id',
             'client_principal.nom' => 'required|string|max:50',
             'client_principal.prenom' => 'required|string|max:50',
             'client_principal.email' => 'required|email',
             'client_principal.telephone' => 'required|string|max:15',
             'client_principal.cin' => 'required|string|max:20',
-            'reservation.check_in' => 'required|date',
+            'reservation.check_in' => 'required|date|after_or_equal:today',
             'reservation.check_out' => 'required|date|after:reservation.check_in',
             'reservation.type_chambre' => 'required|string',
             'reservation.nombre_passagers' => 'required|integer|min:1',
             'reservation.prix_total' => 'required|numeric|min:0',
             'reservation.demandes_speciales' => 'nullable|string',
-            'passagers' => 'nullable|array', // Make passagers optional
+            'passagers' => 'nullable|array',
             'passagers.*.nom' => 'required_with:passagers|string|max:50',
             'passagers.*.prenom' => 'required_with:passagers|string|max:50',
             'passagers.*.cin' => 'required_with:passagers|string|max:20',
-            'passagers.*.nationalite' => 'nullable|string' // Make nationalite optional
+            'passagers.*.nationalite' => 'nullable|string'
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation failed', ['errors' => $validator->errors()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -64,51 +51,79 @@ class ReservationController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             // Get validated data
             $validated = $validator->validated();
             
-            // First, create or get the client (client principal)
-            // Check if client already exists by email or CIN
+            Log::info('Validation passed', ['validated' => $validated]);
+            
+            // Create or get the client (client principal)
             $client = Client::where('email', $validated['client_principal']['email'])
                             ->orWhere('cin', $validated['client_principal']['cin'])
                             ->first();
             
+            if (!$client) {
+                // Create new client
+                $client = Client::create([
+                    'nom' => $validated['client_principal']['nom'],
+                    'prenom' => $validated['client_principal']['prenom'],
+                    'email' => $validated['client_principal']['email'],
+                    'telephone' => $validated['client_principal']['telephone'],
+                    'cin' => $validated['client_principal']['cin'],
+                ]);
+                Log::info('New client created', ['client_id' => $client->id]);
+            } else {
+                // Update existing client with latest info
+                $client->update([
+                    'nom' => $validated['client_principal']['nom'],
+                    'prenom' => $validated['client_principal']['prenom'],
+                    'telephone' => $validated['client_principal']['telephone'],
+                ]);
+                Log::info('Existing client updated', ['client_id' => $client->id]);
+            }
             
-            // 1. Create the main reservation
-            $reservation = Reservation::create([
+            // Create the reservation
+            $reservationData = [
                 'nbPers' => $validated['reservation']['nombre_passagers'],
                 'dateRes' => now(),
-                'statusRes' => 'pending', // pending, confirmed, cancelled, completed
+                'statusRes' => 'pending',
                 'checkIn' => $validated['reservation']['check_in'],
                 'checkOut' => $validated['reservation']['check_out'],
                 'typeChambre' => $validated['reservation']['type_chambre'],
                 'dateAnnulation' => null,
                 'voucherGenere' => false,
-                'service_id' => $validated['hotel_id'], // Using service_id since hotels are in services table
+                'service_id' => $validated['service_id'],
                 'client_id' => $client->id
-            ]);
+            ];
+            
+            Log::info('Creating reservation with data', $reservationData);
+            
+            $reservation = Reservation::create($reservationData);
+            
+            Log::info('Reservation created', ['reservation_id' => $reservation->id]);
 
-            // 2. Create all passengers (if any)
+            // Create all passengers (if any)
             if (isset($validated['passagers']) && !empty($validated['passagers'])) {
                 foreach ($validated['passagers'] as $passagerData) {
-                    Passager::create([
+                    $passager = Passager::create([
                         'reservation_id' => $reservation->id,
                         'nomPas' => $passagerData['nom'],
                         'prenomPas' => $passagerData['prenom'],
                         'cinPas' => $passagerData['cin'],
-                        'passportPass' => $passagerData['nationalite'] ?? null // Store nationalite in passport field or add a new column
+                        'passportPass' => $passagerData['nationalite'] ?? null
                     ]);
+                    Log::info('Passager created', ['passager_id' => $passager->id]);
                 }
             }
 
-           
+            DB::commit();
 
             // Return success response
             return response()->json([
                 'success' => true,
                 'message' => 'Reservation created successfully',
                 'data' => [
-                    'reservation_id' => $reservation->id,
                     'reservation' => $reservation,
                     'client' => $client,
                     'passagers_count' => isset($validated['passagers']) ? count($validated['passagers']) : 0
@@ -116,56 +131,18 @@ class ReservationController extends Controller
             ], 201);
 
         } catch (\Exception $e) {
-            // Rollback transaction on error
             DB::rollBack();
             
-            // // Log the error for debugging
-            // \Log::error('Reservation creation failed: ' . $e->getMessage());
-            // \Log::error('Request data: ' . json_encode($request->all()));
-
+            Log::error('Reservation creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create reservation',
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Reservation $reservation)
-    {
-        // Load relationships
-        $reservation->load(['client', 'passagers']);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $reservation
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Reservation $reservation)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Reservation $reservation)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Reservation $reservation)
-    {
-        //
     }
 }

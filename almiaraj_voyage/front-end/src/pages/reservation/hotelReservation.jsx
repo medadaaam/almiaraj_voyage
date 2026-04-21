@@ -38,61 +38,63 @@ const passagerSchema = z.object({
 
 // Schéma principal pour la réservation
 const formSchema = z.object({
-  nom: z.string().min(2, "Nom doit contenir au moins 2 caractères").max(50),
-  prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères").max(50),
-  email: z.string().email("Email invalide"),
-  telephone: z.string().min(10, "Téléphone invalide").max(15),
-  cin: z.string().min(6, "CIN doit contenir au moins 6 caractères").max(20, "CIN trop long"),
-  checkIn: z.string().min(1, "Date d'arrivée requise"),
-  checkOut: z.string().min(1, "Date de départ requise"),
-  typeChambre: z.string().min(1, "Veuillez sélectionner un type de chambre"),
-  passagers: z.array(passagerSchema),
-  demandesSpeciales: z.string().optional(),
-  terms: z.literal(true, {
-    errorMap: () => ({
-      message: "Vous devez accepter les conditions de réservation",
+    nom: z.string().min(2, "Nom doit contenir au moins 2 caractères").max(50),
+    prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères").max(50),
+    email: z.string().email("Email invalide"),
+    telephone: z.string().min(10, "Téléphone invalide").max(15),
+    cin: z.string().min(6, "CIN doit contenir au moins 6 caractères").max(20, "CIN trop long"),
+    nationalite: z.string().optional(), // Add this
+    checkIn: z.string().min(1, "Date d'arrivée requise"),
+    checkOut: z.string().min(1, "Date de départ requise"),
+    typeChambre: z.string().min(1, "Veuillez sélectionner un type de chambre"),
+    passagers: z.array(passagerSchema),
+    demandesSpeciales: z.string().optional(),
+    terms: z.literal(true, {
+        errorMap: () => ({
+            message: "Vous devez accepter les conditions de réservation",
+        }),
     }),
-  }),
 }).refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
-  message: "La date de départ doit être postérieure à la date d'arrivée",
-  path: ["checkOut"],
+    message: "La date de départ doit être postérieure à la date d'arrivée",
+    path: ["checkOut"],
 });
 
-export default function Reservation() {
-    const { authenticated } = useAuth();
-    const navigate = useNavigate();
-    useEffect(()=>{
-      if (!authenticated){
+export default function HotelsReservation() {
+  const { authenticated } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!authenticated) {
       navigate(LOGIN_ROUTE);
     };
-    },[authenticated]);
-    
-  
+  }, [authenticated]);
+
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedPassagers, setExpandedPassagers] = useState({});
   const [confirmedPassagers, setConfirmedPassagers] = useState({});
   const { user } = useAuth();
   const location = useLocation();
-  
+
   const hotelId = location.state?.hotelId || new URLSearchParams(location.search).get('hotelId');
   const hotelData = location.state?.hotelData || null;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nom: user?.nom || "",
-      prenom: user?.prenom || "",
-      email: user?.email || "",
-      telephone: user?.telephone || "",
-      cin: user?.cin || "",
-      checkIn: "",
-      checkOut: "",
-      typeChambre: "",
-      passagers: [],
-      demandesSpeciales: "",
-      terms: false,
-    },
+    nom: user?.nom || "",
+    prenom: user?.prenom || "",
+    email: user?.email || "",
+    telephone: user?.telephone || "",
+    cin: user?.cin || "",
+    nationalite: user?.nationalite || "",
+    checkIn: "",
+    checkOut: "",
+    typeChambre: "",
+    passagers: [],
+    demandesSpeciales: "",
+    terms: false,
+},
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -192,9 +194,9 @@ export default function Reservation() {
       setConfirmedPassagers({ ...confirmedPassagers, [index]: false });
       setExpandedPassagers({ ...expandedPassagers, [index]: true });
     } else {
-      setExpandedPassagers({ 
-        ...expandedPassagers, 
-        [index]: !expandedPassagers[index] 
+      setExpandedPassagers({
+        ...expandedPassagers,
+        [index]: !expandedPassagers[index]
       });
     }
   };
@@ -203,7 +205,7 @@ export default function Reservation() {
     // Validate the specific passager fields
     const passagerData = form.getValues(`passagers.${index}`);
     const isValid = await form.trigger(`passagers.${index}`);
-    
+
     if (isValid) {
       setConfirmedPassagers({ ...confirmedPassagers, [index]: true });
       setExpandedPassagers({ ...expandedPassagers, [index]: false });
@@ -230,108 +232,112 @@ export default function Reservation() {
     // Check if all passagers are confirmed
     const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
     if (!allConfirmed) {
-        setError("Veuillez confirmer tous les passagers avant de continuer");
-        setLoading(false);
-        return;
+      setError("Veuillez confirmer tous les passagers avant de continuer");
+      setLoading(false);
+      return;
     }
 
     if (!isNombrePassagersValide()) {
-        const chambre = typesChambre.find(c => c.value === watchTypeChambre);
-        setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
-        setLoading(false);
-        return;
+      const chambre = typesChambre.find(c => c.value === watchTypeChambre);
+      setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
+      setLoading(false);
+      return;
     }
 
     try {
-        const reservationData = {
-            hotel_id: parseInt(hotelId), // Ensure it's a number
-            client_principal: {
-                nom: values.nom,
-                prenom: values.prenom,
-                email: values.email,
-                telephone: values.telephone,
-                cin: values.cin,
-                nationalite: values.nationalite,
-            },
-            reservation: {
-                check_in: values.checkIn,
-                check_out: values.checkOut,
-                type_chambre: values.typeChambre,
-                nombre_passagers: values.passagers.length,
-                prix_total: calculerPrixTotal(),
-                demandes_speciales: values.demandesSpeciales || "",
-            },
-            passagers: values.passagers.map(p => ({
-                nom: p.nom,
-                prenom: p.prenom,
-                cin: p.cin,
-                nationalite: p.nationalite || null
-            })),
-        };
+      const reservationData = {
+        service_id: parseInt(hotelId), // Change from hotel_id to service_id
+        client_principal: {
+          nom: values.nom,
+          prenom: values.prenom,
+          email: values.email,
+          telephone: values.telephone,
+          cin: values.cin,
+        },
+        reservation: {
+          check_in: values.checkIn,
+          check_out: values.checkOut,
+          type_chambre: values.typeChambre,
+          nombre_passagers: values.passagers.length + 1, // +1 for the main client
+          prix_total: calculerPrixTotal(),
+          demandes_speciales: values.demandesSpeciales || "",
+        },
+        passagers: values.passagers.map(p => ({
+          nom: p.nom,
+          prenom: p.prenom,
+          cin: p.cin,
+          nationalite: p.nationalite || null
+        })),
+      };
 
-        const response = await axiosClient.post('/reservations', reservationData );
+      console.log("Sending data:", reservationData); // Debug log
 
-        if (response.status === 201 || response.status === 200) {
-            navigate("/reservation-confirmation", { 
-                state: { 
-                    reservation: reservationData, 
-                    hotel: hotelData,
-                    reservationId: response.data.reservation.id
-                }
-            });
-        }
-        
+      const response = await axiosClient.post('/reservations', reservationData);
+
+      if (response.status === 201 || response.status === 200) {
+        navigate("/reservation-confirmation", {
+          state: {
+            reservation: reservationData,
+            hotel: hotelData,
+            reservationId: response.data.data.reservation.id
+          }
+        });
+      }
+
     } catch (err) {
-        console.error("Erreur:", err);
-        
-        if (err.response?.status === 401) {
-            setError("Vous devez être connecté pour effectuer une réservation");
-            // Redirect to login after 2 seconds
-            setTimeout(() => {
-                navigate(LOGIN_ROUTE);
-            }, 2000);
-        } else if (err.response?.status === 422) {
-            const errors = err.response.data.errors;
-            
-            // Handle validation errors
-            if (errors['client_principal.nom']) {
-                form.setError("nom", { message: errors['client_principal.nom'][0] });
-            }
-            if (errors['client_principal.prenom']) {
-                form.setError("prenom", { message: errors['client_principal.prenom'][0] });
-            }
-            if (errors['client_principal.email']) {
-                form.setError("email", { message: errors['client_principal.email'][0] });
-            }
-            if (errors['client_principal.telephone']) {
-                form.setError("telephone", { message: errors['client_principal.telephone'][0] });
-            }
-            if (errors['client_principal.cin']) {
-                form.setError("cin", { message: errors['client_principal.cin'][0] });
-            }
-            if (errors['reservation.check_in']) {
-                form.setError("checkIn", { message: errors['reservation.check_in'][0] });
-            }
-            if (errors['reservation.check_out']) {
-                form.setError("checkOut", { message: errors['reservation.check_out'][0] });
-            }
-            if (errors['reservation.type_chambre']) {
-                form.setError("typeChambre", { message: errors['reservation.type_chambre'][0] });
-            }
-            if (errors.passagers) {
-                setError("Veuillez vérifier les informations des passagers");
-            }
-            
-            if (Object.keys(errors).length === 0) {
-                setError(err.response.data.message || "Données incorrectes");
-            }
-        } else {
-            setError(err.response?.data?.message || "Une erreur s'est produite");
+      console.error("Erreur:", err);
+
+      if (err.response?.status === 401) {
+        setError("Vous devez être connecté pour effectuer une réservation");
+        setTimeout(() => {
+          navigate(LOGIN_ROUTE);
+        }, 2000);
+      } else if (err.response?.status === 422) {
+        const errors = err.response.data.errors;
+        console.log("Validation errors:", errors); // Debug log
+
+        // Handle validation errors
+        if (errors['client_principal.nom']) {
+          form.setError("nom", { message: errors['client_principal.nom'][0] });
         }
+        if (errors['client_principal.prenom']) {
+          form.setError("prenom", { message: errors['client_principal.prenom'][0] });
+        }
+        if (errors['client_principal.email']) {
+          form.setError("email", { message: errors['client_principal.email'][0] });
+        }
+        if (errors['client_principal.telephone']) {
+          form.setError("telephone", { message: errors['client_principal.telephone'][0] });
+        }
+        if (errors['client_principal.cin']) {
+          form.setError("cin", { message: errors['client_principal.cin'][0] });
+        }
+        if (errors['reservation.check_in']) {
+          form.setError("checkIn", { message: errors['reservation.check_in'][0] });
+        }
+        if (errors['reservation.check_out']) {
+          form.setError("checkOut", { message: errors['reservation.check_out'][0] });
+        }
+        if (errors['reservation.type_chambre']) {
+          form.setError("typeChambre", { message: errors['reservation.type_chambre'][0] });
+        }
+        if (errors.service_id) {
+          setError("Erreur: Hôtel non trouvé");
+        }
+        if (errors.passagers) {
+          setError("Veuillez vérifier les informations des passagers");
+        }
+
+        if (Object.keys(errors).length === 0) {
+          setError(err.response.data.message || "Données incorrectes");
+        }
+      } else {
+        setError(err.response?.data?.message || "Une erreur s'est produite");
+      }
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
@@ -448,9 +454,9 @@ export default function Reservation() {
                   <FormItem>
                     <FormLabel>Date d'arrivée <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
+                      <Input
+                        type="date"
+                        {...field}
                         min={new Date().toISOString().split('T')[0]}
                       />
                     </FormControl>
@@ -466,8 +472,8 @@ export default function Reservation() {
                   <FormItem>
                     <FormLabel>Date de départ <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        type="date" 
+                      <Input
+                        type="date"
                         {...field}
                         min={watchCheckIn || new Date().toISOString().split('T')[0]}
                       />
@@ -485,8 +491,8 @@ export default function Reservation() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Type de chambre <span className="text-red-500">*</span></FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       value={field.value}
                     >
                       <FormControl>
@@ -526,7 +532,7 @@ export default function Reservation() {
                 Ajouter un passager
               </Button>
             </div>
-            
+
             {fields.length === 0 ? (
               <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed">
                 <UserPlus className="w-12 h-12 mx-auto text-gray-400 mb-2" />
@@ -539,10 +545,9 @@ export default function Reservation() {
                   {fields.map((field, index) => (
                     <div key={field.id} className="border rounded-lg overflow-hidden">
                       {/* Passager Header (always visible) */}
-                      <div 
-                        className={`flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          confirmedPassagers[index] ? 'bg-green-50' : 'bg-white'
-                        }`}
+                      <div
+                        className={`flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors ${confirmedPassagers[index] ? 'bg-green-50' : 'bg-white'
+                          }`}
                         onClick={() => togglePassager(index)}
                       >
                         <div className="flex items-center gap-3">
@@ -596,7 +601,7 @@ export default function Reservation() {
                                 </FormItem>
                               )}
                             />
-                            
+
                             <FormField
                               control={form.control}
                               name={`passagers.${index}.nom`}
@@ -611,7 +616,7 @@ export default function Reservation() {
                               )}
                             />
                           </div>
-                          
+
                           <div className="mt-4">
                             <FormField
                               control={form.control}
@@ -658,7 +663,7 @@ export default function Reservation() {
                     </div>
                   ))}
                 </div>
-                
+
                 {watchTypeChambre && fields.length > 0 && (
                   <div className={`mt-4 p-3 rounded-md ${isNombrePassagersValide() ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                     {isNombrePassagersValide() ? (
@@ -685,7 +690,7 @@ export default function Reservation() {
               <CreditCard className="w-5 h-5" />
               Options supplémentaires
             </h3>
-            
+
             <FormField
               control={form.control}
               name="demandesSpeciales"
@@ -764,7 +769,7 @@ export default function Reservation() {
           </Button>
         </form>
       </Form>
-      
+
       <p className="mt-6 text-sm/6 text-center">
         <span className="text-gray-600">
           Une question ?{" "}

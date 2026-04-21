@@ -30,7 +30,7 @@ export function Hotel({ hotelId = 1 }) { // Ajoutez hotelId comme prop
         <Card className="relative mx-auto w-full max-w-sm pt-0">
             <div className="absolute inset-0 z-30 aspect-video " />
             <img
-                src="./images/img1.jpg"
+                src="https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg"
                 alt="Event cover"
                 className="relative z-20 aspect-video w-full object-cover"
             />

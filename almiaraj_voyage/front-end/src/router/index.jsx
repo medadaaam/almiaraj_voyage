@@ -17,7 +17,7 @@ import { Hotel } from "@/pages/services/hotel";
 import Hotels from "@/pages/services/hotels";
 import AdminLayout from "@/layouts/AdminLayout";
 import AjouterHotel from "@/pages/adminDashboard/hotel/ajouter";
-import Reservation from "@/pages/hotelReservation";
+import Reservation from "@/pages/reservation/hotelReservation";
 import AjouterVoyage from "@/pages/adminDashboard/voyage/ajouter";
 import AjouterHajjOmra from "@/pages/adminDashboard/hajjOmra/ajouter";
 import AjouterBillet from "@/pages/adminDashboard/billiet/ajouter";
@@ -53,7 +53,7 @@ export const route = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/services",
+        path: "/services/hotels",
         element: <Hotels />
       },
       {
@@ -65,7 +65,7 @@ export const route = createBrowserRouter([
         element: <Contact />,
       },
        {
-        path: "/services/reservation",
+        path: "/services/hotelsReservation",
         element: <Reservation />,
       },
     ],

@@ -69,7 +69,7 @@ export default function LayoutGuest() {
         </div>
       </div> */}
 
-      <header className="absolute w-full">
+      <header className="heGu absolute w-full">
         <div>
           <a href="/">
             <img src="/images/logo.png" alt="logo" />

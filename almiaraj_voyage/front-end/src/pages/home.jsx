@@ -8,29 +8,34 @@ import FeaturedTrips from "./voyagesRecommand";
 import FeaturedHotels from "./FeaturedHotels";
 import Destinations from "./Destinations";
 import About from "./about";
+import Testimonials from "./Testimonials";
+import Contact from "./contact";
+import FAQ from "./FAQ";
+import CTA from "./CTA";
 
 export default function Home() {
-// const { user,authenticated } = useAuth();
-//   useEffect(() => {
-//     if (user) {
-//       console.log(user);
-//     }
-//   }, [authenticated]);
+  // const { user,authenticated } = useAuth();
+  //   useEffect(() => {
+  //     if (user) {
+  //       console.log(user);
+  //     }
+  //   }, [authenticated]);
 
   return (
     <>
-      <div>
-        <Hero />
-      </div>
+      <Hero />
       <div className="bg-blue rounded-lg shadow-lg">
         <Search />
       </div>
-      <Features />
-       <FeaturedTrips />
-       <FeaturedHotels />
       <Destinations />
+      <FeaturedTrips />
+      <FeaturedHotels />
+      <Features />
       <About />
-
+      <Testimonials />
+      <FAQ />
+      <Contact />
+      <CTA />
     </>
   );
 }

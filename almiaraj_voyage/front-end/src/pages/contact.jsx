@@ -44,14 +44,14 @@ export default function Contact() {
     {
       icon: <Mail className="contact-info-icon" />,
       title: "Adresse email",
-      value: "contact@almiarajvoyage.com",
+      value: "almiarajvoyage.fes@gmail.com",
       color: "#3b82f6",
       bgColor: "#eff6ff"
     },
     {
       icon: <Phone className="contact-info-icon" />,
       title: "Téléphone",
-      value: "+212 5 35 65 79 79",
+      value: "05 35 65 79 79",
       color: "#10b981",
       bgColor: "#ecfdf5"
     },

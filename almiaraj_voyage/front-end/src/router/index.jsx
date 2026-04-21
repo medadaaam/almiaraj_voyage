@@ -21,6 +21,8 @@ import Reservation from "@/pages/reservation/hotelReservation";
 import AjouterVoyage from "@/pages/adminDashboard/voyage/ajouter";
 import AjouterHajjOmra from "@/pages/adminDashboard/hajjOmra/ajouter";
 import AjouterBillet from "@/pages/adminDashboard/billiet/ajouter";
+import AboutPage from "@/pages/AboutPage";
+import ContactPage from "@/pages/ContactPage";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -58,11 +60,11 @@ export const route = createBrowserRouter([
       },
       {
         path: "/about",
-        element: <About />,
+        element: <AboutPage />,
       },
       {
         path: "/contact",
-        element: <Contact />,
+        element: <ContactPage />,
       },
        {
         path: "/services/hotelsReservation",

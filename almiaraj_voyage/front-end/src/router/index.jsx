@@ -23,6 +23,7 @@ import AjouterHajjOmra from "@/pages/adminDashboard/hajjOmra/ajouter";
 import AjouterBillet from "@/pages/adminDashboard/billiet/ajouter";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
+import AdminHotels from "@/pages/adminDashboard/hotel";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -114,7 +115,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/hotels",
-        element: <AjouterHotel />,
+        element: <AdminHotels />,
       },
       {
         path: "/admin/hajj-omra",

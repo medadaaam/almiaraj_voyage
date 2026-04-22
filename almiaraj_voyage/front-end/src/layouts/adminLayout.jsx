@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import "./adminLayout.css";
 
+
 export default function AdminLayout() {
     return (
         <div className="admin-container">

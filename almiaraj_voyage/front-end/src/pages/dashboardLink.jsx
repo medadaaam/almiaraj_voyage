@@ -9,9 +9,11 @@ export default function DashboardLink() {
   return (
     <NavLink
       to={user?.role === "admin" ? "/admin" : "/client"}
-      className="aa"
     >
-      Mon compte
+        {
+            user.role === "admin" ? <span className="btn-outline">Dashboard</span>:<span className="btn-outline">Mon compte</span>
+        }
+
     </NavLink>
   );
 }

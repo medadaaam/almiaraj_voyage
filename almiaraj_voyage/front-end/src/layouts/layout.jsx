@@ -2,11 +2,12 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
-import Footer from "@/pages/footer";
+import Footer from "@/pages/HomeSections/footer";
 import { useState, useEffect, useRef } from "react";
+import DashboardLink from "@/pages/dashboardLink";
 
 export default function Layout() {
-  const { authenticated, logout } = useAuth();
+  const { authenticated, logout, user } = useAuth();
   const navigate = useNavigate();
 
   const [showSticky, setShowSticky] = useState(false);
@@ -111,7 +112,7 @@ export default function Layout() {
       ),
       title: "Vols & billets",
       desc: "Réservez facilement vos billets d'avion aux meilleurs prix avec notre assistance complète.",
-      link: "/services/billets",
+      link: "/services/flights",
     },
     {
       icon: (
@@ -137,7 +138,7 @@ export default function Layout() {
       ),
       title: "Circuits touristiques",
       desc: "Découvrez des destinations uniques à travers des circuits organisés et inoubliables.",
-      link: "/services/voyages",
+      link: "/services/circuits",
     },
     {
       icon: (
@@ -168,7 +169,7 @@ export default function Layout() {
       ),
       title: "Hajj & Omra",
       desc: "Organisez votre pèlerinage dans les meilleures conditions avec un accompagnement complet.",
-      link: "/services/hajj-omras",
+      link: "/services/hajj-omra",
     },
   ];
 
@@ -205,18 +206,18 @@ export default function Layout() {
               <a
                 key={index}
                 href={service.link}
-                className="group block p-4 rounded-xl bg-white border border-transparent 
-             transition-all duration-300 
-             hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center" 
+                className="group block p-4 rounded-xl bg-white border border-transparent
+             transition-all duration-300
+             hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center"
               >
                 {/* Icon */}
-                <div className="mb-3 text-[#fb923c] text-2xl transition-all duration-300 
+                <div className="mb-3 text-[#fb923c] text-2xl transition-all duration-300
                   group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center">
                   {service.icon}
                 </div>
 
                 {/* Title */}
-                <h4 className="font-semibold text-gray-800 text-sm mb-1 
+                <h4 className="font-semibold text-gray-800 text-sm mb-1
                  transition-colors duration-300 ">
                   {service.title}
                 </h4>
@@ -401,9 +402,7 @@ export default function Layout() {
                 </>
               ) : (
                 <>
-                  <NavLink to="/admin" className="btn-outline">
-                    Dashboard
-                  </NavLink>
+                    <DashboardLink className="btn-outline"/>
                   <button onClick={logoutCallback} className="btn-outline">
                     Logout
                   </button>

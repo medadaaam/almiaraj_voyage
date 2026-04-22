@@ -1,20 +1,17 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../layouts/layout";
-import Home from "../pages/home";
-import Contact from "../pages/contact";
-import About from "../pages/about";
+import Home from "../pages/HomeSections/home";
+import Contact from "../pages/HomeSections/contact";
 import NotFound from "../pages/notFound";
 import LayoutGuest from "@/layouts/layoutGuest";
-import Login from "@/pages/login";
+import Login from "@/pages/auth/login";
 import LayoutClient from "@/layouts/layoutClient";
 import GuestRoute from "@/components/ProRoutes/GuestRoute";
 import ProtectedRoute from "@/components/ProRoutes/ProtectedRoute";
 import LayoutRoute from "@/components/ProRoutes/LayoutRoute";
-import Register from "@/pages/register";
-import ResetPassword from "@/pages/resetPassword";
-import ForgotPassword from "@/pages/forgetPassword";
-import { Hotel } from "@/pages/services/hotel";
-import Hotels from "@/pages/services/hotels";
+import Register from "@/pages/auth/register";
+import ResetPassword from "@/pages/auth/resetPassword";
+import ForgotPassword from "@/pages/auth/forgetPassword";
 import AdminLayout from "@/layouts/AdminLayout";
 import AjouterHotel from "@/pages/adminDashboard/hotel/ajouter";
 import Reservation from "@/pages/reservation/hotelReservation";
@@ -23,7 +20,11 @@ import AjouterHajjOmra from "@/pages/adminDashboard/hajjOmra/ajouter";
 import AjouterBillet from "@/pages/adminDashboard/billiet/ajouter";
 import AboutPage from "@/pages/AboutPage";
 import ContactPage from "@/pages/ContactPage";
-import AdminHotels from "@/pages/adminDashboard/hotel";
+import DestinationsPage from "@/pages/DestinationsPage";
+import HajjOmra from "@/pages/services/hajjOmra";
+import CircuitsTouristiques from "@/pages/services/CircuitsTouristiques";
+import HotelsSejours from "@/pages/services/HotelsSejours";
+import VolsBillets from "@/pages/services/VolsBillets";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -56,8 +57,8 @@ export const route = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "/services/hotels",
-        element: <Hotels />
+        path: "/destinations",
+        element: <DestinationsPage />,
       },
       {
         path: "/about",
@@ -67,7 +68,22 @@ export const route = createBrowserRouter([
         path: "/contact",
         element: <ContactPage />,
       },
-       {
+
+      {
+        path: "/services/hajj-omra",
+        element: <HajjOmra />,
+      },
+      {
+        path: "/services/circuits",
+        element: <CircuitsTouristiques />,
+      },{
+        path: "/services/hotels",
+        element: <HotelsSejours />,
+      },{
+        path: "/services/flights",
+        element: <VolsBillets />,
+      },
+      {
         path: "/services/hotelsReservation",
         element: <Reservation />,
       },
@@ -91,7 +107,7 @@ export const route = createBrowserRouter([
     ],
   },
   {
-     element: (
+    element: (
       <ProtectedRoute role="admin">
         <AdminLayout />
       </ProtectedRoute>
@@ -103,7 +119,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/users",
-        element: <Contact />
+        element: <Contact />,
       },
       {
         path: "/admin/reservations",
@@ -111,7 +127,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/voyages",
-        element: <AjouterVoyage/>,
+        element: <AjouterVoyage />,
       },
       {
         path: "/admin/hotels",
@@ -119,11 +135,11 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/hajj-omra",
-        element: <AjouterHajjOmra/>
+        element: <AjouterHajjOmra />,
       },
       {
         path: "/admin/billets",
-        element: <AjouterBillet/>
+        element: <AjouterBillet />,
       },
     ],
   },
@@ -146,7 +162,6 @@ export const route = createBrowserRouter([
         path: "/client/orders",
         element: <h1>My Orders</h1>,
       },
-
     ],
   },
 ]);

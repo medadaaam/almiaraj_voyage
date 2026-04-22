@@ -1,5 +1,5 @@
 import { MapPin, Star, Compass, Globe, ArrowRight } from "lucide-react";
-import "./destinations.css";
+import "./styles/destinations.css";
 
 export default function Destinations() {
   const destinations = [

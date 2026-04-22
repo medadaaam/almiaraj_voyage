@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "./hero.css";
+import "./styles/hero.css";
 
 export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);

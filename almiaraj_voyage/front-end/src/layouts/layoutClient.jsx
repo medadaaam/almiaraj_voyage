@@ -2,10 +2,11 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
-import Footer from "@/pages/footer";
+import Footer from "@/pages/HomeSections/footer";
 import { useState, useEffect, useRef } from "react";
+import DashboardLink from "@/pages/dashboardLink";
 
-export default function Layout() {
+export default function LayoutClient() {
   const { authenticated, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -369,25 +370,10 @@ export default function Layout() {
 
             {/* Auth Buttons - Right */}
             <div className="hidden lg:flex items-center gap-4">
-              {!authenticated ? (
-                <>
-                  <NavLink to="/register" className="btn-outline">
-                    S'inscrire
-                  </NavLink>
-                  <NavLink to="/login" className="btn-primary">
-                    Se connecter
-                  </NavLink>
-                </>
-              ) : (
-                <>
-                  <NavLink to="/dashboard" className="btn-outline">
-                    Dashboard
-                  </NavLink>
-                  <button onClick={logoutCallback} className="btn-outline">
-                    Logout
-                  </button>
-                </>
-              )}
+              <DashboardLink />
+              <button onClick={logoutCallback} className="btn-outline">
+                Logout
+              </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -663,12 +649,10 @@ export default function Layout() {
               </ul>
             </div>
 
-
             <div className="hidden lg:flex items-center gap-3">
-
-                <button onClick={logoutCallback} className="btn-outline-sm">
-                  Logout
-                </button>
+              <button onClick={logoutCallback} className="btn-outline-sm">
+                Logout
+              </button>
             </div>
             <button
               className="mobile-menu-toggle lg:hidden"

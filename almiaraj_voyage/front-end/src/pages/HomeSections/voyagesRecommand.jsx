@@ -1,5 +1,5 @@
 import { MapPin, Star, Clock, Users, Calendar, ArrowRight } from "lucide-react";
-import "./featuredTrips.css";
+import "./styles/featuredTrips.css";
 
 export default function FeaturedTrips() {
   const trips = [
@@ -199,7 +199,7 @@ export default function FeaturedTrips() {
 
         {/* View All Button */}
         <div className="featured-footer">
-          <a href="/destinations" className="featured-view-all">
+          <a href="/services/circuits" className="featured-view-all">
             Tous les voyages
             <ArrowRight className="w-4 h-4" />
           </a>

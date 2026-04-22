@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Star, CheckCircle } from "lucide-react";
-import "./testimonials.css";
+import "./styles/testimonials.css";
 
 export default function Testimonials() {
   const [currentSlide, setCurrentSlide] = useState(0);

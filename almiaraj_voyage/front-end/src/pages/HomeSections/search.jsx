@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CalendarIcon, UsersIcon, MapPinIcon, SearchIcon, XIcon, StarIcon, WifiIcon, CoffeeIcon, CarIcon, UtensilsIcon, WavesIcon, DumbbellIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import "./search.css";
+import "./styles/search.css";
 
 
 export default function Search() {

@@ -1,5 +1,5 @@
 import { MapPin, Star, Wifi, Coffee, Car, Utensils, Waves, Dumbbell, ArrowRight, Clock, Users, Calendar } from "lucide-react";
-import "./featuredHotels.css";
+import "./styles/featuredHotels.css";
 
 export default function FeaturedHotels() {
   const hotels = [

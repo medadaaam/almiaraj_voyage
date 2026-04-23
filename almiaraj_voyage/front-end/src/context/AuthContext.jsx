@@ -23,11 +23,10 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     AuthApi.getUser()
-      .then(async ({ data }) => {
+      .then(({ data }) => {
         if (data) {
           setUser(data);
           setAuthenticated(true);
-          await getClient();
         }
       })
       .catch((error) => {
@@ -78,12 +77,9 @@ export function AuthProvider({ children }) {
     try {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.register(userData);
-
       if (response.status === 200 || response.status === 201) {
         setAuthenticated(true);
         setUser(response.data.user);
-
-        await getClient();
         return response;
       }
     } catch (error) {

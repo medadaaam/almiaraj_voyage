@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BilletController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HajjOmraController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,7 @@ Route::post('/hotels', [HotelController::class, 'store']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
+Route::get('/destinations', [DestinationController::class, 'index']);
 
 Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 

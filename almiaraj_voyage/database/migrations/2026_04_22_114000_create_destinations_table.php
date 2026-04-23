@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string("pays",60);
             $table->string("continente",60);
             $table->boolean("en_vedette")->default(false);
-            $table->text("desc")->nullable();
+            $table->text("description")->nullable();
             $table->string("image",255)->nullable();
             $table->timestamps();
         });

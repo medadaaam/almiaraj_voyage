@@ -567,6 +567,8 @@ export default function Layout() {
                   </NavLink>
                 </>
               ) : (
+                <>
+                <DashboardLink className="btn-outline"/>
                 <button
                   onClick={() => {
                     logoutCallback();
@@ -576,7 +578,7 @@ export default function Layout() {
                 >
                   Logout
                 </button>
-              )}
+              </>)}
             </li>
           </ul>
         </nav>
@@ -705,10 +707,12 @@ export default function Layout() {
                   </NavLink>
                 </>
               ) : (
+                <>
+                <DashboardLink/>
                 <button onClick={logoutCallback} className="btn-outline-sm">
                   Logout
                 </button>
-              )}
+              </>)}
             </div>
 
             {/* Mobile Menu Button */}

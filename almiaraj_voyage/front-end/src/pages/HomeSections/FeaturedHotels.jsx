@@ -166,8 +166,8 @@ export default function FeaturedHotels() {
 
                 {/* Price Tag */}
                 <div className="hotel-price-tag">
-                  <span className="hotel-price-old">{hotel.oldPrice}€</span>
-                  <span className="hotel-price-new">{hotel.price}€</span>
+                  <span className="hotel-price-old">{hotel.oldPrice}Dh</span>
+                  <span className="hotel-price-new">{hotel.price}Dh</span>
                   <span className="hotel-price-period">/nuit</span>
                 </div>
               </div>

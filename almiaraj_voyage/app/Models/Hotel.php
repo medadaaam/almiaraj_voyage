@@ -8,9 +8,13 @@ class Hotel extends Model
 {
     public $incrementing = false;
     protected $keyType = 'int';
-    protected $fillable = ['id', 'villeHotel' ];
+    protected $fillable = ['id', 'villeHotel'];
     public function service()
     {
-        return $this->belongsTo(Service::class,'id', 'id');
+        return $this->belongsTo(Service::class, 'id', 'id');
+    }
+    public function destination()
+    {
+        return $this->belongsTo(Destination::class);
     }
 }

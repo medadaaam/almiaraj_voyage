@@ -193,14 +193,10 @@ export default function Layout() {
     return (
       <>
         {/* Overlay */}
-        <div
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={onClose}
-        />
+        <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
 
         {/* Menu */}
         <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
-
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
             {services.map((service, index) => (
               <a
@@ -211,14 +207,18 @@ export default function Layout() {
              hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center"
               >
                 {/* Icon */}
-                <div className="mb-3 text-[#fb923c] text-2xl transition-all duration-300
-                  group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center">
+                <div
+                  className="mb-3 text-[#fb923c] text-2xl transition-all duration-300
+                  group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center"
+                >
                   {service.icon}
                 </div>
 
                 {/* Title */}
-                <h4 className="font-semibold text-gray-800 text-sm mb-1
-                 transition-colors duration-300 ">
+                <h4
+                  className="font-semibold text-gray-800 text-sm mb-1
+                 transition-colors duration-300 "
+                >
                   {service.title}
                 </h4>
 
@@ -229,7 +229,6 @@ export default function Layout() {
               </a>
             ))}
           </div>
-
         </div>
       </>
     );
@@ -293,7 +292,12 @@ export default function Layout() {
             {/* Logo - Left */}
             <div className="flex-shrink-0">
               <a href="/" className="flex items-center">
-                <img src="/images/logo.png" alt="logo" className="h-12" />
+                <img
+                  src="/images/logo.png"
+                  alt="logo"
+                  className="h-12"
+                  style={{ position: "relative", bottom: "6px" }}
+                />
               </a>
             </div>
 
@@ -402,7 +406,9 @@ export default function Layout() {
                 </>
               ) : (
                 <>
-                    <DashboardLink className="btn-outline"/>
+                  <span className="btn-outline">
+                    <DashboardLink />
+                  </span>
                   <button onClick={logoutCallback} className="btn-outline">
                     Logout
                   </button>
@@ -481,17 +487,20 @@ export default function Layout() {
             </li>
             <li className="mobile-dropdown">
               <details>
-                <summary className="mobile-nav-link ">Nos services <svg
-                      className={`w-4 h-4  transition-transform duration-300 ${servicesOpen ? "rotate-180" : ""}`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg></summary>
+                <summary className="mobile-nav-link ">
+                  Nos services{" "}
+                  <svg
+                    className={`w-4 h-4  transition-transform duration-300 ${servicesOpen ? "rotate-180" : ""}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </summary>
                 <div className="pl-4 mt-2 space-y-3">
                   {services.map((service, index) => (
                     <a
@@ -567,15 +576,20 @@ export default function Layout() {
                   </NavLink>
                 </>
               ) : (
-                <button
-                  onClick={() => {
-                    logoutCallback();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mobile-nav-link"
-                >
-                  Logout
-                </button>
+                <>
+                  <span className="mobile-nav-link">
+                    <DashboardLink />
+                  </span>
+                  <button
+                    onClick={() => {
+                      logoutCallback();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="mobile-nav-link"
+                  >
+                    Logout
+                  </button>
+                </>
               )}
             </li>
           </ul>
@@ -705,9 +719,15 @@ export default function Layout() {
                   </NavLink>
                 </>
               ) : (
-                <button onClick={logoutCallback} className="btn-outline-sm">
-                  Logout
-                </button>
+                <>
+                  <span className="btn-outline-sm">
+                    <DashboardLink />
+                  </span>
+
+                  <button onClick={logoutCallback} className="btn-outline-sm">
+                    Logout
+                  </button>
+                </>
               )}
             </div>
 

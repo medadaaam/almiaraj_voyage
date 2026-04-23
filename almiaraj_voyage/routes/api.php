@@ -20,10 +20,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 });
-Route::post('/services', [ServiceController::class, 'store']); 
+Route::post('/services', [ServiceController::class, 'store']);
 Route::post('/hotels', [HotelController::class, 'store']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
+
+Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 
 require __DIR__.'/auth.php';

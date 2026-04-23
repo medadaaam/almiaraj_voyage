@@ -298,6 +298,7 @@ footer {
   transform: translateY(0);
 }
 
+
 .main-header-hidden {
   transform: translateY(-100%);
 }
@@ -458,6 +459,12 @@ main {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.mobile-lang-select:hover{
+    color: #fb923c;
+  border: 2px solid #fb923c;
+
+
 }
 
 .btn-mobile-primary {

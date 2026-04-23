@@ -7,18 +7,27 @@ use App\Models\Client;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class ClientController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        //
+public function index(Request $req)
+{
+    $user = $req->user();
+
+    if (!$user) {
+        return response()->json([
+            'message' => 'Unauthorized'
+        ], 401);
     }
+    $client = $user->client;
+
+    return response()->json([
+        'client' => $client
+    ]);
+}
 
     /**
      * Show the form for creating a new resource.

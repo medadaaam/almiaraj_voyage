@@ -25,6 +25,7 @@ import HajjOmra from "@/pages/services/hajjOmra";
 import CircuitsTouristiques from "@/pages/services/CircuitsTouristiques";
 import HotelsSejours from "@/pages/services/HotelsSejours";
 import VolsBillets from "@/pages/services/VolsBillets";
+import DashboardClient from "@/pages/DashboardClient";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -152,7 +153,7 @@ export const route = createBrowserRouter([
     children: [
       {
         path: "/client",
-        element: <h1>dashboard client </h1>,
+        element: <DashboardClient />,
       },
       {
         path: "/client/profile",

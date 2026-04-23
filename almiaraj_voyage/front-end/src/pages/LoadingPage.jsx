@@ -62,7 +62,7 @@ export default function LoadingPage() {
           <Compass className="loading-icon compass" />
           <Star className="loading-icon star" />
           <Globe className="loading-icon globe" />
-          <MapPin className="loading-icon map" />
+          <MapPin className="loading-icon map"/>
           <Heart className="loading-icon heart" />
         </div>
 

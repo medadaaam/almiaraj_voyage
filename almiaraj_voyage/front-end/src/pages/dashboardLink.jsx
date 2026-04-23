@@ -7,12 +7,13 @@ export default function DashboardLink() {
   if (!authenticated) return null;
 
   return (
+
     <NavLink
       to={user?.role === "admin" ? "/admin" : "/client"}
     >
-        {
-            user.role === "admin" ? <span>Dashboard</span>:<span>Mon compte</span>
-        }
+
+        <span>Dashboard</span>
+
 
     </NavLink>
   );

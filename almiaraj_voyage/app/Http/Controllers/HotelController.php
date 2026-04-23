@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\HajjOmra;
 use App\Models\Service;
 use App\Models\Hotel;
 use Illuminate\Http\Request;
@@ -29,7 +30,8 @@ class HotelController extends Controller
     {
         try {
             DB::beginTransaction();
-            
+
+            // Validate request
             $validated = $request->validate([
                 'nomServ' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -40,8 +42,8 @@ class HotelController extends Controller
                 'amenities' => 'nullable|array',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
-            
-            // Create service
+
+            // 1. Create service first
             $service = Service::create([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
@@ -49,32 +51,32 @@ class HotelController extends Controller
                 'type' => 'hotel',
                 'image' => null,
             ]);
-            
-            // Create hotel
-            $hotel = Hotel::create([
+
+            // 2. Create hajj/omra with the same ID
+            $hajjOmra = HajjOmra::create([
                 'id' => $service->id,
                 'location' => $request->location,
                 'rating' => $request->rating,
                 'type' => $request->type,
                 'amenities' => json_encode($request->amenities ?? []),
             ]);
-            
-            // Handle image
+
+            // 3. Handle image if exists
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imagePath = $image->store('hotels', 'public');
                 $service->image = $imagePath;
                 $service->save();
             }
-            
+
             DB::commit();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Hotel created successfully',
                 'data' => $service->load('hotel')
             ], 201);
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([

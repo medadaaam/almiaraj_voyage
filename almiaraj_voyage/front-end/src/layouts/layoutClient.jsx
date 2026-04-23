@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from "react";
 import DashboardLink from "@/pages/dashboardLink";
 
 export default function LayoutClient() {
-  const { authenticated, logout } = useAuth();
+  const { authenticated, logout, user } = useAuth();
   const navigate = useNavigate();
 
   const [showSticky, setShowSticky] = useState(false);
@@ -138,7 +138,7 @@ export default function LayoutClient() {
       ),
       title: "Circuits touristiques",
       desc: "Découvrez des destinations uniques à travers des circuits organisés et inoubliables.",
-      link: "/services/tours",
+      link: "/services/circuits",
     },
     {
       icon: (
@@ -154,7 +154,7 @@ export default function LayoutClient() {
       ),
       title: "Voyages sur mesure",
       desc: "Créez votre voyage personnalisé selon vos envies et votre budget.",
-      link: "/services/custom",
+      link: "/services/customVoyage",
     },
     {
       icon: (
@@ -187,32 +187,52 @@ export default function LayoutClient() {
   ];
 
   // Mega menu component
-  const MegaMenu = ({ isOpen, onClose }) => (
-    <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose}></div>
-      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-screen max-w-5xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
-        <div className="grid grid-cols-5 divide-x divide-gray-100">
-          {services.map((service, index) => (
-            <a
-              key={index}
-              href={service.link}
-              className="block p-6 hover:bg-gray-50 transition-colors group text-center"
-            >
-              <div className="flex justify-center mb-3 text-[#fb923c] group-hover:scale-105 transition-transform">
-                {service.icon}
-              </div>
-              <h4 className="font-bold text-gray-800 text-sm mb-2">
-                {service.title}
-              </h4>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {service.desc}
-              </p>
-            </a>
-          ))}
+  const MegaMenu = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+      <>
+        {/* Overlay */}
+        <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
+
+        {/* Menu */}
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
+            {services.map((service, index) => (
+              <a
+                key={index}
+                href={service.link}
+                className="group block p-4 rounded-xl bg-white border border-transparent
+             transition-all duration-300
+             hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center"
+              >
+                {/* Icon */}
+                <div
+                  className="mb-3 text-[#fb923c] text-2xl transition-all duration-300
+                  group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center"
+                >
+                  {service.icon}
+                </div>
+
+                {/* Title */}
+                <h4
+                  className="font-semibold text-gray-800 text-sm mb-1
+                 transition-colors duration-300 "
+                >
+                  {service.title}
+                </h4>
+
+                {/* Description */}
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {service.desc}
+                </p>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   return (
     <>
@@ -272,7 +292,12 @@ export default function LayoutClient() {
             {/* Logo - Left */}
             <div className="flex-shrink-0">
               <a href="/" className="flex items-center">
-                <img src="/images/logo.png" alt="logo" className="h-12" />
+                <img
+                  src="/images/logo.png"
+                  alt="logo"
+                  className="h-12"
+                  style={{ position: "relative", bottom: "6px" }}
+                />
               </a>
             </div>
 
@@ -370,10 +395,13 @@ export default function LayoutClient() {
 
             {/* Auth Buttons - Right */}
             <div className="hidden lg:flex items-center gap-4">
-              <DashboardLink />
-              <button onClick={logoutCallback} className="btn-outline">
-                Logout
-              </button>
+
+                  <span className="btn-outline">
+                    <DashboardLink />
+                  </span>
+                  <button onClick={logoutCallback} className="btn-outline">
+                    Logout
+                  </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -447,7 +475,20 @@ export default function LayoutClient() {
             </li>
             <li className="mobile-dropdown">
               <details>
-                <summary className="mobile-nav-link">Nos services</summary>
+                <summary className="mobile-nav-link ">
+                  Nos services{" "}
+                  <svg
+                    className={`w-4 h-4  transition-transform duration-300 ${servicesOpen ? "rotate-180" : ""}`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </summary>
                 <div className="pl-4 mt-2 space-y-3">
                   {services.map((service, index) => (
                     <a
@@ -505,34 +546,18 @@ export default function LayoutClient() {
               </select>
             </li>
             <li className="mobile-auth-section">
-              {!authenticated ? (
-                <>
-                  <NavLink
-                    to="/register"
+                  <span className="mobile-nav-link">
+                    <DashboardLink />
+                  </span>
+                  <button
+                    onClick={() => {
+                      logoutCallback();
+                      setMobileMenuOpen(false);
+                    }}
                     className="mobile-nav-link"
-                    onClick={() => setMobileMenuOpen(false)}
                   >
-                    S'inscrire
-                  </NavLink>
-                  <NavLink
-                    to="/login"
-                    className="mobile-nav-link btn-mobile-primary"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Se connecter
-                  </NavLink>
-                </>
-              ) : (
-                <button
-                  onClick={() => {
-                    logoutCallback();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="mobile-nav-link"
-                >
-                  Logout
-                </button>
-              )}
+                    Logout
+                  </button>
             </li>
           </ul>
         </nav>
@@ -649,11 +674,18 @@ export default function LayoutClient() {
               </ul>
             </div>
 
+            {/* Auth Buttons - Right */}
             <div className="hidden lg:flex items-center gap-3">
-              <button onClick={logoutCallback} className="btn-outline-sm">
-                Logout
-              </button>
+                  <span className="btn-outline-sm">
+                    <DashboardLink />
+                  </span>
+
+                  <button onClick={logoutCallback} className="btn-outline-sm">
+                    Logout
+                  </button>
             </div>
+
+            {/* Mobile Menu Button */}
             <button
               className="mobile-menu-toggle lg:hidden"
               onClick={() => setMobileMenuOpen(true)}

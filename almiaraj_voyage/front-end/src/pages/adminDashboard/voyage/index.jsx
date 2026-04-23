@@ -52,7 +52,14 @@ export default function AdminVoyages() {
 
     return (
         <div className="service-circuits">
-
+            <div className="flex justify-end">
+                <Link
+                    to={`/admin/AjouterVoyage`}
+                    className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xl hover:bg-blue-600 hover:text-white transition"
+                >
+                    + Ajouter un voyage
+                </Link>
+            </div><br />
             {/* Circuits Grid */}
             <div className="overflow-x-auto bg-white rounded-xl shadow">
                 <table className="w-full text-left">
@@ -119,8 +126,8 @@ export default function AdminVoyages() {
                                             <Star
                                                 key={i}
                                                 className={`w-4 h-4 ${i < Math.floor(circuit.rating)
-                                                        ? "fill-yellow-400 text-yellow-400"
-                                                        : "text-gray-300"
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-gray-300"
                                                     }`}
                                             />
                                         ))}
@@ -137,33 +144,33 @@ export default function AdminVoyages() {
 
                                 {/* ACTIONS */}
                                 <td className="p-3">
-                                        <div className="flex gap-2">
+                                    <div className="flex gap-2">
 
-                                            {/* DETAILS */}
-                                            <Link
-                                                to={`/services/details/${circuit.id}`}
-                                                className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs hover:bg-blue-600 hover:text-white transition"
-                                            >
-                                                Détails
-                                            </Link>
+                                        {/* DETAILS */}
+                                        <Link
+                                            to={`/services/details/${circuit.id}`}
+                                            className="bg-gray-100 text-gray-600 px-2 py-1 rounded-md text-xs hover:bg-gray-600 hover:text-white transition"
+                                        >
+                                            Détails
+                                        </Link>
 
-                                            {/* EDIT */}
-                                            <Link
-                                                to={`/admin/edit/${circuit.id}`}
-                                                className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs hover:bg-green-600 hover:text-white transition"
-                                            >
-                                                Modifier
-                                            </Link>
+                                        {/* EDIT */}
+                                        <Link
+                                            to={`/admin/edit/${circuit.id}`}
+                                            className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs hover:bg-green-600 hover:text-white transition"
+                                        >
+                                            Modifier
+                                        </Link>
 
-                                            {/* DELETE */}
-                                            <button
-                                                className="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs hover:bg-red-600 hover:text-white transition"
-                                            >
-                                                Supprimer
-                                            </button>
+                                        {/* DELETE */}
+                                        <button
+                                            className="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs hover:bg-red-600 hover:text-white transition"
+                                        >
+                                            Supprimer
+                                        </button>
 
-                                        </div>
-                                    </td>
+                                    </div>
+                                </td>
 
                             </tr>
                         ))}

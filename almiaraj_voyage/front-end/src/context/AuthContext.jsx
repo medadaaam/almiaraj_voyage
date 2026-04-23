@@ -3,23 +3,27 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const stateContext = createContext({
   user: null,
+  client: null,
   authenticated: false,
   setUser: () => {},
+  setClient: () => {},
   logout: () => {},
   setAuthenticated: () => {},
   login: (email, password) => {},
   register: (data) => {},
+  getClient: () => {},
   loading: true,
 });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [client, setClient] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { 
+  useEffect(() => {
     AuthApi.getUser()
-      .then(({ data }) => {
+      .then( ({ data }) => {
         if (data) {
           setUser(data);
           setAuthenticated(true);
@@ -36,35 +40,51 @@ export function AuthProvider({ children }) {
       });
   }, []);
 
+  const getClient = async () => {
+    try {
+      const { data } = await AuthApi.getClient();
+
+      if (data.client) {
+        setClient(data.client);
+        return data.client;
+      }
+    } catch (error) {
+      console.error("Error fetching client:", error);
+      return null;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       await AuthApi.getCsrfToken();
+
       const response = await AuthApi.login(email, password);
 
       if (response.status === 200 || response.status === 204) {
-        const userResponse = await AuthApi.getUser();
-        setUser(userResponse.data);
         setAuthenticated(true);
+
+        await getClient();
+
+        return response;
       }
-      return response;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
     }
   };
 
-  const register = async (data) => {
+  const register = async (userData) => {
     try {
       await AuthApi.getCsrfToken();
-      const response = await AuthApi.register(data);
+      const response = await AuthApi.register(userData);
 
-      if (response.status === 200 || response.status === 201 || response.status === 204) {
-
-        const userResponse = await AuthApi.getUser();
-        setUser(userResponse.data);
+      if (response.status === 200 || response.status === 201) {
         setAuthenticated(true);
+        setUser(response.data.user);
+
+        await getClient();
+        return response;
       }
-      return response;
     } catch (error) {
       console.error("Register error:", error);
       throw error;
@@ -92,6 +112,8 @@ export function AuthProvider({ children }) {
         setAuthenticated,
         logout,
         register,
+        getClient,
+        client,
         loading,
       }}
     >

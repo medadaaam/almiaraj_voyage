@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { Hotel, Wifi, Coffee, Waves, Dumbbell, Utensils, Car, Star, MapPin } from "lucide-react";
 
-export default function HotelsSejours() {
+export default function AdminHotels() {
     const hotels = [
         {
             id: 1,

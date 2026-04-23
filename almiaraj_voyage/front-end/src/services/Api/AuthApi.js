@@ -1,6 +1,5 @@
 import { axiosClient, csrfClient } from "@/api/axios";
 
-
 const AuthApi = {
 
   getCsrfToken: async () => {
@@ -14,7 +13,6 @@ const AuthApi = {
   },
 
   login: async (email, password) => {
-    // Make sure we have a fresh CSRF token before login
     await AuthApi.getCsrfToken();
     return await axiosClient.post("/login", { email, password });
   },
@@ -38,9 +36,6 @@ const AuthApi = {
   getUser: async () => {
     return await axiosClient.get("/user");
   },
-  getClient: async () => {
-    return await axiosClient.get('/clients')
-  }
 };
 
 export default AuthApi;

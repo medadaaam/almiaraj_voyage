@@ -65,16 +65,16 @@ export default function Register() {
   });
 
   const countries = [
-    { value: "ma", label: "Maroc 🇲🇦" },
-    { value: "fr", label: "France 🇫🇷" },
-    { value: "es", label: "Espagne 🇪🇸" },
-    { value: "it", label: "Italie 🇮🇹" },
-    { value: "de", label: "Allemagne 🇩🇪" },
-    { value: "us", label: "États-Unis 🇺🇸" },
-    { value: "ca", label: "Canada 🇨🇦" },
-    { value: "uk", label: "Royaume-Uni 🇬🇧" },
-    { value: "be", label: "Belgique 🇧🇪" },
-    { value: "ch", label: "Suisse 🇨🇭" },
+    { value: "Maroc", label: "Maroc 🇲🇦" },
+    { value: "France", label: "France 🇫🇷" },
+    { value: "Espagne", label: "Espagne 🇪🇸" },
+    { value: "Italie", label: "Italie 🇮🇹" },
+    { value: "Allemagne", label: "Allemagne 🇩🇪" },
+    { value: "États-Unis", label: "États-Unis 🇺🇸" },
+    { value: "Canada", label: "Canada 🇨🇦" },
+    { value: "Royaume-Uni", label: "Royaume-Uni 🇬🇧" },
+    { value: "Belgique", label: "Belgique 🇧🇪" },
+    { value: "Suisse", label: "Suisse 🇨🇭" },
   ];
 
   useEffect(() => {
@@ -312,7 +312,7 @@ export default function Register() {
                   />
                   <FormLabel className="auth-label text-sm font-normal">
                     J'accepte les{" "}
-                    <a href="/terms" className="text-[#fb923c] hover:underline">
+                    <a href="/terms" className="text-[#fb923c]">
                       conditions générales
                     </a>
                   </FormLabel>

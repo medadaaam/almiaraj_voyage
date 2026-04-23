@@ -2,7 +2,7 @@ import { axiosClient, csrfClient } from "@/api/axios";
 
 
 const AuthApi = {
-  
+
   getCsrfToken: async () => {
     try {
       const response = await csrfClient.get("/sanctum/csrf-cookie");
@@ -38,6 +38,9 @@ const AuthApi = {
   getUser: async () => {
     return await axiosClient.get("/user");
   },
+  getClient: async () => {
+    return await axiosClient.get('/clients')
+  }
 };
 
 export default AuthApi;

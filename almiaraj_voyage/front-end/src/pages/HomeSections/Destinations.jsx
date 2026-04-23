@@ -94,7 +94,7 @@ export default function Destinations() {
               Nous proposons des forfaits de voyage et des circuits vers une large
               gamme de destinations dans le monde entier.
             </p>
-          </div>
+          </div>  
         </div>
 
         {/* Destinations Grid */}

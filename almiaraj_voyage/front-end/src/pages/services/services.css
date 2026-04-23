@@ -197,7 +197,7 @@
 .service-circuits-grid,
 .service-hotels-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
   margin-bottom: 60px;
 }
@@ -789,7 +789,7 @@
 
   .service-info-grid,
   .service-features-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .service-airlines-grid {
@@ -810,7 +810,7 @@
   }
 
   .service-airlines-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .service-hero-title {

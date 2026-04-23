@@ -487,7 +487,7 @@ export default function Search() {
                                             </div>
                                             <div className="result-footer">
                                                 <div className="result-price">
-                                                    <span className="price-amount">{result.price}€</span>
+                                                    <span className="price-amount">{result.price}Dh</span>
                                                     <span className="price-period">/personne</span>
                                                 </div>
                                                 <div className="result-duration">

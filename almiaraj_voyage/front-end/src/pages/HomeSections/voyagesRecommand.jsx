@@ -148,8 +148,8 @@ export default function FeaturedTrips() {
 
                 {/* Price Tag */}
                 <div className="trip-price-tag">
-                  <span className="trip-price-old">{trip.oldPrice}€</span>
-                  <span className="trip-price-new">{trip.price}€</span>
+                  <span className="trip-price-old">{trip.oldPrice}Dh</span>
+                  <span className="trip-price-new">{trip.price}Dh</span>
                   <span className="trip-price-period">/personne</span>
                 </div>
               </div>

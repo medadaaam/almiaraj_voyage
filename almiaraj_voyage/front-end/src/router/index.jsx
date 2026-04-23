@@ -26,6 +26,10 @@ import CircuitsTouristiques from "@/pages/services/CircuitsTouristiques";
 import HotelsSejours from "@/pages/services/HotelsSejours";
 import VolsBillets from "@/pages/services/VolsBillets";
 import DashboardClient from "@/pages/DashboardClient";
+import AdminVoyages from "@/pages/adminDashboard/voyage";
+import AdminHotels from "@/pages/adminDashboard/hotel";
+import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
+import AdminBillets from "@/pages/adminDashboard/billiet";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -128,19 +132,35 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/voyages",
-        element: <AjouterVoyage />,
+        element: <AdminVoyages />,
       },
       {
         path: "/admin/hotels",
-        element: <AjouterHotel />,
+        element: <AdminHotels />,
       },
       {
         path: "/admin/hajj-omra",
-        element: <AjouterHajjOmra />,
+        element: <AdminHajjOmra />,
       },
       {
         path: "/admin/billets",
-        element: <AjouterBillet />,
+        element: <AdminBillets />,
+      },
+      {
+        path: "/admin/ajouterVoyage",
+        element: <AjouterVoyage />,
+      },
+      {
+        path: "/admin/ajouterHotel",
+        element: <AdminHotels />,
+      },
+      {
+        path: "/admin/hajj-omra",
+        element: <AdminHajjOmra />,
+      },
+      {
+        path: "/admin/billets",
+        element: <AdminBillets />,
       },
     ],
   },

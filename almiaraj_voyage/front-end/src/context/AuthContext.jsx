@@ -4,8 +4,10 @@ import { createContext, useContext, useState, useEffect } from "react";
 const stateContext = createContext({
   user: null,
   authenticated: false,
+  destinations: [],
   setUser: () => {},
   logout: () => {},
+  getDestination: () => {},
   setAuthenticated: () => {},
   login: (email, password) => {},
   register: (data) => {},
@@ -14,6 +16,7 @@ const stateContext = createContext({
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [destinations, setDestination] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +73,20 @@ export function AuthProvider({ children }) {
       throw error;
     }
   };
+  const getDestination = async () => {
+    try {
+      const response = await AuthApi.getDestination();
+
+      if (response.status === 200 || response.status === 201 || response.status === 204) {
+        setDestination(response.data.destinations);
+
+      }
+      return response;
+    } catch (error) {
+      console.error("Recuperation error:", error);
+      throw error;
+    }
+  };
 
   const logout = async () => {
     try {
@@ -93,6 +110,8 @@ export function AuthProvider({ children }) {
         logout,
         register,
         loading,
+        getDestination,
+        destinations
       }}
     >
       {children}

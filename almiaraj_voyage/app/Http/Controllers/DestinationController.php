@@ -13,7 +13,10 @@ class DestinationController extends Controller
      */
     public function index()
     {
-        //
+        $dest = Destination::all();
+        return response()->json([
+            'destinations'=>$dest
+        ],200);
     }
 
     /**

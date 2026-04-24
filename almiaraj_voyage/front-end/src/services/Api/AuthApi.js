@@ -36,6 +36,9 @@ const AuthApi = {
   getUser: async () => {
     return await axiosClient.get("/user");
   },
+    getDestination: async () => {
+    return await axiosClient.get("/destinations");
+  },
 };
 
 export default AuthApi;

@@ -30,8 +30,8 @@ export default function Login() {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "adam@gmail.com",
+      password: "123456789",
     },
   });
 

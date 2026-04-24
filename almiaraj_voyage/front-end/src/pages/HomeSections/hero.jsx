@@ -79,7 +79,7 @@ export default function Hero() {
               <h1 className="hero-title">{slide.title}</h1>
               <p className="hero-subtitle">{slide.subtitle}</p>
               <div className="hero-buttons">
-                <a href="#trips" className="hero-btn-primary">
+                <a href="services/voyages" className="hero-btn-primary">
                   Explorer les voyages
                 </a>
                 <a href="/customize-tour" className="hero-btn-secondary">

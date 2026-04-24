@@ -12,7 +12,7 @@ class Service extends Model
         return $this->hasMany(Reservation::class);
     }
     public function hotels(){
-        return $this->hasOne(Hotel::class);
+        return $this->hasMany(Hotel::class);
     }
     public function voyages(){
         return $this->hasMany(Voyage::class);

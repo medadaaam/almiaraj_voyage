@@ -57,6 +57,15 @@ export default function AdminHajjOmra() {
     return (
         <div className="service-hajj">
 
+            <div className="flex justify-end">
+                <Link
+                    to={`/admin/AjouterHajj-omra`}
+                    className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xl hover:bg-blue-600 hover:text-white transition"
+                >
+                    + Ajouter hajj / omra
+                </Link>
+            </div><br />
+
 
             {/* Packages */}
             <div className="service-packages">

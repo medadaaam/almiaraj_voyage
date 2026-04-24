@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Destination extends Model
 {
-    protected $fillable = ['nom', 'pays', 'description', 'image'];
+    protected $table = 'destinations';
+    protected $fillable = ['nom', 'pays', 'continente', 'en_vedette', 'desc', 'image'];
 
     public function hotels()
     {

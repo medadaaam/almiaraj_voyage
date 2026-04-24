@@ -61,6 +61,15 @@ export default function AdminHotels() {
     return (
         <div className="service-hotels">
 
+            <div className="flex justify-end">
+                <Link
+                    to={`/admin/AjouterHotel`}
+                    className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xl hover:bg-blue-600 hover:text-white transition"
+                >
+                    + Ajouter un hotel
+                </Link>
+            </div><br />
+
             {/* Hotels Grid */}
             <div className="overflow-x-auto bg-white rounded-xl shadow">
                 <table className="w-full text-left">
@@ -119,8 +128,8 @@ export default function AdminHotels() {
                                             <Star
                                                 key={i}
                                                 className={`w-4 h-4 ${i < Math.floor(hotel.rating)
-                                                        ? "fill-yellow-400 text-yellow-400"
-                                                        : "text-gray-300"
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-gray-300"
                                                     }`}
                                             />
                                         ))}

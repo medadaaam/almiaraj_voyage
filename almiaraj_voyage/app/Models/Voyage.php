@@ -8,12 +8,13 @@ class Voyage extends Model
 {
     public $incrementing = false;
     protected $keyType = 'int';
-    protected $fillable = ['id', 'destinationV', 'dateDepartV', 'dateRetourV', 'programme'];
+    protected $fillable = ['id', 'destination_id', 'destinationV', 'dateDepartV', 'dateRetourV', 'programme', 'duree'];
 
     public function service()
     {
         return $this->belongsTo(Service::class, 'id', 'id');
     }
+    
     public function destination()
     {
         return $this->belongsTo(Destination::class);

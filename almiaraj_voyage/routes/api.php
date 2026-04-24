@@ -22,9 +22,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 Route::post('/services', [ServiceController::class, 'store']);
 Route::post('/hotels', [HotelController::class, 'store']);
-Route::post('/voyages', [VoyageController::class, 'store']);
+// Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
+
+Route::prefix('voyages')->group(function () {
+    Route::get('/', [VoyageController::class, 'index']);
+    Route::get('/{id}', [VoyageController::class, 'show']);
+    Route::post('/', [VoyageController::class, 'store']);
+    Route::put('/{id}', [VoyageController::class, 'update']);
+    Route::delete('/{id}', [VoyageController::class, 'destroy']);
+});
+
+Route::prefix('destinations')->group(function () {
+    Route::get('/', [VoyageController::class, 'getDestinations']);
+    Route::get('/pays', [VoyageController::class, 'getPays']);
+    Route::get('/pays/{pays}', [VoyageController::class, 'getDestinationsByPays']);
+    Route::get('/search', [VoyageController::class, 'searchDestinations']);
+});
 
 Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 

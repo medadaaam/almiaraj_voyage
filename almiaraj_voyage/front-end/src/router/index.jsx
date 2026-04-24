@@ -79,7 +79,7 @@ export const route = createBrowserRouter([
         element: <HajjOmra />,
       },
       {
-        path: "/services/circuits",
+        path: "/services/voyages",
         element: <CircuitsTouristiques />,
       },{
         path: "/services/hotels",
@@ -152,15 +152,15 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/ajouterHotel",
-        element: <AdminHotels />,
+        element: <AjouterHotel />,
       },
       {
-        path: "/admin/hajj-omra",
-        element: <AdminHajjOmra />,
+        path: "/admin/ajouterHajj-omra",
+        element: <AjouterHajjOmra />,
       },
       {
-        path: "/admin/billets",
-        element: <AdminBillets />,
+        path: "/admin/ajouterBillets",
+        element: <AjouterBillet />,
       },
     ],
   },

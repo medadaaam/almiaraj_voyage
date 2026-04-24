@@ -51,6 +51,14 @@ export default function AdminBillets() {
     return (
         <div className="service-flights">
 
+            <div className="flex justify-end">
+                <Link
+                    to={`/admin/AjouterBillet`}
+                    className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xl hover:bg-blue-600 hover:text-white transition"
+                >
+                    + Ajouter un billet
+                </Link>
+            </div><br />
 
             {/* SEARCH (خليتو) */}
             <div className="service-flight-search">

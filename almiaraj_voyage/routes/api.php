@@ -22,7 +22,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 });
 Route::post('/services', [ServiceController::class, 'store']);
-Route::post('/hotels', [HotelController::class, 'store']);
+// Route::post('/hotels', [HotelController::class, 'store']);
 // Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
@@ -33,6 +33,13 @@ Route::prefix('voyages')->group(function () {
     Route::post('/', [VoyageController::class, 'store']);
     Route::put('/{id}', [VoyageController::class, 'update']);
     Route::delete('/{id}', [VoyageController::class, 'destroy']);
+});
+Route::prefix('hotels')->group(function () {
+    Route::get('/', [HotelController::class, 'index']);
+    Route::get('/{id}', [HotelController::class, 'show']);
+    Route::post('/', [HotelController::class, 'store']);
+    Route::put('/{id}', [HotelController::class, 'update']);
+    Route::delete('/{id}', [HotelController::class, 'destroy']);
 });
 
 Route::get('/destinations', [DestinationController::class, 'index']);

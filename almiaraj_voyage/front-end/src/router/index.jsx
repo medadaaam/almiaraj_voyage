@@ -32,6 +32,8 @@ import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
 import AdminBillets from "@/pages/adminDashboard/billiet";
 import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
 import VoyageDetails from "@/pages/adminDashboard/voyage/details";
+import ModifierHotel from "@/pages/adminDashboard/hotel/modifier";
+import HotelDetails from "@/pages/adminDashboard/hotel/details";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -141,12 +143,12 @@ export const route = createBrowserRouter([
         element: <AjouterVoyage />,
       },
       {
-        path:"/admin/editVoyage/:id",
-        element: <ModifierVoyage/>  
+        path: "/admin/editVoyage/:id",
+        element: <ModifierVoyage />
       },
       {
-        path:"/admin/showVoyage/:id",
-        element: <VoyageDetails/>  
+        path: "/admin/showVoyage/:id",
+        element: <VoyageDetails />
       },
 
       {
@@ -156,6 +158,14 @@ export const route = createBrowserRouter([
       {
         path: "/admin/ajouterHotel",
         element: <AjouterHotel />,
+      },
+      {
+        path: "/admin/editHotel/:id",
+        element: <ModifierHotel />
+      },
+      {
+        path: "/admin/showHotel/:id",
+        element: <HotelDetails />
       },
 
 

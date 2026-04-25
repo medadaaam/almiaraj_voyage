@@ -28,19 +28,19 @@ Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
 
 
-Route::get('/destinations', [DestinationController::class, 'indexCl']);
-Route::get('/destinations/{id}/services', [DestinationController::class, 'getServicesCl']);
+Route::get('/destinationsCl', [DestinationController::class, 'indexCl']);
+Route::get('/destinationsCl/{id}/services', [DestinationController::class, 'getServicesCl']);
 
 
-Route::get('/billets', [BilletController::class, 'indexCl']);
-Route::get('/omraHajj', [HajjOmraController::class, 'indexCl']);
-Route::get('/voyages', [VoyageController::class, 'indexCl']);
-Route::get('/hotels', [HotelController::class, 'indexCl']);
+Route::get('/billetsCl', [BilletController::class, 'indexCl']);
+Route::get('/omraHajjCl', [HajjOmraController::class, 'indexCl']);
+Route::get('/voyagesCl', [VoyageController::class, 'indexCl']);
+Route::get('/hotelsCl', [HotelController::class, 'indexCl']);
 
-Route::get('/omraHajj/{id}', [HajjOmraController::class, 'showCl']);
-Route::get('/billets/{id}', [BilletController::class, 'showCl']);
-Route::get('/hotels/{id}', [HotelController::class, 'showCl']);
-Route::get('/voyages/{id}', [VoyageController::class, 'showCl']);
+Route::get('/omraHajjCl/{id}', [HajjOmraController::class, 'showCl']);
+Route::get('/billetsCl/{id}', [BilletController::class, 'showCl']);
+Route::get('/hotelsCl/{id}', [HotelController::class, 'showCl']);
+Route::get('/voyagesCl/{id}', [VoyageController::class, 'showCl']);
 
 Route::prefix('voyages')->group(function () {
     Route::get('/', [VoyageController::class, 'index']);

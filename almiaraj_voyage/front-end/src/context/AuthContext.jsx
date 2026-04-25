@@ -9,6 +9,7 @@ const stateContext = createContext({
   voyages: [],
   hotels: [],
   billets: [],
+  hajjOmras: [],
   setUser: () => {},
   logout: () => {},
   getDestination: () => {},
@@ -25,7 +26,7 @@ const stateContext = createContext({
   getVoyageDetails: (id) => {},
   getHajjOmraDetails: (id) => {},
   loading: true,
-  initialLoading: true, // ✅ جديد
+  initialLoading: true,
 });
 
 export function AuthProvider({ children }) {
@@ -33,11 +34,11 @@ export function AuthProvider({ children }) {
   const [destinations, setDestination] = useState([]);
   const [voyages, setVoyage] = useState([]);
   const [hajjOmras, setHajjOmras] = useState([]);
-  const [billets, setBittets] = useState([]);
+  const [billets, setBillets] = useState([]); // ✅ تصحيح: setBittets → setBillets
   const [hotels, setHotels] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [initialLoading, setInitialLoading] = useState(true); // ✅ جديد: لتحميل البيانات الأولية
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // جلب المستخدم أولاً
   useEffect(() => {
@@ -63,7 +64,7 @@ export function AuthProvider({ children }) {
   // ✅ بعد ما يجيب المستخدم، جلب كل البيانات
   useEffect(() => {
     const fetchAllData = async () => {
-      if (loading) return; // استنى ما يجيب المستخدم
+      if (loading) return;
 
       setInitialLoading(true);
 
@@ -72,6 +73,8 @@ export function AuthProvider({ children }) {
         getDestination(),
         getVoyages(),
         getHotels(),
+        getBillets(),     // ✅ أضفنا billets
+        getHajjOmras(),   // ✅ أضفنا hajjOmras
       ];
 
       await Promise.all(promises);
@@ -163,7 +166,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await AuthApi.getBillets();
       if (response.status === 200 && response.data) {
-        setBittets(response.data);
+        setBillets(response.data);
       }
       return response;
     } catch (error) {
@@ -201,6 +204,7 @@ export function AuthProvider({ children }) {
       const response = await AuthApi.getHotelDetails(id);
       return response.data;
     } catch (error) {
+      console.error("Error fetching hotel details:", error);
       return null;
     }
   };
@@ -210,6 +214,7 @@ export function AuthProvider({ children }) {
       const response = await AuthApi.getOmraHajjDetails(id);
       return response.data;
     } catch (error) {
+      console.error("Error fetching hajj/omra details:", error);
       return null;
     }
   };
@@ -219,6 +224,7 @@ export function AuthProvider({ children }) {
       const response = await AuthApi.getBilletsDetails(id);
       return response.data;
     } catch (error) {
+      console.error("Error fetching billet details:", error);
       return null;
     }
   };
@@ -228,6 +234,7 @@ export function AuthProvider({ children }) {
       const response = await AuthApi.getVoyageDetails(id);
       return response.data;
     } catch (error) {
+      console.error("Error fetching voyage details:", error);
       return null;
     }
   };
@@ -243,6 +250,8 @@ export function AuthProvider({ children }) {
       setDestination([]);
       setVoyage([]);
       setHotels([]);
+      setBillets([]);
+      setHajjOmras([]);
     }
   };
 
@@ -256,8 +265,8 @@ export function AuthProvider({ children }) {
         setAuthenticated,
         logout,
         register,
-        loading, // لجلب المستخدم فقط
-        initialLoading, // ✅ لجلب كل البيانات الأولية
+        loading,
+        initialLoading,
         getDestination,
         destinations,
         getVoyages,
@@ -267,12 +276,12 @@ export function AuthProvider({ children }) {
         hajjOmras,
         getHotels,
         getBillets,
+        getHajjOmras,
         getDestinationServices,
         getVoyageDetails,
         getHotelDetails,
         getBilletsDetails,
         getHajjOmraDetails,
-        getHajjOmras,
       }}
     >
       {children}

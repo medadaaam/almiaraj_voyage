@@ -31,6 +31,11 @@ import VoyageDetails from "@/pages/VoyageDetails";
 import HotelDetails from "@/pages/HotelDetails";
 import BilletDetails from "@/pages/services/BilletDetails";
 import HajjOmraDetails from "@/pages/services/HajjOmraDetails";
+import AdminVoyages from "@/pages/adminDashboard/voyage";
+import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
+import AdminHotels from "@/pages/adminDashboard/hotel";
+import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
+import AdminBillets from "@/pages/adminDashboard/billiet";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -164,7 +169,7 @@ export const route = createBrowserRouter([
       },
       {
         path:"/admin/editVoyage/:id",
-        element: <ModifierVoyage/>
+        element: <ModifierVoyage />
       },
       {
         path:"/admin/showVoyage/:id",

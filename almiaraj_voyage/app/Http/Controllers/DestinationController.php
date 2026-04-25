@@ -21,7 +21,7 @@ class DestinationController extends Controller
     }
 
 
-    public function getServices($id)
+    public function getServicesCl($id)
     {
         try {
             $destination = Destination::find($id);

@@ -36,38 +36,38 @@ const AuthApi = {
     return await axiosClient.get("/user");
   },
   getDestination: async () => {
-    return await axiosClient.get("/destinations");
+    return await axiosClient.get("/destinationsCl");
   },
 
   getDestinationServices: async (id) => {
-    return await axiosClient.get(`/destinations/${id}/services`);
+    return await axiosClient.get(`/destinationsCl/${id}/services`);
   },
   getVoyages: async () => {
-    return await axiosClient.get("/voyages");
+    return await axiosClient.get("/voyagesCl");
   },
   getHotels: async () => {
-    return await axiosClient.get("/hotels");
+    return await axiosClient.get("/hotelsCl");
   },
 
   getBillets: async () => {
-    return await axiosClient.get("/billets");
+    return await axiosClient.get("/billetsCl");
   },
 
   getOmraHajj: async () => {
-    return await axiosClient.get("/omraHajj");
+    return await axiosClient.get("/omraHajjCl");
   },
     getOmraHajjDetails: async (id) => {
-    return await axiosClient.get(`/omraHajj/${id}`);
+    return await axiosClient.get(`/omraHajjCl/${id}`);
   },
   getHotelDetails: async (id) => {
-    return await axiosClient.get(`/hotels/${id}`);
+    return await axiosClient.get(`/hotelsCl/${id}`);
   },
   getVoyageDetails: async (id) => {
-    return await axiosClient.get(`/voyages/${id}`);
+    return await axiosClient.get(`/voyagesCl/${id}`);
   },
 
   getBilletsDetails: async (id) => {
-    return await axiosClient.get(`/billets/${id}`);
+    return await axiosClient.get(`/billetsCl/${id}`);
   },
 };
 

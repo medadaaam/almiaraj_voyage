@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Destination;
 use App\Models\Service;
 use App\Models\HajjOmra;
 use App\Models\Hotel;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class HotelController extends Controller
 {
 
-    public function index()
+    public function indexCl()
     {
         $hotels = Hotel::with(['service', 'destination'])->get();
 
@@ -38,44 +39,34 @@ class HotelController extends Controller
             DB::beginTransaction();
 
             // Validate request
-            $validated = $request->validate([
-                'nomServ' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'prix' => 'required|numeric|min:0',
-                'titre' => 'required|string|max:100',
-                'typeHO' => 'required|in:hajj,omra',
-                'descriptionHO' => 'required|string',
-                'dateDepartHO' => 'required|date',
-                'dateRetourHO' => 'required|date|after_or_equal:dateDepartHO',
-                'duree' => 'required|integer|min:1',
-                'placesDisponibles' => 'required|integer|min:0',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
-
+            // $validated = $request->validate([
+            //     'nomServ' => 'required|string|max:255',
+            //     'description' => 'nullable|string',
+            //     'prix' => 'required|numeric|min:0',
+            //     'villeHotel'=> 'required|string',
+            //     'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            // ]);
+             $destination = Destination::find($request->destination_id);
             // 1. Create service first
             $service = Service::create([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
                 'prix' => $request->prix,
+                'type' => 'hotel',
                 'image' => null,
             ]);
 
-            // 2. Create hajj/omra with the same ID
-            $hajjOmra = HajjOmra::create([
+            // 2. Create hotel with the same ID
+            $hotel = Hotel::create([
                 'id' => $service->id,
-                'titre' => $request->titre,
-                'typeHO' => $request->typeHO,
-                'description' => $request->descriptionHO,
-                'dateDepartHO' => $request->dateDepartHO,
-                'dateRetourHO' => $request->dateRetourHO,
-                'duree' => $request->duree,
-                'placesDisponibles' => $request->placesDisponibles,
+                'destination_id' => $request->destination_id,
+                'villeHotel' => $request->villeHotel
             ]);
 
             // 3. Handle image if exists
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $imagePath = $image->store('hajj_omras', 'public');
+                $imagePath = $image->store('hotels', 'public');
                 $service->image = $imagePath;
                 $service->save();
             }
@@ -84,10 +75,10 @@ class HotelController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Hajj/Omra created successfully',
+                'message' => 'Hotel creé avec succés',
                 'data' => [
                     'service' => $service,
-                    'hajjOmra' => $hajjOmra
+                    'hajjOmra' => $hotel
                 ]
             ], 201);
         } catch (\Exception $e) {
@@ -95,13 +86,13 @@ class HotelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create Hajj/Omra',
+                'message' => 'Failed to create Hotel',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
-    public function show($id)
+    public function showCl($id)
     {
         $hotel = Hotel::with(['service','destination'])->findOrFail($id);
         return response()->json($hotel);

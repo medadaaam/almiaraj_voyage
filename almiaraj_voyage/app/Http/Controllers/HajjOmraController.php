@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class HajjOmraController extends Controller
 {
 
-    public function index()
+    public function indexCl()
 {
     $items = HajjOmra::with('service')->get();
 
@@ -38,6 +38,20 @@ class HajjOmraController extends Controller
     {
         try {
             DB::beginTransaction();
+
+            $validated = $request->validate([
+                'nomServ' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'prix' => 'required|numeric|min:0',
+                'titre' => 'required|string|max:100',
+                'typeHO' => 'required|in:hajj,omra',
+                'descriptionHO' => 'required|string',
+                'dateDepartHO' => 'required|date',
+                'dateRetourHO' => 'required|date|after_or_equal:dateDepartHO',
+                'duree' => 'required|integer|min:1',
+                'placesDisponibles' => 'required|integer|min:0',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
 
             // 1. Create service first (this gets an auto-increment ID)
             $service = Service::create([
@@ -87,7 +101,7 @@ class HajjOmraController extends Controller
         }
     }
 
-        public function show($id) {
+        public function showCl($id) {
         $hajjOmra = HajjOmra::with('service')->findOrFail($id);
         return response()->json($hajjOmra);
 

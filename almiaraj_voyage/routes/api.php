@@ -23,26 +23,36 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 Route::post('/services', [ServiceController::class, 'store']);
 Route::post('/hotels', [HotelController::class, 'store']);
-Route::post('/voyages', [VoyageController::class, 'store']);
+// Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
 
 
+Route::get('/destinations', [DestinationController::class, 'indexCl']);
+Route::get('/destinations/{id}/services', [DestinationController::class, 'getServicesCl']);
+
+
+Route::get('/billets', [BilletController::class, 'indexCl']);
+Route::get('/omraHajj', [HajjOmraController::class, 'indexCl']);
+Route::get('/voyages', [VoyageController::class, 'indexCl']);
+Route::get('/hotels', [HotelController::class, 'indexCl']);
+
+Route::get('/omraHajj/{id}', [HajjOmraController::class, 'showCl']);
+Route::get('/billets/{id}', [BilletController::class, 'showCl']);
+Route::get('/hotels/{id}', [HotelController::class, 'showCl']);
+Route::get('/voyages/{id}', [VoyageController::class, 'showCl']);
+
+Route::prefix('voyages')->group(function () {
+    Route::get('/', [VoyageController::class, 'index']);
+    Route::get('/{id}', [VoyageController::class, 'show']);
+    Route::post('/', [VoyageController::class, 'store']);
+    Route::put('/{id}', [VoyageController::class, 'update']);
+    Route::delete('/{id}', [VoyageController::class, 'destroy']);
+});
+
 Route::get('/destinations', [DestinationController::class, 'index']);
-Route::get('/destinations/{id}/services', [DestinationController::class, 'getServices']);
-
-
-Route::get('/billets', [BilletController::class, 'index']);
-Route::get('/omraHajj', [HajjOmraController::class, 'index']);
-Route::get('/voyages', [VoyageController::class, 'index']);
-Route::get('/hotels', [HotelController::class, 'index']);
-
-Route::get('/omraHajj/{id}', [HajjOmraController::class, 'show']);
-Route::get('/billets/{id}', [BilletController::class, 'show']);
-Route::get('/hotels/{id}', [HotelController::class, 'show']);
-Route::get('/voyages/{id}', [VoyageController::class, 'show']);
-
-
+Route::get('/destinations/search', [VoyageController::class, 'searchDestinations']);
+Route::post('/voyages', [VoyageController::class, 'store']);
 Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 
 require __DIR__.'/auth.php';

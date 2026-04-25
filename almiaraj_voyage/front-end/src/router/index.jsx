@@ -85,12 +85,12 @@ export const route = createBrowserRouter([
         element: <HajjOmra />,
       },
       {
-        path: "/services/circuits",
+        path: "/services/voyages",
         element: <CircuitsTouristiques />,
-      },{
+      }, {
         path: "/services/hotels",
         element: <HotelsSejours />,
-      },{
+      }, {
         path: "/services/flights",
         element: <VolsBillets />,
       },
@@ -156,18 +156,47 @@ export const route = createBrowserRouter([
       },
       {
         path: "/admin/voyages",
+        element: <AdminVoyages />,
+      },
+      {
+        path: "/admin/ajouterVoyage",
         element: <AjouterVoyage />,
       },
       {
+        path:"/admin/editVoyage/:id",
+        element: <ModifierVoyage/>
+      },
+      {
+        path:"/admin/showVoyage/:id",
+        element: <VoyageDetails/>
+      },
+
+      {
         path: "/admin/hotels",
+        element: <AdminHotels />,
+      },
+      {
+        path: "/admin/ajouterHotel",
         element: <AjouterHotel />,
       },
+
+
       {
         path: "/admin/hajj-omra",
-        element: <AjouterHajjOmra />,
+        element: <AdminHajjOmra />,
       },
       {
+        path: "/admin/ajouterHajj-omra",
+        element: <AjouterHajjOmra />,
+      },
+
+
+      {
         path: "/admin/billets",
+        element: <AdminBillets />,
+      },
+      {
+        path: "/admin/ajouterBillets",
         element: <AjouterBillet />,
       },
     ],

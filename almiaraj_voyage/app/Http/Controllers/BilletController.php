@@ -5,12 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Service;
 use App\Models\Billet;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 class BilletController extends Controller
 {
-    public function index()
+    public function indexCl()
     {
         $billets = Billet::with('service')->get();
 
@@ -83,7 +82,7 @@ class BilletController extends Controller
         }
     }
 
-    public function show($id) {
+    public function showCl($id) {
         $billet = Billet::with('service')->findOrFail($id);
         return response()->json($billet);
 

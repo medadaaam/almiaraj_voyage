@@ -12,7 +12,7 @@ class DestinationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+      public function indexCl()
     {
         $dest = Destination::all();
         return response()->json([

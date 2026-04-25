@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class VoyageController extends Controller
 {
 
-    public function index()
+    public function indexCl()
     {
         $voyages = Voyage::with(['service', 'destination'])->get();
 
@@ -41,53 +41,73 @@ class VoyageController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1. Create service first (this gets an auto-increment ID)
+            // Calculate duration
+            $dateDepart = Carbon::parse($request->dateDepartV);
+            $dateRetour = Carbon::parse($request->dateRetourV);
+            $dureeJours = $dateDepart->diffInDays($dateRetour);
+            $duree = $dureeJours . ' jours / ' . ($dureeJours - 1) . ' nuits';
+
+            // Validation
+            $validated = $request->validate([
+                'nomServ' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'prix' => 'required|numeric|min:0',
+                'destination_id' => 'required|exists:destinations,id',
+                'selected_cities' => 'nullable|json',
+                'dateDepartV' => 'required|date',
+                'dateRetourV' => 'required|date|after_or_equal:dateDepartV',
+                'programme' => 'required|string',
+            ]);
+
+            // Handle image
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imagePath = $image->store('voyages', 'public');
+            }
+
+            // Create service
             $service = Service::create([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
                 'prix' => $request->prix,
-                'image' => null,
+                'type' => 'voyage',
+                'image' => $imagePath,
             ]);
 
-            // 2. Create voyage with the SAME ID as the service
+            // Decode selected cities
+            $selectedCities = json_decode($request->selected_cities, true);
+
+            // Create voyage
             $voyage = Voyage::create([
-                'id' => $service->id,  // CRITICAL: Use the service's ID
-                'destinationV' => $request->destinationV,
+                'id' => $service->id,
+                'destination_id' => $request->destination_id,
+                'selected_cities' => $selectedCities, // Store as array
                 'dateDepartV' => $request->dateDepartV,
                 'dateRetourV' => $request->dateRetourV,
                 'programme' => $request->programme,
+                'duree' => $duree,
             ]);
-
-            // 3. Handle image if exists
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imagePath = $image->store('voyages', 'public');
-                $service->image = $imagePath;
-                $service->save();
-            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Voyage created successfully',
-                'data' => [
-                    'service' => $service,
-                    'voyage' => $voyage
-                ]
+                'message' => 'Voyage créé avec succès',
+                'data' => $service->load('voyage.destination')
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create voyage',
+                'message' => 'Erreur lors de la création du voyage',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
-    public function show($id)
+    public function showCl($id)
     {
         $voyage = Voyage::with(['service','destination'])->findOrFail($id);
         return response()->json($voyage);

@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Destination extends Model
 {
-    protected $fillable = ['nom', 'pays', 'description', 'image'];
+    protected $table = 'destinations';
+    protected $casts = [
+        'villes' => 'array'
+    ];
+    protected $fillable = ['pays', 'villes', 'continente', 'en_vedette', 'description', 'image'];
 
     public function hotels()
     {

@@ -1,129 +1,375 @@
 // src/pages/services/HotelsSejours.jsx
 import { Link } from "react-router-dom";
-import { Hotel, Wifi, Coffee, Waves, Dumbbell, Utensils, Car, Star, MapPin } from "lucide-react";
-import "./services.css";
+import {
+  Hotel,
+  Wifi,
+  Coffee,
+  Waves,
+  Dumbbell,
+  Utensils,
+  Car,
+  Star,
+  MapPin,
+  Users,
+  Calendar,
+  Eye,
+  CreditCard,
+  ArrowRight,
+  Clock,
+  CheckCircle,
+  Shield,
+  Search,
+  X
+} from "lucide-react";
+import "./hotels.css";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState, useMemo } from "react";
 
 export default function HotelsSejours() {
-  const hotels = [
-    {
-      id: 1,
-      name: "Royal Mansour Marrakech",
-      location: "Marrakech, Maroc",
-      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-      price: 1200,
-      rating: 4.9,
-      amenities: ["Piscine", "Spa", "Restaurant", "Wifi"],
-      type: "Luxe"
-    },
-    {
-      id: 2,
-      name: "Four Seasons Istanbul",
-      location: "Istanbul, Turquie",
-      image: "https://images.pexels.com/photos/417344/pexels-photo-417344.jpeg",
-      price: 950,
-      rating: 4.8,
-      amenities: ["Piscine", "Spa", "Restaurant", "Wifi", "Vue mer"],
-      type: "Luxe"
-    },
-    {
-      id: 3,
-      name: "Atlantis The Palm",
-      location: "Dubai, Émirats",
-      image: "https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg",
-      price: 2100,
-      rating: 4.9,
-      amenities: ["Aquapark", "Piscine", "Spa", "Plage privée", "Wifi"],
-      type: "Luxe"
-    },
-    {
-      id: 4,
-      name: "Hyatt Regency Casablanca",
-      location: "Casablanca, Maroc",
-      image: "https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg",
-      price: 750,
-      rating: 4.7,
-      amenities: ["Piscine", "Restaurant", "Wifi", "Business center"],
-      type: "Affaires"
-    }
-  ];
+  const { hotels, getHotels } = useAuth();
+  const [loading, setLoading] = useState(true);
 
-  const amenitiesIcons = {
-    "Wifi": <Wifi size={14} />,
-    "Piscine": <Waves size={14} />,
-    "Spa": <Waves size={14} />,
-    "Restaurant": <Utensils size={14} />,
-    "Parking": <Car size={14} />,
-    "Aquapark": <Waves size={14} />,
-    "Plage privée": <Waves size={14} />,
-    "Business center": <Car size={14} />,
-    "Vue mer": <Waves size={14} />
+  // ✅ State للبحث
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedPriceRange, setSelectedPriceRange] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchHotels = async () => {
+      setLoading(true);
+      await getHotels();
+      setLoading(false);
+    };
+    fetchHotels();
+  }, []);
+
+  // ✅ استخراج المدن للـ datalist
+  const locations = useMemo(() => {
+    if (!hotels) return [];
+    const locs = new Set();
+    hotels.forEach(hotel => {
+      if (hotel.location) locs.add(hotel.location);
+    });
+    return Array.from(locs).sort();
+  }, [hotels]);
+
+  // ✅ فلترة الفنادق
+  const filteredHotels = useMemo(() => {
+    if (!hotels) return [];
+
+    let results = [...hotels];
+
+    // فلترة حسب الكلمة المدخلة
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      results = results.filter(hotel =>
+        hotel.name?.toLowerCase().includes(term) ||
+        hotel.location?.toLowerCase().includes(term)
+      );
+    }
+
+    // فلترة حسب الموقع
+    if (selectedLocation) {
+      results = results.filter(hotel => hotel.location === selectedLocation);
+    }
+
+    // فلترة حسب السعر
+    if (selectedPriceRange) {
+      const [min, max] = selectedPriceRange.split('-').map(Number);
+      if (max) {
+        results = results.filter(hotel => hotel.prix >= min && hotel.prix <= max);
+      } else if (selectedPriceRange === '500+') {
+        results = results.filter(hotel => hotel.prix >= 500);
+      } else if (min) {
+        results = results.filter(hotel => hotel.prix <= min);
+      }
+    }
+
+    return results;
+  }, [hotels, searchTerm, selectedLocation, selectedPriceRange]);
+
+  // ✅ إعادة ضبط البحث
+  const resetSearch = () => {
+    setSearchTerm("");
+    setSelectedLocation("");
+    setSelectedPriceRange("");
   };
 
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={i} className="star-filled" />);
+    }
+    if (hasHalfStar) {
+      stars.push(<Star key="half" className="star-filled-half" />);
+    }
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<Star key={`empty-${i}`} className="star-empty" />);
+    }
+    return stars;
+  };
+
+  const getAmenityIcon = (amenity) => {
+    const icons = {
+      Wifi: <Wifi className="w-3 h-3" />,
+      Piscine: <Waves className="w-3 h-3" />,
+      Spa: <Waves className="w-3 h-3" />,
+      "Petit-déjeuner": <Coffee className="w-3 h-3" />,
+      Hamam: <Waves className="w-3 h-3" />,
+      "Vue mer": <Waves className="w-3 h-3" />,
+      Restaurant: <Utensils className="w-3 h-3" />,
+      Aquapark: <Waves className="w-3 h-3" />,
+      "Plage privée": <Waves className="w-3 h-3" />,
+      "Business center": <Car className="w-3 h-3" />,
+      "Restaurant étoilé": <Utensils className="w-3 h-3" />,
+      Concierge: <Users className="w-3 h-3" />,
+    };
+    return icons[amenity] || <Coffee className="w-3 h-3" />;
+  };
+
+  const features = [
+    { icon: <Shield />, title: "Paiement sécurisé", desc: "Transactions 100% sécurisées" },
+    { icon: <CheckCircle />, title: "Meilleur prix garanti", desc: "Prix compétitifs" },
+    { icon: <Clock />, title: "Annulation hotel", desc: "Jusqu'à 15 jours avant" },
+    { icon: <Users />, title: "Support 24/7", desc: "Assistance à tout moment" }
+  ];
+
+  const priceRanges = [
+    { value: "", label: "Tous les prix" },
+    { value: "500", label: "Moins de 500 DH" },
+    { value: "500-700", label: "500 - 700 DH" },
+    { value: "700-1000", label: "700 - 1000 DH" },
+    { value: "1000+", label: "Plus de 1000 DH" }
+  ];
+
+  if (loading) {
+    return (
+      <div className="hotels-loading">
+        <div className="hotels-loading-spinner"></div>
+        <p>Chargement des hôtels...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="service-hotels">
-      {/* Hero */}
-      <div className="service-hero">
-        <div className="service-hero-overlay"></div>
-        <div className="service-hero-content">
-          <h1 className="service-hero-title">Hôtels & séjours</h1>
-          <p className="service-hero-subtitle">
+    <div className="hotels-page">
+      {/* Hero Section */}
+      <div className="hotels-hero">
+        <div className="hotels-hero-overlay"></div>
+        <div className="hotels-hero-content">
+          <h1 className="hotels-hero-title">Hôtels & séjours</h1>
+          <p className="hotels-hero-subtitle">
             Découvrez notre sélection d'hôtels pour un séjour parfait
           </p>
         </div>
       </div>
 
+      {/* ✅ Search Bar Section */}
+      <div className="hotels-search-section">
+        <div className="hotels-search-container">
+          <div className="hotels-search-wrapper">
+            <div className="hotels-search-input-wrapper">
+              <Search className="hotels-search-icon" />
+              <input
+                type="text"
+                placeholder="Rechercher un hôtel par nom ou ville..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="hotels-search-input"
+                list="hotels-locations"
+              />
+              <datalist id="hotels-locations">
+                {locations.map((loc, i) => (
+                  <option key={i} value={loc} />
+                ))}
+              </datalist>
+              {searchTerm && (
+                <button className="hotels-search-clear" onClick={() => setSearchTerm("")}>
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
+            <button
+              className={`hotels-filter-toggle ${showFilters ? "active" : ""}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              Filtres
+            </button>
+          </div>
+
+          {/* Filtres avancés */}
+          {showFilters && (
+            <div className="hotels-filters-panel">
+              <div className="hotels-filter-group">
+                <label className="hotels-filter-label">📍 Ville</label>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="hotels-filter-select"
+                >
+                  <option value="">Toutes les villes</option>
+                  {locations.map((loc, i) => (
+                    <option key={i} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hotels-filter-group">
+                <label className="hotels-filter-label">💰 Prix par nuit</label>
+                <select
+                  value={selectedPriceRange}
+                  onChange={(e) => setSelectedPriceRange(e.target.value)}
+                  className="hotels-filter-select"
+                >
+                  {priceRanges.map((range, i) => (
+                    <option key={i} value={range.value}>{range.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {(selectedLocation || selectedPriceRange) && (
+                <button onClick={resetSearch} className="hotels-filter-reset">
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Résultats count */}
+          <div className="hotels-results-count">
+            <p>{filteredHotels.length} hôtel(s) trouvé(s)</p>
+          </div>
+        </div>
+      </div>
+
       {/* Hotels Grid */}
-      <div className="service-hotels-section">
-        <div className="service-section-header">
+      <div className="hotels-section">
+        <div className="hotels-section-header">
           <h2>Nos hôtels partenaires</h2>
           <p>Des établissements d'exception pour tous les budgets</p>
         </div>
-        <div className="service-hotels-grid">
-          {hotels.map((hotel) => (
-            <div key={hotel.id} className="service-hotel-card">
-              <div className="service-hotel-image">
-                <img src={hotel.image} alt={hotel.name} />
-                <span className="service-hotel-type">{hotel.type}</span>
-                <div className="service-hotel-price">
-                  <span className="price">{hotel.price} DH</span>
-                  <span className="period">/nuit</span>
-                </div>
-              </div>
-              <div className="service-hotel-content">
-                <div className="service-hotel-header">
-                  <h3 className="service-hotel-name">{hotel.name}</h3>
-                  <div className="service-hotel-rating">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={i < Math.floor(hotel.rating) ? "filled" : "empty"} />
-                    ))}
-                    <span>{hotel.rating}</span>
+
+        {filteredHotels.length === 0 ? (
+          <div className="hotels-no-results">
+            <Hotel size={48} className="hotels-no-results-icon" />
+            <h3>Aucun hôtel trouvé</h3>
+            <p>Essayez de modifier vos critères de recherche</p>
+            <button onClick={resetSearch} className="hotels-no-results-btn">
+              Voir tous les hôtels
+            </button>
+          </div>
+        ) : (
+          <div className="hotels-grid">
+            {filteredHotels.map((hotel) => (
+              <div key={hotel.id} className="hotels-card">
+                {/* Image */}
+                <div className="hotels-card-image">
+                  <img src={hotel.image} alt={hotel.name} />
+                  <div className="hotels-card-overlay"></div>
+
+                  {hotel.enVedette === 1 && (
+                    <span className="hotels-card-badge featured">
+                      <Star className="w-3 h-3" />
+                      Recommandé
+                    </span>
+                  )}
+
+                  {hotel.oldPrix && hotel.oldPrix > hotel.prix && (
+                    <span className="hotels-card-badge discount">
+                      -{Math.round(((hotel.oldPrix - hotel.prix) / hotel.oldPrix) * 100)}%
+                    </span>
+                  )}
+
+                  <div className="hotels-card-price">
+                    {hotel.oldPrix && (
+                      <span className="hotels-card-price-old">{hotel.oldPrix}DH</span>
+                    )}
+                    <span className="hotels-card-price-new">{hotel.prix}DH</span>
+                    <span className="hotels-card-price-period">/nuit</span>
                   </div>
                 </div>
-                <div className="service-hotel-location">
-                  <MapPin size={14} /> {hotel.location}
+
+                {/* Content */}
+                <div className="hotels-card-content">
+                  <div className="hotels-card-location">
+                    <MapPin className="w-4 h-4" />
+                    <span>{hotel.location}</span>
+                  </div>
+
+                  <h3 className="hotels-card-title">{hotel.name}</h3>
+
+                  {hotel.rating && (
+                    <div className="hotels-card-rating">
+                      <div className="hotels-card-stars">
+                        {renderStars(parseFloat(hotel.rating))}
+                      </div>
+                      <span className="hotels-card-reviews">
+                        ({hotel.reviews || 0} avis)
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="hotels-card-amenities">
+                    {hotel.amenities?.slice(0, 4).map((amenity, i) => (
+                      <span key={i} className="hotels-card-amenity">
+                        {getAmenityIcon(amenity)}
+                        {amenity}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="hotels-card-footer">
+                    <div className="hotels-card-buttons">
+                      <Link to={`/hotels/${hotel.id}`} className="hotels-card-btn details">
+                        <Eye size={16} />
+                        Détails
+                      </Link>
+                      <Link to={`/reserver/hotel/${hotel.id}`} className="hotels-card-btn book">
+                        <CreditCard size={16} />
+                        Réserver
+                      </Link>
+                    </div>
+                  </div>
                 </div>
-                <div className="service-hotel-amenities">
-                  {hotel.amenities.map((amenity, i) => (
-                    <span key={i} className="service-hotel-amenity">
-                      {amenitiesIcons[amenity] || <Hotel size={14} />}
-                      {amenity}
-                    </span>
-                  ))}
-                </div>
-                <Link to={`/services/hotels/${hotel.id}`} className="service-hotel-btn">
-                  Réserver
-                </Link>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Features Section */}
+      <div className="hotels-features">
+        <div className="hotels-features-header">
+          <h2>Pourquoi réserver avec nous ?</h2>
+        </div>
+        <div className="hotels-features-grid">
+          {features.map((feature, index) => (
+            <div key={index} className="hotels-feature-card">
+              <div className="hotels-feature-icon">{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.desc}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="service-cta">
+      {/* CTA Section */}
+      <div className="hotels-cta">
         <h3>Offre spéciale séjour longue durée ?</h3>
         <p>Contactez-nous pour des tarifs préférentiels</p>
-        <Link to="/contact" className="service-cta-btn">Nous contacter</Link>
+        <Link to="/contact" className="hotels-cta-btn">
+          Nous contacter
+          <ArrowRight size={18} />
+        </Link>
       </div>
     </div>
   );

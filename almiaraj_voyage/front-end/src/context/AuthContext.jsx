@@ -1,3 +1,4 @@
+// AuthContext.jsx
 import AuthApi from "@/services/Api/AuthApi";
 import { createContext, useContext, useState, useEffect } from "react";
 
@@ -5,39 +6,81 @@ const stateContext = createContext({
   user: null,
   authenticated: false,
   destinations: [],
+  voyages: [],
+  hotels: [],
+  billets: [],
   setUser: () => {},
   logout: () => {},
   getDestination: () => {},
+  getVoyages: () => {},
+  getHotels: () => {},
+  getBillets: () => {},
+  getHajjOmras: () => {},
   setAuthenticated: () => {},
   login: (email, password) => {},
   register: (data) => {},
+  getDestinationServices: (id) => {},
+  getHotelDetails: (id) => {},
+  getBilletsDetails: (id) => {},
+  getVoyageDetails: (id) => {},
+  getHajjOmraDetails: (id) => {},
   loading: true,
+  initialLoading: true, // ✅ جديد
 });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [destinations, setDestination] = useState([]);
+  const [voyages, setVoyage] = useState([]);
+  const [hajjOmras, setHajjOmras] = useState([]);
+  const [billets, setBittets] = useState([]);
+  const [hotels, setHotels] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true); // ✅ جديد: لتحميل البيانات الأولية
 
+  // جلب المستخدم أولاً
   useEffect(() => {
-    AuthApi.getUser()
-      .then(({ data }) => {
+    const fetchUser = async () => {
+      try {
+        const { data } = await AuthApi.getUser();
         if (data) {
           setUser(data);
           setAuthenticated(true);
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         if (error.response?.status === 401) {
           setAuthenticated(false);
           setUser(null);
         }
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchUser();
   }, []);
+
+  // ✅ بعد ما يجيب المستخدم، جلب كل البيانات
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (loading) return; // استنى ما يجيب المستخدم
+
+      setInitialLoading(true);
+
+      // جلب جميع البيانات بالتوازي
+      const promises = [
+        getDestination(),
+        getVoyages(),
+        getHotels(),
+      ];
+
+      await Promise.all(promises);
+
+      setInitialLoading(false);
+    };
+
+    fetchAllData();
+  }, [loading]);
 
   const login = async (email, password) => {
     try {
@@ -61,8 +104,11 @@ export function AuthProvider({ children }) {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.register(data);
 
-      if (response.status === 200 || response.status === 201 || response.status === 204) {
-
+      if (
+        response.status === 200 ||
+        response.status === 201 ||
+        response.status === 204
+      ) {
         const userResponse = await AuthApi.getUser();
         setUser(userResponse.data);
         setAuthenticated(true);
@@ -73,18 +119,116 @@ export function AuthProvider({ children }) {
       throw error;
     }
   };
+
   const getDestination = async () => {
     try {
       const response = await AuthApi.getDestination();
-
-      if (response.status === 200 || response.status === 201 || response.status === 204) {
+      if (response.status === 200 && response.data?.destinations) {
         setDestination(response.data.destinations);
-
       }
       return response;
     } catch (error) {
       console.error("Recuperation error:", error);
       throw error;
+    }
+  };
+
+  const getVoyages = async () => {
+    try {
+      const response = await AuthApi.getVoyages();
+      if (response.status === 200 && response.data) {
+        setVoyage(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error("Recuperation error:", error);
+      throw error;
+    }
+  };
+
+  const getHajjOmras = async () => {
+    try {
+      const response = await AuthApi.getOmraHajj();
+      if (response.status === 200 && response.data) {
+        setHajjOmras(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error("Recuperation error:", error);
+      throw error;
+    }
+  };
+
+  const getBillets = async () => {
+    try {
+      const response = await AuthApi.getBillets();
+      if (response.status === 200 && response.data) {
+        setBittets(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error("Recuperation error:", error);
+      throw error;
+    }
+  };
+
+  const getHotels = async () => {
+    try {
+      const response = await AuthApi.getHotels();
+      if (response.status === 200 && response.data) {
+        setHotels(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error("Recuperation error:", error);
+      throw error;
+    }
+  };
+
+  const getDestinationServices = async (id) => {
+    try {
+      console.log("Fetching services for destination:", id);
+      const response = await AuthApi.getDestinationServices(id);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      return null;
+    }
+  };
+
+  const getHotelDetails = async (id) => {
+    try {
+      const response = await AuthApi.getHotelDetails(id);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getHajjOmraDetails = async (id) => {
+    try {
+      const response = await AuthApi.getOmraHajjDetails(id);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getBilletsDetails = async (id) => {
+    try {
+      const response = await AuthApi.getBilletsDetails(id);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const getVoyageDetails = async (id) => {
+    try {
+      const response = await AuthApi.getVoyageDetails(id);
+      return response.data;
+    } catch (error) {
+      return null;
     }
   };
 
@@ -96,6 +240,9 @@ export function AuthProvider({ children }) {
     } finally {
       setAuthenticated(false);
       setUser(null);
+      setDestination([]);
+      setVoyage([]);
+      setHotels([]);
     }
   };
 
@@ -109,9 +256,23 @@ export function AuthProvider({ children }) {
         setAuthenticated,
         logout,
         register,
-        loading,
+        loading, // لجلب المستخدم فقط
+        initialLoading, // ✅ لجلب كل البيانات الأولية
         getDestination,
-        destinations
+        destinations,
+        getVoyages,
+        voyages,
+        hotels,
+        billets,
+        hajjOmras,
+        getHotels,
+        getBillets,
+        getDestinationServices,
+        getVoyageDetails,
+        getHotelDetails,
+        getBilletsDetails,
+        getHajjOmraDetails,
+        getHajjOmras,
       }}
     >
       {children}

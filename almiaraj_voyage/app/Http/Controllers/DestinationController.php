@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Destination;
 use App\Http\Controllers\Controller;
+use App\Models\Service;
 use Illuminate\Http\Request;
 
 class DestinationController extends Controller
@@ -15,13 +16,41 @@ class DestinationController extends Controller
     {
         $dest = Destination::all();
         return response()->json([
-            'destinations'=>$dest
-        ],200);
+            'destinations' => $dest
+        ], 200);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+
+    public function getServices($id)
+    {
+        try {
+            $destination = Destination::find($id);
+
+            if (!$destination) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Destination not found'
+                ], 404);
+            }
+
+            $hotels = $destination->hotels()->with('service')->get();
+            $voyages = $destination->voyages()->with('service')->get();
+
+            return response()->json([
+                'success' => true,
+                'destination' => $destination,
+                'offres' => [
+                    'hotels' => $hotels,
+                    'voyages' => $voyages
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function create()
     {
         //

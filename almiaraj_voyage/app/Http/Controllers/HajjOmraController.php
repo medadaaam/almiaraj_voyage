@@ -10,6 +10,30 @@ use Illuminate\Support\Facades\DB;
 
 class HajjOmraController extends Controller
 {
+
+    public function index()
+{
+    $items = HajjOmra::with('service')->get();
+
+    $data = $items->map(function ($h) {
+        return [
+            'id' => $h->id,
+            'title' => $h->service->nomServ,
+            'depart' => $h->dateDepartHO,
+            'retour' => $h->dateRetourHO,
+            'duration' => $h->duree . ' jours',
+            'price' => $h->service->prix,
+            'oldPrice' => $h->service->oldPrix,
+            'groupSize' => $h->typeChambre,
+            'hotel' => $h->hotel,
+            'transport' => $h->transport,
+            'meals' => $h->meals,
+        ];
+    });
+
+    return response()->json($data);
+}
+
     public function store(Request $request)
     {
         try {
@@ -61,5 +85,11 @@ class HajjOmraController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+        public function show($id) {
+        $hajjOmra = HajjOmra::with('service')->findOrFail($id);
+        return response()->json($hajjOmra);
+
     }
 }

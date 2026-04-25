@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('hotels', function (Blueprint $table) {
-            $table->date('dateFinH')->nullable()->after('villeHotel');
+        Schema::table('hajj_omras', function (Blueprint $table) {
+            $table->string('meals',255)->nullable()->after('typeChambre');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('hotels', function (Blueprint $table) {
-            $table->dropColumn('dateFinH');
+        Schema::table('hajj_omras', function (Blueprint $table) {
+            $table->dropColumn('meals');
         });
     }
 };

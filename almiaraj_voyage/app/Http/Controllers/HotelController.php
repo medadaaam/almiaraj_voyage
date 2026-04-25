@@ -4,11 +4,34 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\HajjOmra;
+use App\Models\Hotel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class HotelController extends Controller
 {
+
+    public function index()
+    {
+        $hotels = Hotel::with(['service', 'destination'])->get();
+
+        $data = $hotels->map(function ($h) {
+            return [
+                'id' => $h->id,
+                'name' => $h->service->nomServ,
+                'location' => $h->villeHotel . ', ' . ($h->destination->pays ?? ''),
+                'image' => $h->service->image,
+                'prix' => $h->service->prix,
+                'oldPrix' => $h->service->oldPrix,
+                'rating' => $h->service->rating,
+                'enVedette' => $h->service->enVedette,
+                'amenities' => explode(',', $h->amenities),
+            ];
+        });
+
+        return response()->json($data);
+    }
+
     public function store(Request $request)
     {
         try {
@@ -67,7 +90,6 @@ class HotelController extends Controller
                     'hajjOmra' => $hajjOmra
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -77,5 +99,11 @@ class HotelController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function show($id)
+    {
+        $hotel = Hotel::with(['service','destination'])->findOrFail($id);
+        return response()->json($hotel);
     }
 }

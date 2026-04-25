@@ -1,99 +1,14 @@
-import { MapPin, Star, Clock, Users, Calendar, ArrowRight } from "lucide-react";
+import { MapPin, Star, Clock, Users, Calendar, ArrowRight, Eye, CreditCard } from "lucide-react";
 import "./styles/featuredTrips.css";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 
 export default function FeaturedTrips() {
-  const trips = [
-    {
-      id: 1,
-      name: "Malaisie - 9 nuits pour 2 personnes",
-      destination: "Malaisie",
-      country: "Asie",
-      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-      price: 2500,
-      oldPrice: 3200,
-      rating: 4.9,
-      reviews: 234,
-      duration: "9 nuits",
-      groupSize: "2 personnes",
-      featured: true,
-      icon: "🏝️"
-    },
-    {
-      id: 2,
-      name: "Istanbul - Séjour 7 nuits",
-      destination: "Istanbul",
-      country: "Turquie",
-      image: "https://images.pexels.com/photos/417344/pexels-photo-417344.jpeg",
-      price: 1700,
-      oldPrice: 2200,
-      rating: 4.8,
-      reviews: 189,
-      duration: "7 nuits",
-      groupSize: "2 personnes",
-      featured: true,
-      icon: "🕌"
-    },
-    {
-      id: 3,
-      name: "Marrakech - Escapade 5 nuits",
-      destination: "Marrakech",
-      country: "Maroc",
-      image: "https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg",
-      price: 890,
-      oldPrice: 1200,
-      rating: 4.7,
-      reviews: 156,
-      duration: "5 nuits",
-      groupSize: "2 personnes",
-      featured: false,
-      icon: "🏜️"
-    },
-    {
-      id: 4,
-      name: "Dubai - Luxe 4 nuits",
-      destination: "Dubai",
-      country: "Émirats",
-      image: "https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg",
-      price: 3200,
-      oldPrice: 4500,
-      rating: 4.9,
-      reviews: 312,
-      duration: "4 nuits",
-      groupSize: "2 personnes",
-      featured: true,
-      icon: "🏙️"
-    },
-    {
-      id: 5,
-      name: "Casablanca - Découverte 3 nuits",
-      destination: "Casablanca",
-      country: "Maroc",
-      image: "https://images.pexels.com/photos/189349/pexels-photo-189349.jpeg",
-      price: 650,
-      oldPrice: 850,
-      rating: 4.6,
-      reviews: 98,
-      duration: "3 nuits",
-      groupSize: "2 personnes",
-      featured: false,
-      icon: "🌊"
-    },
-    {
-      id: 6,
-      name: "Paris - Romance 5 nuits",
-      destination: "Paris",
-      country: "France",
-      image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg",
-      price: 2100,
-      oldPrice: 2800,
-      rating: 4.8,
-      reviews: 267,
-      duration: "5 nuits",
-      groupSize: "2 personnes",
-      featured: true,
-      icon: "🗼"
-    }
-  ];
+  const { voyages, getVoyages } = useAuth();
+  useEffect(() => {
+    getVoyages();
+  }, []);
 
   const renderStars = (rating) => {
     const stars = [];
@@ -101,14 +16,14 @@ export default function FeaturedTrips() {
     const hasHalfStar = rating % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={i} className="w-4 h-4 fill-[#fb923c] text-[#fb923c]" />);
+      stars.push(<Star key={i} className="star-filled" />);
     }
     if (hasHalfStar) {
-      stars.push(<Star key="half" className="w-4 h-4 fill-[#fb923c] text-[#fb923c] opacity-50" />);
+      stars.push(<Star key="half" className="star-filled-half" />);
     }
     const emptyStars = 5 - stars.length;
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />);
+      stars.push(<Star key={`empty-${i}`} className="star-empty" />);
     }
     return stars;
   };
@@ -116,7 +31,6 @@ export default function FeaturedTrips() {
   return (
     <section className="featured-trips">
       <div className="featured-trips-container">
-
         {/* Header */}
         <div className="featured-trips-header">
           <span className="featured-badge">Voyages en vedette</span>
@@ -130,12 +44,11 @@ export default function FeaturedTrips() {
 
         {/* Trips Grid */}
         <div className="featured-grid">
-          {trips.slice(0, 3).map((trip) => (
+          {voyages.slice(0, 5).map((trip) => (
             <div key={trip.id} className="trip-card">
-
               {/* Image */}
               <div className="trip-image">
-                <img src={trip.image} alt={trip.name} />
+                <img src={trip.image} alt={trip.destination} />
                 <div className="trip-overlay"></div>
 
                 {/* Featured Badge */}
@@ -146,11 +59,20 @@ export default function FeaturedTrips() {
                   </span>
                 )}
 
+                {/* Discount Badge */}
+                {trip.oldPrix && trip.oldPrix > trip.prix && (
+                  <span className="trip-discount">
+                    -{Math.round(((trip.oldPrix - trip.prix) / trip.oldPrix) * 100)}%
+                  </span>
+                )}
+
                 {/* Price Tag */}
                 <div className="trip-price-tag">
-                  <span className="trip-price-old">{trip.oldPrice}€</span>
-                  <span className="trip-price-new">{trip.price}€</span>
-                  <span className="trip-price-period">/personne</span>
+                  {trip.oldPrix && (
+                    <span className="trip-price-old">{trip.oldPrix}DH</span>
+                  )}
+                  <span className="trip-price-new">{trip.prix}DH</span>
+                  <span className="trip-price-period">/pers</span>
                 </div>
               </div>
 
@@ -159,27 +81,29 @@ export default function FeaturedTrips() {
                 {/* Destination */}
                 <div className="trip-destination">
                   <MapPin className="w-4 h-4" />
-                  <span>{trip.destination}, {trip.country}</span>
+                  <span>{trip.destination}, {trip.pays}</span>
                 </div>
 
                 {/* Title */}
-                <h3 className="trip-title">{trip.name}</h3>
+                <h3 className="trip-title">{trip.nomServ}</h3>
 
                 {/* Rating */}
-                {/* <div className="trip-rating">
-                  <div className="trip-stars">{renderStars(trip.rating)}</div>
-                  <span className="trip-reviews">({trip.reviews} avis)</span>
-                </div> */}
+                {/* {trip.rating && (
+                  <div className="trip-rating">
+                    <div className="trip-stars">{renderStars(trip.rating)}</div>
+                    <span className="trip-reviews">({trip.reviews || 0} avis)</span>
+                  </div>
+                )} */}
 
                 {/* Details */}
                 <div className="trip-details">
                   <div className="trip-detail">
                     <Clock className="w-4 h-4" />
-                    <span>{trip.duration}</span>
+                    <span>{trip.duration || "7 nuits"}</span>
                   </div>
                   <div className="trip-detail">
                     <Users className="w-4 h-4" />
-                    <span>{trip.groupSize}</span>
+                    <span>{trip.groupSize || "2 personnes"}</span>
                   </div>
                   <div className="trip-detail">
                     <Calendar className="w-4 h-4" />
@@ -187,11 +111,17 @@ export default function FeaturedTrips() {
                   </div>
                 </div>
 
-                {/* Button */}
-                <a href={`/trips/${trip.id}`} className="trip-button">
-                  Voir les détails
-                  <ArrowRight className="w-4 h-4" />
-                </a>
+                {/* Buttons Group */}
+                <div className="trip-buttons">
+                  <a href={`/voyages/${trip.id}`} className="trip-btn-details">
+                    <Eye className="w-4 h-4" />
+                    Détails
+                  </a>
+                  <Link to={`/reserver/voyage/${trip.id}`} className="trip-btn-book">
+                    <CreditCard className="w-4 h-4" />
+                    Réserver
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
@@ -204,7 +134,6 @@ export default function FeaturedTrips() {
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>
-
       </div>
     </section>
   );

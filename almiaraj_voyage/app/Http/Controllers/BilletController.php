@@ -10,11 +10,32 @@ use Illuminate\Support\Facades\DB;
 
 class BilletController extends Controller
 {
+    public function index()
+    {
+        $billets = Billet::with('service')->get();
+
+        $data = $billets->map(function ($b) {
+            return [
+                'id' => $b->id,
+                'name' => $b->service->nomServ,
+                'from' => $b->villeDepartBi,
+                'to' => $b->destinationBi,
+                'departure' => $b->dateDepartBi,
+                'return' => $b->dateRetourBi,
+                'type' => $b->typeBi,
+                'price' => $b->service->prix,
+                'image' => $b->service->image,
+                'rating' => $b->service->rating,
+            ];
+        });
+        return response()->json($data);
+    }
+
     public function store(Request $request)
     {
         try {
             DB::beginTransaction();
-            
+
             // 1. Create service first (this gets an auto-increment ID)
             $service = Service::create([
                 'nomServ' => $request->nomServ,
@@ -40,7 +61,7 @@ class BilletController extends Controller
                 $service->image = $imagePath;
                 $service->save();
             }
-            
+
             DB::commit();
 
             return response()->json([
@@ -51,10 +72,9 @@ class BilletController extends Controller
                     'billet' => $billet
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create billet',
@@ -62,4 +82,11 @@ class BilletController extends Controller
             ], 500);
         }
     }
+
+    public function show($id) {
+        $billet = Billet::with('service')->findOrFail($id);
+        return response()->json($billet);
+
+    }
+
 }

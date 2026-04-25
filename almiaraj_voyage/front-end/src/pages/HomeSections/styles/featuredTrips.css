@@ -137,6 +137,21 @@
   z-index: 2;
 }
 
+/* Discount Badge */
+.trip-discount {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 30px;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
 /* Price Tag */
 .trip-price-tag {
   position: absolute;
@@ -216,6 +231,27 @@
   gap: 2px;
 }
 
+.star-filled {
+  width: 14px;
+  height: 14px;
+  fill: #fbbf24;
+  color: #fbbf24;
+}
+
+.star-filled-half {
+  width: 14px;
+  height: 14px;
+  fill: #fbbf24;
+  color: #fbbf24;
+  opacity: 0.5;
+}
+
+.star-empty {
+  width: 14px;
+  height: 14px;
+  color: #e2e8f0;
+}
+
 .trip-reviews {
   font-size: 0.7rem;
   color: #94a3b8;
@@ -242,13 +278,19 @@
   color: #94a3b8;
 }
 
-/* Button */
-.trip-button {
+/* ================= BUTTONS GROUP ================= */
+.trip-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+/* Details Button */
+.trip-btn-details {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
   padding: 12px;
   background: #f1f5f9;
   color: #475569;
@@ -259,16 +301,48 @@
   transition: all 0.3s ease;
 }
 
-.trip-button svg {
+.trip-btn-details svg {
   transition: transform 0.3s ease;
 }
 
-.trip-button:hover {
-  background: #2f6f85;
-  color: white;
+.trip-btn-details:hover {
+  background: #e2e8f0;
+  color: #1e293b;
 }
 
-.trip-button:hover svg {
+.trip-btn-details:hover svg {
+  transform: translateX(-2px);
+}
+
+/* Book Button */
+.trip-btn-book {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: linear-gradient(135deg, #2f6f85, #1e5a6e);
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 40px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.trip-btn-book svg {
+  transition: transform 0.3s ease;
+}
+
+.trip-btn-book:hover {
+  background: linear-gradient(135deg, #1e5a6e, #154a5a);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(47, 111, 133, 0.3);
+}
+
+.trip-btn-book:hover svg {
   transform: translateX(4px);
 }
 
@@ -353,6 +427,16 @@
 
   .trip-title {
     font-size: 1rem;
+  }
+  
+  .trip-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .trip-btn-details,
+  .trip-btn-book {
+    width: 100%;
   }
 }
 

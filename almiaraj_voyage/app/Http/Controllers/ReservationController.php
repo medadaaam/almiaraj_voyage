@@ -6,6 +6,7 @@ use App\Models\Reservation;
 use App\Models\Client;
 use App\Models\Passager;
 use App\Http\Controllers\Controller;
+use App\Models\Hotel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -13,13 +14,17 @@ use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
 {
+    public function getHotel($id) {
+        $hotel= Hotel::findOrFails($id);
+        
+    }
     public function store(Request $request)
     {
         // Log the incoming request for debugging
         Log::info('Reservation request received', [
             'data' => $request->all()
         ]);
-        
+
         // Validate the request data
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
@@ -52,17 +57,17 @@ class ReservationController extends Controller
 
         try {
             DB::beginTransaction();
-            
+
             // Get validated data
             $validated = $validator->validated();
-            
+
             Log::info('Validation passed', ['validated' => $validated]);
-            
+
             // Create or get the client (client principal)
             $client = Client::where('email', $validated['client_principal']['email'])
                             ->orWhere('cin', $validated['client_principal']['cin'])
                             ->first();
-            
+
             if (!$client) {
                 // Create new client
                 $client = Client::create([
@@ -82,7 +87,7 @@ class ReservationController extends Controller
                 ]);
                 Log::info('Existing client updated', ['client_id' => $client->id]);
             }
-            
+
             // Create the reservation
             $reservationData = [
                 'nbPers' => $validated['reservation']['nombre_passagers'],
@@ -96,11 +101,11 @@ class ReservationController extends Controller
                 'service_id' => $validated['service_id'],
                 'client_id' => $client->id
             ];
-            
+
             Log::info('Creating reservation with data', $reservationData);
-            
+
             $reservation = Reservation::create($reservationData);
-            
+
             Log::info('Reservation created', ['reservation_id' => $reservation->id]);
 
             // Create all passengers (if any)
@@ -132,12 +137,12 @@ class ReservationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Reservation creation failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create reservation',

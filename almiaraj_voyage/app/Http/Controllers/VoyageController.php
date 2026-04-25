@@ -4,17 +4,43 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Voyage;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
 class VoyageController extends Controller
 {
+
+    public function index()
+    {
+        $voyages = Voyage::with(['service', 'destination'])->get();
+
+        $data = $voyages->map(function ($v) {
+            return [
+                'id' => $v->id,
+                'nomServ' => $v->service->nomServ,
+                'destination' => $v->destination->nom,
+                'pays' => $v->destination->pays ?? null,
+                'image' => $v->service->image,
+                'prix' => $v->service->prix,
+                'oldPrix' => $v->service->oldPrix ?? null,
+                'rating' => $v->service->rating ?? 0,
+                'duration' => \Carbon\Carbon::parse($v->dateDepartV)
+                    ->diffInDays(\Carbon\Carbon::parse($v->dateRetourV)) . ' nuits',
+                'groupSize' => $v->groupSize ?? null,
+                'featured' => $v->service->enVedette ?? false,
+            ];
+        });
+
+        return response()->json($data);
+    }
+
+
     public function store(Request $request)
     {
         try {
             DB::beginTransaction();
-            
+
             // 1. Create service first (this gets an auto-increment ID)
             $service = Service::create([
                 'nomServ' => $request->nomServ,
@@ -39,7 +65,7 @@ class VoyageController extends Controller
                 $service->image = $imagePath;
                 $service->save();
             }
-            
+
             DB::commit();
 
             return response()->json([
@@ -50,15 +76,20 @@ class VoyageController extends Controller
                     'voyage' => $voyage
                 ]
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create voyage',
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function show($id)
+    {
+        $voyage = Voyage::with(['service','destination'])->findOrFail($id);
+        return response()->json($voyage);
     }
 }

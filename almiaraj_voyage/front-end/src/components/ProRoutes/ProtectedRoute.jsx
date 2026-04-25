@@ -4,9 +4,9 @@ import { LOGIN_ROUTE } from "@/router";
 import LoadingPage from "@/pages/LoadingPage";
 
 export default function ProtectedRoute({ children, role }) {
-  const { authenticated, loading, user } = useAuth();
+  const { authenticated, initialLoading, user } = useAuth(); // ✅ استخدم initialLoading
 
-  if (loading) return <LoadingPage />;
+  if (initialLoading) return <LoadingPage />;
 
   if (!authenticated) {
     return <Navigate to={LOGIN_ROUTE} />;

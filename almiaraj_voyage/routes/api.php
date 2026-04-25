@@ -26,7 +26,22 @@ Route::post('/hotels', [HotelController::class, 'store']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
+
+
 Route::get('/destinations', [DestinationController::class, 'index']);
+Route::get('/destinations/{id}/services', [DestinationController::class, 'getServices']);
+
+
+Route::get('/billets', [BilletController::class, 'index']);
+Route::get('/omraHajj', [HajjOmraController::class, 'index']);
+Route::get('/voyages', [VoyageController::class, 'index']);
+Route::get('/hotels', [HotelController::class, 'index']);
+
+Route::get('/omraHajj/{id}', [HajjOmraController::class, 'show']);
+Route::get('/billets/{id}', [BilletController::class, 'show']);
+Route::get('/hotels/{id}', [HotelController::class, 'show']);
+Route::get('/voyages/{id}', [VoyageController::class, 'show']);
+
 
 Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 

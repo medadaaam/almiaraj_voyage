@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
         Schema::table('voyages', function (Blueprint $table) {
-            $table->foreignId('destination_id')->constrained('destination')->onDelete('cascade');
+            $table->foreignId('destination_id')->constrained('destinations')->onDelete('cascade');
         });
     }
 

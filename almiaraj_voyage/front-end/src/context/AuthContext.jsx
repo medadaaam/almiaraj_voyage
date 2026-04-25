@@ -16,7 +16,7 @@ const stateContext = createContext({
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [destinations, setDestination] = useState([]);
+  const [destinations, setDestinations] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -62,7 +62,6 @@ export function AuthProvider({ children }) {
       const response = await AuthApi.register(data);
 
       if (response.status === 200 || response.status === 201 || response.status === 204) {
-
         const userResponse = await AuthApi.getUser();
         setUser(userResponse.data);
         setAuthenticated(true);
@@ -73,13 +72,14 @@ export function AuthProvider({ children }) {
       throw error;
     }
   };
+  
   const getDestination = async () => {
     try {
       const response = await AuthApi.getDestination();
-
       if (response.status === 200 || response.status === 201 || response.status === 204) {
-        setDestination(response.data.destinations);
-
+        // Handle both possible response structures
+        const destinationsData = response.data.destinations || response.data;
+        setDestinations(Array.isArray(destinationsData) ? destinationsData : []);
       }
       return response;
     } catch (error) {

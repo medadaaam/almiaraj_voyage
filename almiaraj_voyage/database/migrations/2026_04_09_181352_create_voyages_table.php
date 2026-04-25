@@ -9,10 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
-        Schema::create('voyages', function (Blueprint $table) {
+        Schema::create('voyages', function (Blueprint $table){
             $table->unsignedBigInteger('id')->primary();
             $table->unsignedBigInteger('destination_id')->nullable();
-            $table->string('destinationV')->nullable();
             $table->date('dateDepartV');
             $table->string('duree')->nullable();
             $table->date('dateRetourV');

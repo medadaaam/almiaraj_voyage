@@ -11,12 +11,10 @@ class DestinationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+      public function index()
     {
-        $dest = Destination::all();
-        return response()->json([
-            'destinations'=>$dest
-        ],200);
+        $destinations = Destination::all();
+        return response()->json($destinations); // Return array directly, not wrapped in 'destinations' key
     }
 
     /**

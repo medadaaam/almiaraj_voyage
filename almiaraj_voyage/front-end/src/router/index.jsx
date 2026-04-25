@@ -30,6 +30,8 @@ import AdminVoyages from "@/pages/adminDashboard/voyage";
 import AdminHotels from "@/pages/adminDashboard/hotel";
 import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
 import AdminBillets from "@/pages/adminDashboard/billiet";
+import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
+import VoyageDetails from "@/pages/adminDashboard/voyage/details";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -81,10 +83,10 @@ export const route = createBrowserRouter([
       {
         path: "/services/voyages",
         element: <CircuitsTouristiques />,
-      },{
+      }, {
         path: "/services/hotels",
         element: <HotelsSejours />,
-      },{
+      }, {
         path: "/services/flights",
         element: <VolsBillets />,
       },
@@ -135,28 +137,41 @@ export const route = createBrowserRouter([
         element: <AdminVoyages />,
       },
       {
-        path: "/admin/hotels",
-        element: <AdminHotels />,
-      },
-      {
-        path: "/admin/hajj-omra",
-        element: <AdminHajjOmra />,
-      },
-      {
-        path: "/admin/billets",
-        element: <AdminBillets />,
-      },
-      {
         path: "/admin/ajouterVoyage",
         element: <AjouterVoyage />,
+      },
+      {
+        path:"/admin/editVoyage/:id",
+        element: <ModifierVoyage/>  
+      },
+      {
+        path:"/admin/showVoyage/:id",
+        element: <VoyageDetails/>  
+      },
+
+      {
+        path: "/admin/hotels",
+        element: <AdminHotels />,
       },
       {
         path: "/admin/ajouterHotel",
         element: <AjouterHotel />,
       },
+
+
+      {
+        path: "/admin/hajj-omra",
+        element: <AdminHajjOmra />,
+      },
       {
         path: "/admin/ajouterHajj-omra",
         element: <AjouterHajjOmra />,
+      },
+
+
+      {
+        path: "/admin/billets",
+        element: <AdminBillets />,
       },
       {
         path: "/admin/ajouterBillets",

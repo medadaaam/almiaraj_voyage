@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
-import { Search, MapPin, Globe, X, Calendar, Clock } from "lucide-react";
+import { Search, MapPin, Globe, X, Calendar, Clock, Upload, Trash2, Plus } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AjouterVoyage() {
+  const { getDestination, destinations } = useAuth();
+  
+  useEffect(() => {
+    getDestination();
+  }, []);
+  
   const [form, setForm] = useState({
     nomServ: "",
     description: "",
@@ -19,24 +26,17 @@ export default function AjouterVoyage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   
-  // States pour la sélection de destination
-  const [destinations, setDestinations] = useState([]);
+  // City selection states
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loadingDestinations, setLoadingDestinations] = useState(false);
-  const [selectedDestination, setSelectedDestination] = useState(null);
+  const [selectedCities, setSelectedCities] = useState([]); // Array of selected city objects
+  const [currentDestination, setCurrentDestination] = useState(null);
   
-  // Calcul automatique de la durée
+  // Duration calculation
   const [calculatedDuree, setCalculatedDuree] = useState("");
-
   const today = new Date().toISOString().split('T')[0];
 
-  // Charger toutes les destinations au montage
-  useEffect(() => {
-    fetchAllDestinations();
-  }, []);
-
-  // Calculer la durée quand les dates changent
+  // Calculate duration
   useEffect(() => {
     if (form.dateDepartV && form.dateRetourV) {
       const depart = new Date(form.dateDepartV);
@@ -54,119 +54,155 @@ export default function AjouterVoyage() {
     }
   }, [form.dateDepartV, form.dateRetourV]);
 
-  const fetchAllDestinations = async () => {
-    try {
-      setLoadingDestinations(true);
-      const response = await axiosClient.get('/destinations');
-      console.log('Destinations chargées:', response.data);
-      setDestinations(response.data);
-    } catch (error) {
-      console.error('Error fetching destinations:', error);
-      setError('Erreur lors du chargement des destinations');
-    } finally {
-      setLoadingDestinations(false);
+  // Get all cities from all destinations
+  const getAllCities = () => {
+    const cities = [];
+    if (Array.isArray(destinations)) {
+      destinations.forEach(dest => {
+        if (Array.isArray(dest.villes)) {
+          dest.villes.forEach(ville => {
+            cities.push({
+              id: `${dest.id}_${ville}`,
+              cityName: ville,
+              country: dest.pays,
+              continent: dest.continente,
+              destinationId: dest.id,
+              destination: dest
+            });
+          });
+        }
+      });
     }
+    return cities;
   };
 
-  const searchDestinations = async (term) => {
-    if (term.length === 0) {
-      fetchAllDestinations();
-      return;
+  // Filter cities based on search term (excluding already selected ones)
+  const filteredCities = getAllCities().filter(city => 
+    city.cityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    city.country.toLowerCase().includes(searchTerm.toLowerCase())
+  ).filter(city => 
+    !selectedCities.some(selected => 
+      selected.cityName === city.cityName && selected.destinationId === city.destinationId
+    )
+  );
+
+  // Add city to selection
+  const addCity = (city) => {
+    const newSelectedCities = [...selectedCities, city];
+    setSelectedCities(newSelectedCities);
+    
+    // Auto-set destination_id from the first city (all cities should be from same country)
+    if (!currentDestination && city.destinationId) {
+      setCurrentDestination(city.destination);
+      setForm({
+        ...form,
+        destination_id: city.destinationId
+      });
     }
     
-    try {
-      const response = await axiosClient.get(`/destinations/search?q=${term}`);
-      setDestinations(response.data);
-      setShowDropdown(true);
-    } catch (error) {
-      console.error('Error searching destinations:', error);
-    }
-  };
-
-  const handleDestinationSearch = (e) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    
-    if (term.length > 0) {
-      searchDestinations(term);
-    } else {
-      fetchAllDestinations();
-      setShowDropdown(false);
-    }
-  };
-
-  const handleSelectDestination = (destination) => {
-    setSelectedDestination(destination);
-    setForm({
-      ...form,
-      destination_id: destination.id
-    });
-    setSearchTerm(`${destination.nom}, ${destination.pays}`);
+    setSearchTerm("");
     setShowDropdown(false);
   };
 
-  const clearDestination = () => {
-    setSelectedDestination(null);
+  // Remove city from selection
+  const removeCity = (cityToRemove) => {
+    const newSelectedCities = selectedCities.filter(
+      city => !(city.cityName === cityToRemove.cityName && city.destinationId === cityToRemove.destinationId)
+    );
+    setSelectedCities(newSelectedCities);
+    
+    // If no cities left, clear destination
+    if (newSelectedCities.length === 0) {
+      setCurrentDestination(null);
+      setForm({
+        ...form,
+        destination_id: ""
+      });
+    }
+  };
+
+  // Clear all cities
+  const clearAllCities = () => {
+    setSelectedCities([]);
+    setCurrentDestination(null);
     setForm({
       ...form,
       destination_id: ""
     });
     setSearchTerm("");
-    fetchAllDestinations();
   };
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  // Handle search
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    setShowDropdown(true);
+  };
 
-    if (name === "image") {
-      const file = files[0];
-      if (file) {
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-        if (validTypes.includes(file.type)) {
-          setForm({ ...form, image: file });
-          const previewUrl = URL.createObjectURL(file);
-          setImagePreview(previewUrl);
-        } else {
-          alert('Veuillez sélectionner une image valide (JPEG, PNG, JPG, GIF)');
-          e.target.value = '';
-        }
-      }
-    } else {
-      setForm({ ...form, [name]: value });
+  // Handle text inputs
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  // Image handling
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setForm({ ...form, image: file });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  const removeImage = () => {
+    setForm({ ...form, image: null });
+    setImagePreview(null);
+    const fileInput = document.getElementById('image-input');
+    if (fileInput) fileInput.value = '';
+  };
+
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
 
-    // Validation
-    if (parseFloat(form.prix) <= 0) {
-      setError("Le prix doit être supérieur à 0");
+    // Validations
+    if (!form.nomServ.trim()) {
+      setError("Veuillez entrer le nom du voyage");
       setIsSubmitting(false);
       return;
     }
 
-    if (!form.destination_id) {
-      setError("Veuillez sélectionner une destination");
+    if (!form.prix || parseFloat(form.prix) <= 0) {
+      setError("Veuillez entrer un prix valide");
       setIsSubmitting(false);
       return;
     }
 
-    const todayDate = new Date();
-    todayDate.setHours(0, 0, 0, 0);
-    const departDate = new Date(form.dateDepartV);
-    
-    if (departDate < todayDate) {
-      setError("La date de départ ne peut pas être dans le passé");
+    if (selectedCities.length === 0) {
+      setError("Veuillez sélectionner au moins une ville");
       setIsSubmitting(false);
       return;
     }
-    
-    const retourDate = new Date(form.dateRetourV);
-    if (retourDate <= departDate) {
-      setError("La date de retour doit être après la date de départ");
+
+    if (!form.dateDepartV) {
+      setError("Veuillez sélectionner une date de départ");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!form.dateRetourV) {
+      setError("Veuillez sélectionner une date de retour");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!form.programme.trim()) {
+      setError("Veuillez entrer le programme du voyage");
       setIsSubmitting(false);
       return;
     }
@@ -177,6 +213,11 @@ export default function AjouterVoyage() {
       formData.append('description', form.description || '');
       formData.append('prix', form.prix);
       formData.append('destination_id', form.destination_id);
+      
+      // Send selected cities as JSON array
+      const citiesArray = selectedCities.map(city => city.cityName);
+      formData.append('selected_cities', JSON.stringify(citiesArray));
+      
       formData.append('dateDepartV', form.dateDepartV);
       formData.append('dateRetourV', form.dateRetourV);
       formData.append('programme', form.programme);
@@ -188,37 +229,36 @@ export default function AjouterVoyage() {
       const response = await axiosClient.post('/voyages', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        }
+        },
       });
       
-      alert('Voyage ajouté avec succès!');
-      
-      // Reset form
-      setForm({
-        nomServ: "",
-        description: "",
-        prix: "",
-        destination_id: "",
-        dateDepartV: "",
-        dateRetourV: "",
-        programme: "",
-        image: null,
-      });
-      setImagePreview(null);
-      setSearchTerm("");
-      setSelectedDestination(null);
-      setCalculatedDuree("");
+      if (response.data.success) {
+        alert('Voyage ajouté avec succès!');
+        
+        // Reset form
+        setForm({
+          nomServ: "",
+          description: "",
+          prix: "",
+          destination_id: "",
+          dateDepartV: "",
+          dateRetourV: "",
+          programme: "",
+          image: null,
+        });
+        setSelectedCities([]);
+        setCurrentDestination(null);
+        setImagePreview(null);
+        setSearchTerm("");
+        setCalculatedDuree("");
+        
+        const fileInput = document.getElementById('image-input');
+        if (fileInput) fileInput.value = '';
+      }
       
     } catch (error) {
-      console.error('Error details:', error.response?.data);
-      
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError('Erreur lors de l\'ajout du voyage');
-      }
+      console.error('Error:', error.response?.data);
+      setError(error.response?.data?.message || "Erreur lors de l'ajout du voyage");
     } finally {
       setIsSubmitting(false);
     }
@@ -236,6 +276,7 @@ export default function AjouterVoyage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -248,6 +289,7 @@ export default function AjouterVoyage() {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                placeholder="Ex: Circuit Impérial du Maroc"
               />
             </div>
 
@@ -261,93 +303,115 @@ export default function AjouterVoyage() {
                 value={form.prix}
                 onChange={handleChange}
                 required
-                min="0.01"
-                step="0.01"
+                min="0"
+                step="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                placeholder="0"
               />
             </div>
           </div>
 
-          {/* Destination Selection avec recherche */}
+          {/* Multiple Cities Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Destination *
+              Villes à visiter * (Vous pouvez en sélectionner plusieurs)
             </label>
 
-            {/* Search Input */}
+            {/* Selected Cities Tags */}
+            {selectedCities.length > 0 && (
+              <div className="mb-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="text-sm font-medium text-gray-700 mb-2">Villes sélectionnées ({selectedCities.length}):</div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCities.map((city, index) => (
+                    <span
+                      key={`${city.destinationId}_${city.cityName}_${index}`}
+                      className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
+                    >
+                      <MapPin size={14} />
+                      {city.cityName}, {city.country}
+                      <button
+                        type="button"
+                        onClick={() => removeCity(city)}
+                        className="ml-1 text-green-700 hover:text-red-700"
+                      >
+                        <X size={14} />
+                      </button>
+                    </span>
+                  ))}
+                  {selectedCities.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={clearAllCities}
+                      className="text-red-500 hover:text-red-700 text-sm underline ml-2"
+                    >
+                      Tout effacer
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Search Input for Adding Cities */}
             <div className="relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
                   value={searchTerm}
-                  onChange={handleDestinationSearch}
+                  onChange={handleSearch}
                   onFocus={() => setShowDropdown(true)}
-                  placeholder="Rechercher une destination par ville ou pays..."
+                  placeholder="Rechercher une ville à ajouter (ex: Casablanca, Marrakech, Fès...)"
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
                 />
                 {searchTerm && (
                   <button
                     type="button"
-                    onClick={clearDestination}
+                    onClick={() => setSearchTerm("")}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X size={16} />
                   </button>
                 )}
               </div>
-
-              {/* Dropdown results */}
-              {showDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {loadingDestinations ? (
-                    <div className="p-4 text-center text-gray-500">
-                      Chargement...
-                    </div>
-                  ) : destinations.length > 0 ? (
-                    destinations.map((dest) => (
-                      <button
-                        key={dest.id}
-                        type="button"
-                        onClick={() => handleSelectDestination(dest)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100 transition-colors"
-                      >
+              
+              {/* Dropdown Results */}
+              {showDropdown && searchTerm && filteredCities.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredCities.map((city) => (
+                    <button
+                      key={city.id}
+                      type="button"
+                      onClick={() => addCity(city)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
                         <MapPin size={16} className="text-[#fb923c]" />
                         <div>
-                          <div className="font-medium">{dest.nom}</div>
-                          <div className="text-xs text-gray-500">{dest.pays}</div>
+                          <div className="font-medium">{city.cityName}</div>
+                          <div className="text-xs text-gray-500">
+                            {city.country} • {city.continent}
+                          </div>
                         </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      Aucune destination trouvée
-                    </div>
-                  )}
+                      </div>
+                      <Plus size={16} className="text-green-500" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {showDropdown && searchTerm && filteredCities.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg p-4 text-center text-gray-500">
+                  Aucune ville trouvée pour "{searchTerm}"
                 </div>
               )}
             </div>
 
-            {/* Selected destination display */}
-            {selectedDestination && (
-              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Globe size={16} className="text-green-600" />
-                  <span className="text-sm text-green-700">
-                    Destination sélectionnée: {selectedDestination.nom}, {selectedDestination.pays}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={clearDestination}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            )}
+            <div className="mt-2 text-xs text-blue-600">
+              💡 Astuce: Ajoutez les villes dans l'ordre de visite
+            </div>
           </div>
 
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -387,18 +451,17 @@ export default function AjouterVoyage() {
             </div>
           </div>
 
-          {/* Durée calculée automatiquement */}
+          {/* Duration Display */}
           {calculatedDuree && (
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="flex items-center gap-2">
-                <Clock size={18} className="text-blue-600" />
-                <span className="text-sm text-blue-700">
-                  Durée: <strong>{calculatedDuree}</strong>
-                </span>
-              </div>
+              <Clock size={18} className="inline mr-2 text-blue-600" />
+              <span className="text-sm text-blue-700">
+                Durée: <strong>{calculatedDuree}</strong>
+              </span>
             </div>
           )}
 
+          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description
@@ -409,9 +472,11 @@ export default function AjouterVoyage() {
               onChange={handleChange}
               rows="3"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+              placeholder="Une brève description du voyage..."
             />
           </div>
 
+          {/* Programme */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Programme / Itinéraire *
@@ -422,36 +487,59 @@ export default function AjouterVoyage() {
               onChange={handleChange}
               rows="6"
               required
-              placeholder="Jour 1: Arrivée à Casablanca...&#10;Jour 2: Visite de Rabat...&#10;Jour 3: ..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+              placeholder="Jour 1: Arrivée à Casablanca...&#10;Jour 2: Visite de Rabat...&#10;Jour 3: Excursion à Fès...&#10;Jour 4: ..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c] font-mono text-sm"
             />
           </div>
 
+          {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Image
             </label>
-            <input 
-              type="file" 
-              name="image" 
-              onChange={handleChange}
-              accept="image/jpeg,image/png,image/jpg,image/gif"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-            />
+            <div className="flex items-center gap-4">
+              <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md flex items-center gap-2">
+                <Upload size={18} />
+                <span>Choisir une image</span>
+                <input
+                  id="image-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              {imagePreview && (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                >
+                  <Trash2 size={18} />
+                  Supprimer
+                </button>
+              )}
+            </div>
+            
             {imagePreview && (
-              <div className="mt-2">
-                <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-md" />
+              <div className="mt-3">
+                <img src={imagePreview} alt="Preview" className="w-40 h-40 object-cover rounded-md border" />
               </div>
             )}
+            
+            <p className="text-xs text-gray-500 mt-2">
+              Formats supportés: JPG, PNG, GIF (max 2MB)
+            </p>
           </div>
           
+          {/* Buttons */}
           <div className="flex gap-4 pt-4">
-            <button 
+            <button
+              type="submit"
               className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" 
-              type="submit" 
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Ajout en cours..." : "Ajouter"}
+              {isSubmitting ? "Ajout en cours..." : "Ajouter le voyage"}
             </button>
             <Link 
               to="/admin" 

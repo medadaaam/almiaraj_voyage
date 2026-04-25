@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::table('hotels', function (Blueprint $table) {
-            $table->date('dateDebutH')->nullable()->after('villeHotel');
+            $table->foreignId('destination_id')->constrained('destinations')->onDelete('cascade');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('hotels', function (Blueprint $table) {
-            $table->dropColumn('dateDebutH');
+            $table->dropColumn('destination_id');
         });
     }
 };

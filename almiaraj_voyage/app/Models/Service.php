@@ -11,13 +11,8 @@ class Service extends Model
     public function reservations(){
         return $this->hasMany(Reservation::class);
     }
-<<<<<<< HEAD
-    public function hotels(){
-        return $this->hasMany(Hotel::class);
-=======
     public function hotel(){
         return $this->hasOne(Hotel::class,'id','id');
->>>>>>> f594d2924eb2c2d5913305f21e52f7ad58626dfa
     }
     public function voyage(){
         return $this->hasOne(Voyage::class,'id','id');

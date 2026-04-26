@@ -22,10 +22,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 });
 Route::post('/services', [ServiceController::class, 'store']);
-// Route::post('/hotels', [HotelController::class, 'store']);
-// Route::post('/voyages', [VoyageController::class, 'store']);
-Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
-Route::post('/billets', [BilletController::class, 'store']);
 
 Route::prefix('voyages')->group(function () {
     Route::get('/', [VoyageController::class, 'index']);
@@ -40,6 +36,20 @@ Route::prefix('hotels')->group(function () {
     Route::post('/', [HotelController::class, 'store']);
     Route::put('/{id}', [HotelController::class, 'update']);
     Route::delete('/{id}', [HotelController::class, 'destroy']);
+});
+Route::prefix('hajj-omras')->group(function () {
+    Route::get('/', [HajjOmraController::class, 'index']);
+    Route::get('/{id}', [HajjOmraController::class, 'show']);
+    Route::post('/', [HajjOmraController::class, 'store']);
+    Route::put('/{id}', [HajjOmraController::class, 'update']);
+    Route::delete('/{id}', [HajjOmraController::class, 'destroy']);
+});
+Route::prefix('billets')->group(function () {
+    Route::get('/', [BilletController::class, 'index']);
+    Route::get('/{id}', [BilletController::class, 'show']);
+    Route::post('/', [BilletController::class, 'store']);
+    Route::put('/{id}', [BilletController::class, 'update']);
+    Route::delete('/{id}', [BilletController::class, 'destroy']);
 });
 
 Route::get('/destinations', [DestinationController::class, 'index']);

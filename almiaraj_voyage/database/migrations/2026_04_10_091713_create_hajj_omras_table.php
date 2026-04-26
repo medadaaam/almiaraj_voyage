@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
         Schema::create('hajj_omras', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
-            $table->string('type');
-            $table->string('formule');
+            $table->enum('type', ['hajj', 'omra'])->default('omra');
+            $table->string('formule',100);
             $table->date('dateDepartHO');
             $table->date('dateRetourHO');
-            $table->integer('duree');
+            $table->integer('duree')->nullable();
             $table->string('typeChambre');
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->timestamps();

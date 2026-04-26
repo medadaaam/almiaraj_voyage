@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
 import { Search, MapPin, Globe, X, Upload, Trash2, Star, Wifi, Coffee, Car, Dumbbell, Utensils, Sparkles, Wind, PawPrint, Clock as ClockIcon, Sun, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AjouterHotel() {
   const { getDestination, destinations } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     getDestination();
@@ -216,6 +217,7 @@ export default function AjouterHotel() {
       
       if (response.data.success) {
         alert('Hôtel ajouté avec succès!');
+        navigate('/admin/hotels')
         
         setForm({
           nomServ: "",

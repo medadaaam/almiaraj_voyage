@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Billet;
+use App\Models\Destination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +15,7 @@ class BilletController extends Controller
 {
     public function index()
     {
-        $billets = Billet::with('service')
+        $billets = Billet::with(['service', 'destination'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -30,17 +31,24 @@ class BilletController extends Controller
             DB::beginTransaction();
 
             // Validation
-            $validated = $request->validate([
+            $rules = [
                 'nomServ' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'prix' => 'required|numeric|min:0',
-                'typeBi' => 'required|in:aller_simple,aller_retour,',
+                'typeBi' => 'required|in:aller_simple,aller_retour',
                 'villeDepartBi' => 'required|string|max:100',
-                'destinationBi' => 'required|string|max:100',
+                'destination_id' => 'required|exists:destinations,id',
                 'dateDepartBi' => 'required|date',
-                'dateRetourBi' => 'nullable|date|after_or_equal:dateDepartBi',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
+            ];
+
+            // Add conditional validation for aller_retour
+            if ($request->typeBi === 'aller_retour') {
+                $rules['dateRetourBi'] = 'required|date|after_or_equal:dateDepartBi';
+            } else {
+                $rules['dateRetourBi'] = 'nullable|date';
+            }
+
+            $validated = $request->validate($rules);
 
             // Handle image
             $imagePath = null;
@@ -63,9 +71,9 @@ class BilletController extends Controller
                 'id' => $service->id,
                 'typeBi' => $request->typeBi,
                 'villeDepartBi' => $request->villeDepartBi,
-                'destinationBi' => $request->destinationBi,
+                'destination_id' => $request->destination_id,
                 'dateDepartBi' => $request->dateDepartBi,
-                'dateRetourBi' => $request->dateRetourBi,
+                'dateRetourBi' => $request->dateRetourBi ?? null,
             ]);
 
             DB::commit();
@@ -73,7 +81,7 @@ class BilletController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Billet créé avec succès',
-                'data' => $service->load('billet')
+                'data' => $service->load('billet.destination')
             ], 201);
 
         } catch (\Exception $e) {
@@ -90,7 +98,7 @@ class BilletController extends Controller
     public function show($id)
     {
         try {
-            $billet = Billet::with('service')->find($id);
+            $billet = Billet::with(['service', 'destination'])->find($id);
 
             if (!$billet) {
                 return response()->json([
@@ -121,17 +129,23 @@ class BilletController extends Controller
             $service = Service::findOrFail($id);
 
             // Validation
-            $validated = $request->validate([
+            $rules = [
                 'nomServ' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'prix' => 'required|numeric|min:0',
                 'typeBi' => 'required|in:aller_simple,aller_retour',
                 'villeDepartBi' => 'required|string|max:100',
-                'destinationBi' => 'required|string|max:100',
+                'destination_id' => 'required|exists:destinations,id',
                 'dateDepartBi' => 'required|date',
-                'dateRetourBi' => 'nullable|date|after_or_equal:dateDepartBi',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
+            ];
+
+            if ($request->typeBi === 'aller_retour') {
+                $rules['dateRetourBi'] = 'required|date|after_or_equal:dateDepartBi';
+            } else {
+                $rules['dateRetourBi'] = 'nullable|date';
+            }
+
+            $validated = $request->validate($rules);
 
             // Update service
             $service->update([
@@ -154,9 +168,9 @@ class BilletController extends Controller
             $billet->update([
                 'typeBi' => $request->typeBi,
                 'villeDepartBi' => $request->villeDepartBi,
-                'destinationBi' => $request->destinationBi,
+                'destination_id' => $request->destination_id,
                 'dateDepartBi' => $request->dateDepartBi,
-                'dateRetourBi' => $request->dateRetourBi,
+                'dateRetourBi' => $request->dateRetourBi ?? null,
             ]);
 
             DB::commit();
@@ -185,12 +199,10 @@ class BilletController extends Controller
             $billet = Billet::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            // Delete image if exists
             if ($service->image && Storage::disk('public')->exists($service->image)) {
                 Storage::disk('public')->delete($service->image);
             }
 
-            // Delete billet
             $billet->delete();
 
             DB::commit();

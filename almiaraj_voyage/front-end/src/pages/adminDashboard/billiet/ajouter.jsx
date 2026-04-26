@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
-import { Calendar, Upload, Trash2, Plane, MapPin } from "lucide-react";
+import { Search, MapPin, X, Calendar, Upload, Trash2, Plane } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AjouterBillet() {
   const navigate = useNavigate();
+  const { getDestination, destinations } = useAuth();
+  
+  useEffect(() => {
+    getDestination();
+  }, []);
   
   const [form, setForm] = useState({
     nomServ: "",
@@ -12,7 +18,8 @@ export default function AjouterBillet() {
     prix: "",
     typeBi: "aller_retour",
     villeDepartBi: "",
-    destinationBi: "",
+    villeArriveeBi: "",
+    destination_id: "",
     dateDepartBi: "",
     dateRetourBi: "",
     image: null,
@@ -21,15 +28,87 @@ export default function AjouterBillet() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
+  
+  const [searchDepartureTerm, setSearchDepartureTerm] = useState("");
+  const [searchArrivalTerm, setSearchArrivalTerm] = useState("");
+  const [showDepartureDropdown, setShowDepartureDropdown] = useState(false);
+  const [showArrivalDropdown, setShowArrivalDropdown] = useState(false);
+  const [selectedDepartureCity, setSelectedDepartureCity] = useState(null);
+  const [selectedArrivalCity, setSelectedArrivalCity] = useState(null);
+  
   const today = new Date().toISOString().split('T')[0];
 
-  // Handle text inputs
+  const getAllCities = () => {
+    const cities = [];
+    if (Array.isArray(destinations)) {
+      destinations.forEach(dest => {
+        if (Array.isArray(dest.villes)) {
+          dest.villes.forEach(ville => {
+            cities.push({
+              id: `${dest.id}_${ville}`,
+              cityName: ville,
+              country: dest.pays,
+              destinationId: dest.id,
+            });
+          });
+        }
+      });
+    }
+    return cities;
+  };
+
+  const filteredDepartureCities = getAllCities().filter(city => 
+    city.cityName.toLowerCase().includes(searchDepartureTerm.toLowerCase()) ||
+    city.country.toLowerCase().includes(searchDepartureTerm.toLowerCase())
+  );
+
+  const filteredArrivalCities = getAllCities().filter(city => 
+    city.cityName.toLowerCase().includes(searchArrivalTerm.toLowerCase()) ||
+    city.country.toLowerCase().includes(searchArrivalTerm.toLowerCase())
+  ).filter(city => city.cityName !== form.villeDepartBi);
+
+  const handleSelectDepartureCity = (city) => {
+    setSelectedDepartureCity(city);
+    setForm({ 
+      ...form, 
+      villeDepartBi: city.cityName,
+      destination_id: city.destinationId
+    });
+    setSearchDepartureTerm(`${city.cityName}, ${city.country}`);
+    setShowDepartureDropdown(false);
+  };
+
+  const handleSelectArrivalCity = (city) => {
+    setSelectedArrivalCity(city);
+    setForm({ ...form, villeArriveeBi: city.cityName });
+    setSearchArrivalTerm(`${city.cityName}, ${city.country}`);
+    setShowArrivalDropdown(false);
+  };
+
+  const clearDepartureCity = () => {
+    setSelectedDepartureCity(null);
+    setForm({ 
+      ...form, 
+      villeDepartBi: "",
+      destination_id: "",
+      villeArriveeBi: ""
+    });
+    setSelectedArrivalCity(null);
+    setSearchDepartureTerm("");
+    setSearchArrivalTerm("");
+  };
+
+  const clearArrivalCity = () => {
+    setSelectedArrivalCity(null);
+    setForm({ ...form, villeArriveeBi: "" });
+    setSearchArrivalTerm("");
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  // Image handling
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -49,7 +128,6 @@ export default function AjouterBillet() {
     if (fileInput) fileInput.value = '';
   };
 
-  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -67,14 +145,14 @@ export default function AjouterBillet() {
       return;
     }
 
-    if (!form.villeDepartBi.trim()) {
-      setError("Veuillez entrer la ville de départ");
+    if (!form.villeDepartBi) {
+      setError("Veuillez sélectionner une ville de départ");
       setIsSubmitting(false);
       return;
     }
 
-    if (!form.destinationBi.trim()) {
-      setError("Veuillez entrer la destination");
+    if (!form.villeArriveeBi) {
+      setError("Veuillez sélectionner une ville d'arrivée");
       setIsSubmitting(false);
       return;
     }
@@ -86,7 +164,7 @@ export default function AjouterBillet() {
     }
 
     if (form.typeBi === "aller_retour" && !form.dateRetourBi) {
-      setError("Veuillez sélectionner une date de retour pour un billet aller-retour");
+      setError("Veuillez sélectionner une date de retour");
       setIsSubmitting(false);
       return;
     }
@@ -98,7 +176,8 @@ export default function AjouterBillet() {
       formData.append('prix', form.prix);
       formData.append('typeBi', form.typeBi);
       formData.append('villeDepartBi', form.villeDepartBi);
-      formData.append('destinationBi', form.destinationBi);
+      formData.append('villeArriveeBi', form.villeArriveeBi);
+      formData.append('destination_id', form.destination_id);
       formData.append('dateDepartBi', form.dateDepartBi);
       if (form.dateRetourBi) {
         formData.append('dateRetourBi', form.dateRetourBi);
@@ -189,42 +268,135 @@ export default function AjouterBillet() {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ville de départ *
-              </label>
+          {/* Departure City Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ville de départ *
+            </label>
+            <div className="relative">
               <div className="relative">
-                <Plane className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  name="villeDepartBi"
-                  value={form.villeDepartBi}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                  placeholder="Ex: Casablanca"
+                  value={searchDepartureTerm}
+                  onChange={(e) => {
+                    setSearchDepartureTerm(e.target.value);
+                    setShowDepartureDropdown(true);
+                  }}
+                  onFocus={() => setShowDepartureDropdown(true)}
+                  placeholder="Rechercher une ville de départ..."
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
                 />
+                {searchDepartureTerm && (
+                  <button
+                    type="button"
+                    onClick={clearDepartureCity}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
+
+              {showDepartureDropdown && searchDepartureTerm && filteredDepartureCities.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredDepartureCities.map((city) => (
+                    <button
+                      key={city.id}
+                      type="button"
+                      onClick={() => handleSelectDepartureCity(city)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b"
+                    >
+                      <MapPin size={16} className="text-[#fb923c]" />
+                      <div>
+                        <div className="font-medium">{city.cityName}</div>
+                        <div className="text-xs text-gray-500">{city.country}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Destination *
-              </label>
+            {selectedDepartureCity && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Plane size={16} className="text-green-600" />
+                  <span className="text-sm text-green-700">
+                    Départ: {selectedDepartureCity.cityName}, {selectedDepartureCity.country}
+                  </span>
+                </div>
+                <button type="button" onClick={clearDepartureCity} className="text-red-500 hover:text-red-700">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Arrival City Selection - Always visible */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ville d'arrivée *
+            </label>
+            <div className="relative">
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                 <input
                   type="text"
-                  name="destinationBi"
-                  value={form.destinationBi}
-                  onChange={handleChange}
-                  required
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                  placeholder="Ex: Paris"
+                  value={searchArrivalTerm}
+                  onChange={(e) => {
+                    setSearchArrivalTerm(e.target.value);
+                    setShowArrivalDropdown(true);
+                  }}
+                  onFocus={() => setShowArrivalDropdown(true)}
+                  placeholder="Rechercher une ville d'arrivée..."
+                  disabled={!form.villeDepartBi}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c] disabled:bg-gray-100"
                 />
+                {searchArrivalTerm && (
+                  <button
+                    type="button"
+                    onClick={clearArrivalCity}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
+
+              {showArrivalDropdown && searchArrivalTerm && filteredArrivalCities.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredArrivalCities.map((city) => (
+                    <button
+                      key={city.id}
+                      type="button"
+                      onClick={() => handleSelectArrivalCity(city)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b"
+                    >
+                      <MapPin size={16} className="text-[#fb923c]" />
+                      <div>
+                        <div className="font-medium">{city.cityName}</div>
+                        <div className="text-xs text-gray-500">{city.country}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {selectedArrivalCity && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} className="text-green-600" />
+                  <span className="text-sm text-green-700">
+                    Arrivée: {selectedArrivalCity.cityName}, {selectedArrivalCity.country}
+                  </span>
+                </div>
+                <button type="button" onClick={clearArrivalCity} className="text-red-500 hover:text-red-700">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -248,7 +420,7 @@ export default function AjouterBillet() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date de retour
+                Date de retour {form.typeBi === "aller_retour" && "*"}
               </label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -259,12 +431,10 @@ export default function AjouterBillet() {
                   onChange={handleChange}
                   min={form.dateDepartBi || today}
                   disabled={form.typeBi !== "aller_retour"}
+                  required={form.typeBi === "aller_retour"}
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c] disabled:bg-gray-100"
                 />
               </div>
-              {form.typeBi === "aller_retour" && (
-                <p className="text-xs text-gray-500 mt-1">Requis pour un billet aller-retour</p>
-              )}
             </div>
           </div>
 

@@ -6,27 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::disableForeignKeyConstraints();
         Schema::create('billets', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
-            $table->string('villeDepartBi');
-            $table->string('destinationBi');
+            $table->enum('typeBi', ['aller_simple', 'aller_retour'])->default('aller_retour');
+            $table->string('villeDepartBi', 100);
+            $table->string('villeArriveeBi', 100);
+            $table->unsignedBigInteger('destination_id')->nullable();
             $table->date('dateDepartBi');
             $table->date('dateRetourBi')->nullable();
-            // $table->string('bagage');
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
+            $table->foreign('destination_id')->references('id')->on('destinations')->onDelete('set null');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('billets');

@@ -1,108 +1,227 @@
 <?php
+// app/Http/Controllers/BilletController.php
 
 namespace App\Http\Controllers;
 
-
-use App\Models\Client;
-use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Service;
+use App\Models\Billet;
+use App\Models\Destination;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
-class ClientController extends Controller
+class BilletController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-public function index(Request $req)
-{
-    $user = $req->user();
+    public function index()
+    {
+        $billets = Billet::with(['service', 'destination'])
+            ->orderBy('id', 'desc')
+            ->get();
 
-    if (!$user) {
         return response()->json([
-            'message' => 'Unauthorized'
-        ], 401);
+            'success' => true,
+            'data' => $billets
+        ]);
     }
-    $client = $user->client;
-
-    return response()->json([
-        'client' => $client
-    ]);
-}
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create() {}
-
-    /**
-     * Store a newly created resource in storage.
-     */
 
     public function store(Request $request)
     {
-        // $request->validate([
-        //     'nom' => ['required'],
-        //     'prenom' => ['required'],
-        //     'email' => ['required', 'email', 'unique:users'],
-        //     'password' => ['required', 'confirmed'],
-        //     'nat' => ['required'],
-        //     'numTel' => ['required'],
-        // ]);
+        try {
+            DB::beginTransaction();
 
+            // Validation
+            $rules = [
+                'nomServ' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'prix' => 'required|numeric|min:0',
+                'typeBi' => 'required|in:aller_simple,aller_retour',
+                'villeDepartBi' => 'required|string|max:100',
+                'villeArriveeBi' => 'required|string|max:100',
+                'destination_id' => 'required|exists:destinations,id',
+                'dateDepartBi' => 'required|date',
+            ];
 
-        // $user = User::create([
-        //     'name' => $request->nom . ' ' . $request->prenom,
-        //     'email' => $request->email,
-        //     'password' => Hash::make($request->password),
-        // ]);
+            if ($request->typeBi === 'aller_retour') {
+                $rules['dateRetourBi'] = 'required|date|after_or_equal:dateDepartBi';
+            } else {
+                $rules['dateRetourBi'] = 'nullable|date';
+            }
 
+            $validated = $request->validate($rules);
 
-        // Client::create([
-        //     'user_id' => $user->id,
-        //     'nomCl' => $request->nom,
-        //     'prenomCl' => $request->prenom,
-        //     'natCl' => $request->nat,
-        //     'numTelCl' => $request->numTel,
-        //     'email' => $request->email,
-        //     'dateInscription' => now(),
-        // ]);
+            // Handle image
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imagePath = $image->store('billets', 'public');
+            }
 
-        // Auth::login($user);
+            // Create service
+            $service = Service::create([
+                'nomServ' => $request->nomServ,
+                'description' => $request->description,
+                'prix' => $request->prix,
+                'type' => 'billet',
+                'image' => $imagePath,
+            ]);
 
-        // return response()->json([
-        //     'user' => $user
-        // ]);
+            // Create billet
+            $billet = Billet::create([
+                'id' => $service->id,
+                'typeBi' => $request->typeBi,
+                'villeDepartBi' => $request->villeDepartBi,
+                'villeArriveeBi' => $request->villeArriveeBi,
+                'destination_id' => $request->destination_id,
+                'dateDepartBi' => $request->dateDepartBi,
+                'dateRetourBi' => $request->dateRetourBi ?? null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Billet créé avec succès',
+                'data' => $service->load('billet.destination')
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Client $client)
+    public function show($id)
     {
-        //
+        try {
+            $billet = Billet::with(['service', 'destination'])->find($id);
+
+            if (!$billet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Billet non trouvé'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $billet
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Client $client)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+            DB::beginTransaction();
+
+            $billet = Billet::findOrFail($id);
+            $service = Service::findOrFail($id);
+
+            $rules = [
+                'nomServ' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'prix' => 'required|numeric|min:0',
+                'typeBi' => 'required|in:aller_simple,aller_retour',
+                'villeDepartBi' => 'required|string|max:100',
+                'villeArriveeBi' => 'required|string|max:100',
+                'destination_id' => 'required|exists:destinations,id',
+                'dateDepartBi' => 'required|date',
+            ];
+
+            if ($request->typeBi === 'aller_retour') {
+                $rules['dateRetourBi'] = 'required|date|after_or_equal:dateDepartBi';
+            } else {
+                $rules['dateRetourBi'] = 'nullable|date';
+            }
+
+            $validated = $request->validate($rules);
+
+            // Update service
+            $service->update([
+                'nomServ' => $request->nomServ,
+                'description' => $request->description,
+                'prix' => $request->prix,
+            ]);
+
+            // Handle image update
+            if ($request->hasFile('image')) {
+                if ($service->image && Storage::disk('public')->exists($service->image)) {
+                    Storage::disk('public')->delete($service->image);
+                }
+                $image = $request->file('image');
+                $service->image = $image->store('billets', 'public');
+                $service->save();
+            }
+
+            // Update billet
+            $billet->update([
+                'typeBi' => $request->typeBi,
+                'villeDepartBi' => $request->villeDepartBi,
+                'villeArriveeBi' => $request->villeArriveeBi,
+                'destination_id' => $request->destination_id,
+                'dateDepartBi' => $request->dateDepartBi,
+                'dateRetourBi' => $request->dateRetourBi ?? null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Billet modifié avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la modification',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Client $client)
+    public function destroy($id)
     {
-        //
-    }
+        try {
+            DB::beginTransaction();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Client $client)
-    {
-        //
+            $billet = Billet::findOrFail($id);
+            $service = Service::findOrFail($id);
+
+            if ($service->image && Storage::disk('public')->exists($service->image)) {
+                Storage::disk('public')->delete($service->image);
+            }
+
+            $billet->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Billet supprimé avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

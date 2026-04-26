@@ -165,10 +165,10 @@ export default function AdminHajjOmras() {
                                         <td className="p-3 font-bold text-[#fb923c]">{serviceData.prix} DH</td>
                                         <td className="p-3">
                                             <div className="flex gap-2">
-                                                <Link to={`/admin/showHajjOmra/${itemId}`} className="bg-gray-100 text-gray-600 p-2 rounded-md hover:bg-gray-600 hover:text-white transition" title="Détails">
+                                                <Link to={`/admin/showHajj-omra/${itemId}`} className="bg-gray-100 text-gray-600 p-2 rounded-md hover:bg-gray-600 hover:text-white transition" title="Détails">
                                                     <Eye size={16} />
                                                 </Link>
-                                                <Link to={`/admin/editHajjOmra/${itemId}`} className="bg-green-100 text-green-600 p-2 rounded-md hover:bg-green-600 hover:text-white transition" title="Modifier">
+                                                <Link to={`/admin/editHajj-omra/${itemId}`} className="bg-green-100 text-green-600 p-2 rounded-md hover:bg-green-600 hover:text-white transition" title="Modifier">
                                                     <Edit size={16} />
                                                 </Link>
                                                 <button onClick={() => handleDelete(itemId)} disabled={deletingId === itemId} className="bg-red-100 text-red-600 p-2 rounded-md hover:bg-red-600 hover:text-white transition disabled:opacity-50" title="Supprimer">

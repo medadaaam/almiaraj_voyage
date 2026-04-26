@@ -26,7 +26,7 @@ export default function AdminLayout() {
 
                         <li><NavLink to="/admin/voyages">Voyages</NavLink></li>
                         <li><NavLink to="/admin/hotels">Hôtels</NavLink></li>
-                        <li><NavLink to="/admin/hajj-omra">Hajj & Omra</NavLink></li>
+                        <li><NavLink to="/admin/hajj-omras">Hajj & Omra</NavLink></li>
                         <li><NavLink to="/admin/billets">Billets</NavLink></li>
                     </ul>
                 </nav>

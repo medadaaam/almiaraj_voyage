@@ -39,7 +39,7 @@ class BilletController extends Controller
     {
         $billets = Billet::with(['service', 'destination'])
             ->orderBy('id', 'desc')
-            ->get();
+            ->paginate(5);
 
         return response()->json([
             'success' => true,

@@ -15,12 +15,19 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']);
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::post('/reservations', [ReservationController::class, 'store']);
+//     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
+//     Route::get('/user', function (Request $request) {
+//         return $request->user();
+//     });
+// });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reservations/voyage', [ReservationController::class, 'storeVoyage']);
+    Route::get('/my-reservations', [ReservationController::class, 'myReservations']);
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
 });
 
 

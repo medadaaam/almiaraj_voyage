@@ -37,11 +37,11 @@ const AuthApi = {
   },
 
   getClientProfile: async () => {
-    return await axiosClient.get('/client/profile');
-},
-updateClientProfile: async (data) => {
-    return await axiosClient.put('/client/profile', data);
-},
+    return await axiosClient.get("/client/profile");
+  },
+  updateClientProfile: async (data) => {
+    return await axiosClient.put("/client/profile", data);
+  },
 
   // ✅ Destination avec Pagination
   getDestination: async (page = 1) => {
@@ -86,6 +86,21 @@ updateClientProfile: async (data) => {
 
   getBilletsDetails: async (id) => {
     return await axiosClient.get(`/billetsCl/${id}`);
+  },
+  createVoyageReservation: async (data) => {
+    return await axiosClient.post("/reservations/voyage", data);
+  },
+
+  getMyReservations: async () => {
+    return await axiosClient.get("/my-reservations");
+  },
+
+  getReservationDetails: async (id) => {
+    return await axiosClient.get(`/reservations/${id}`);
+  },
+
+  cancelReservation: async (id) => {
+    return await axiosClient.put(`/reservations/${id}/cancel`);
   },
 };
 

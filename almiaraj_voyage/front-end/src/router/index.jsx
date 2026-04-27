@@ -36,7 +36,9 @@ import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
 import AdminHotels from "@/pages/adminDashboard/hotel";
 import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
 import AdminBillets from "@/pages/adminDashboard/billiet";
-import ClientProfile from "@/pages/ClientProfile";
+import ClientProfile from "@/pages/clientPages/ClientProfile";
+import VoyageReservation from "@/pages/reservation/VoyageReservation";
+import ClientOrders from "@/pages/clientPages/MesCommandes";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -101,8 +103,12 @@ export const route = createBrowserRouter([
         element: <VolsBillets />,
       },
       {
-        path: "/services/hotelsReservation/{idH}",
+        path: "/services/hotelsReservation/:idH",
         element: <Reservation />,
+      },
+            {
+        path: "/reserver/voyage/:id",
+        element: <VoyageReservation />,
       },
 
       {
@@ -219,12 +225,12 @@ export const route = createBrowserRouter([
         element: <ClientProfile />,
       },
             {
-        path: "/",
-        element: <Home />,
+        path: "/voyages/:id/reserver",
+        element: <VoyageReservation />,
       },
       {
-        path: "/client/profile",
-        element: <h1>Client Profile</h1>,
+        path: "/client/orders",
+        element: <ClientOrders />,
       },
       {
         path: "/client/orders",

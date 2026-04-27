@@ -35,33 +35,51 @@ const AuthApi = {
   getUser: async () => {
     return await axiosClient.get("/user");
   },
-  getDestination: async () => {
-    return await axiosClient.get("/destinationsCl");
+
+  getClientProfile: async () => {
+    return await axiosClient.get('/client/profile');
+},
+updateClientProfile: async (data) => {
+    return await axiosClient.put('/client/profile', data);
+},
+
+  // ✅ Destination avec Pagination
+  getDestination: async (page = 1) => {
+    return await axiosClient.get(`/destinationsCl?page=${page}`);
   },
 
   getDestinationServices: async (id) => {
     return await axiosClient.get(`/destinationsCl/${id}/services`);
   },
-  getVoyages: async () => {
-    return await axiosClient.get("/voyagesCl");
-  },
-  getHotels: async () => {
-    return await axiosClient.get("/hotelsCl");
+
+  // ✅ Voyages avec Pagination
+  getVoyages: async (page = 1) => {
+    return await axiosClient.get(`/voyagesCl?page=${page}`);
   },
 
-  getBillets: async () => {
-    return await axiosClient.get("/billetsCl");
+  // ✅ Hotels avec Pagination
+  getHotels: async (page = 1) => {
+    return await axiosClient.get(`/hotelsCl?page=${page}`);
   },
 
-  getOmraHajj: async () => {
-    return await axiosClient.get("/omraHajjCl");
+  // ✅ Billets avec Pagination
+  getBillets: async (page = 1) => {
+    return await axiosClient.get(`/billetsCl?page=${page}`);
   },
-    getOmraHajjDetails: async (id) => {
+
+  // ✅ Hajj Omra avec Pagination
+  getOmraHajj: async (page = 1) => {
+    return await axiosClient.get(`/omraHajjCl?page=${page}`);
+  },
+
+  getOmraHajjDetails: async (id) => {
     return await axiosClient.get(`/omraHajjCl/${id}`);
   },
+
   getHotelDetails: async (id) => {
     return await axiosClient.get(`/hotelsCl/${id}`);
   },
+
   getVoyageDetails: async (id) => {
     return await axiosClient.get(`/voyagesCl/${id}`);
   },

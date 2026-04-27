@@ -456,12 +456,12 @@
     font-size: 0.6rem;
     padding: 3px 6px;
   }
-  
+
   .hotel-buttons {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .hotel-btn-details,
   .hotel-btn-book {
     width: 100%;
@@ -493,4 +493,24 @@
   .hotel-price-new {
     font-size: 0.9rem;
   }
+}
+
+
+/* Loading State */
+.featured-hotels-loading {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }

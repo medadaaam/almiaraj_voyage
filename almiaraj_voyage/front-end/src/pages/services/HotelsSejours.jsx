@@ -19,15 +19,17 @@ import {
   CheckCircle,
   Shield,
   Search,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import "./hotels.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export default function HotelsSejours() {
-  const { hotels, getHotels } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { hotels, getHotels, hotelsMeta, loadingHotels } = useAuth();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // ✅ State للبحث
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,14 +37,23 @@ export default function HotelsSejours() {
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
   const [showFilters, setShowFilters] = useState(false);
 
+  // ✅ جلب البيانات الأولية (الصفحة 1)
   useEffect(() => {
     const fetchHotels = async () => {
-      setLoading(true);
-      await getHotels();
-      setLoading(false);
+      setInitialLoading(true);
+      await getHotels(1);
+      setInitialLoading(false);
     };
     fetchHotels();
   }, []);
+
+  // ✅ تحميل المزيد
+  const loadMore = useCallback(async () => {
+    if (loadingMore || hotelsMeta.current_page >= hotelsMeta.last_page) return;
+    setLoadingMore(true);
+    await getHotels(hotelsMeta.current_page + 1);
+    setLoadingMore(false);
+  }, [loadingMore, hotelsMeta, getHotels]);
 
   // ✅ استخراج المدن للـ datalist
   const locations = useMemo(() => {
@@ -60,7 +71,6 @@ export default function HotelsSejours() {
 
     let results = [...hotels];
 
-    // فلترة حسب الكلمة المدخلة
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       results = results.filter(hotel =>
@@ -69,27 +79,25 @@ export default function HotelsSejours() {
       );
     }
 
-    // فلترة حسب الموقع
     if (selectedLocation) {
       results = results.filter(hotel => hotel.location === selectedLocation);
     }
 
-    // فلترة حسب السعر
     if (selectedPriceRange) {
-      const [min, max] = selectedPriceRange.split('-').map(Number);
-      if (max) {
-        results = results.filter(hotel => hotel.prix >= min && hotel.prix <= max);
-      } else if (selectedPriceRange === '500+') {
-        results = results.filter(hotel => hotel.prix >= 500);
-      } else if (min) {
-        results = results.filter(hotel => hotel.prix <= min);
+      if (selectedPriceRange === "500") {
+        results = results.filter(hotel => hotel.prix < 500);
+      } else if (selectedPriceRange === "500-700") {
+        results = results.filter(hotel => hotel.prix >= 500 && hotel.prix <= 700);
+      } else if (selectedPriceRange === "700-1000") {
+        results = results.filter(hotel => hotel.prix >= 700 && hotel.prix <= 1000);
+      } else if (selectedPriceRange === "1000+") {
+        results = results.filter(hotel => hotel.prix >= 1000);
       }
     }
 
     return results;
   }, [hotels, searchTerm, selectedLocation, selectedPriceRange]);
 
-  // ✅ إعادة ضبط البحث
   const resetSearch = () => {
     setSearchTerm("");
     setSelectedLocation("");
@@ -98,14 +106,9 @@ export default function HotelsSejours() {
 
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
+    const fullStars = Math.floor(rating || 0);
     for (let i = 0; i < fullStars; i++) {
       stars.push(<Star key={i} className="star-filled" />);
-    }
-    if (hasHalfStar) {
-      stars.push(<Star key="half" className="star-filled-half" />);
     }
     const emptyStars = 5 - stars.length;
     for (let i = 0; i < emptyStars; i++) {
@@ -120,14 +123,7 @@ export default function HotelsSejours() {
       Piscine: <Waves className="w-3 h-3" />,
       Spa: <Waves className="w-3 h-3" />,
       "Petit-déjeuner": <Coffee className="w-3 h-3" />,
-      Hamam: <Waves className="w-3 h-3" />,
-      "Vue mer": <Waves className="w-3 h-3" />,
       Restaurant: <Utensils className="w-3 h-3" />,
-      Aquapark: <Waves className="w-3 h-3" />,
-      "Plage privée": <Waves className="w-3 h-3" />,
-      "Business center": <Car className="w-3 h-3" />,
-      "Restaurant étoilé": <Utensils className="w-3 h-3" />,
-      Concierge: <Users className="w-3 h-3" />,
     };
     return icons[amenity] || <Coffee className="w-3 h-3" />;
   };
@@ -147,7 +143,7 @@ export default function HotelsSejours() {
     { value: "1000+", label: "Plus de 1000 DH" }
   ];
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="hotels-loading">
         <div className="hotels-loading-spinner"></div>
@@ -169,7 +165,7 @@ export default function HotelsSejours() {
         </div>
       </div>
 
-      {/* ✅ Search Bar Section */}
+      {/* Search Bar Section */}
       <div className="hotels-search-section">
         <div className="hotels-search-container">
           <div className="hotels-search-wrapper">
@@ -206,7 +202,6 @@ export default function HotelsSejours() {
             </button>
           </div>
 
-          {/* Filtres avancés */}
           {showFilters && (
             <div className="hotels-filters-panel">
               <div className="hotels-filter-group">
@@ -244,7 +239,6 @@ export default function HotelsSejours() {
             </div>
           )}
 
-          {/* Résultats count */}
           <div className="hotels-results-count">
             <p>{filteredHotels.length} hôtel(s) trouvé(s)</p>
           </div>
@@ -268,81 +262,101 @@ export default function HotelsSejours() {
             </button>
           </div>
         ) : (
-          <div className="hotels-grid">
-            {filteredHotels.map((hotel) => (
-              <div key={hotel.id} className="hotels-card">
-                {/* Image */}
-                <div className="hotels-card-image">
-                  <img src={hotel.image} alt={hotel.name} />
-                  <div className="hotels-card-overlay"></div>
+          <>
+            <div className="hotels-grid">
+              {filteredHotels.map((hotel) => (
+                <div key={hotel.id} className="hotels-card">
+                  <div className="hotels-card-image">
+                    <img src={hotel.image} alt={hotel.name} />
+                    <div className="hotels-card-overlay"></div>
 
-                  {hotel.enVedette === 1 && (
-                    <span className="hotels-card-badge featured">
-                      <Star className="w-3 h-3" />
-                      Recommandé
-                    </span>
-                  )}
-
-                  {hotel.oldPrix && hotel.oldPrix > hotel.prix && (
-                    <span className="hotels-card-badge discount">
-                      -{Math.round(((hotel.oldPrix - hotel.prix) / hotel.oldPrix) * 100)}%
-                    </span>
-                  )}
-
-                  <div className="hotels-card-price">
-                    {hotel.oldPrix && (
-                      <span className="hotels-card-price-old">{hotel.oldPrix}DH</span>
+                    {hotel.enVedette === 1 && (
+                      <span className="hotels-card-badge featured">
+                        <Star className="w-3 h-3" />
+                        Recommandé
+                      </span>
                     )}
-                    <span className="hotels-card-price-new">{hotel.prix}DH</span>
-                    <span className="hotels-card-price-period">/nuit</span>
+
+                    {hotel.oldPrix && hotel.oldPrix > hotel.prix && (
+                      <span className="hotels-card-badge discount">
+                        -{Math.round(((hotel.oldPrix - hotel.prix) / hotel.oldPrix) * 100)}%
+                      </span>
+                    )}
+
+                    <div className="hotels-card-price">
+                      {hotel.oldPrix && (
+                        <span className="hotels-card-price-old">{hotel.oldPrix}DH</span>
+                      )}
+                      <span className="hotels-card-price-new">{hotel.prix}DH</span>
+                      <span className="hotels-card-price-period">/nuit</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="hotels-card-content">
-                  <div className="hotels-card-location">
-                    <MapPin className="w-4 h-4" />
-                    <span>{hotel.location}</span>
-                  </div>
+                  <div className="hotels-card-content">
+                    <div className="hotels-card-location">
+                      <MapPin className="w-4 h-4" />
+                      <span>{hotel.location}</span>
+                    </div>
 
-                  <h3 className="hotels-card-title">{hotel.name}</h3>
+                    <h3 className="hotels-card-title">{hotel.name}</h3>
 
-                  {hotel.rating && (
-                    <div className="hotels-card-rating">
-                      <div className="hotels-card-stars">
-                        {renderStars(parseFloat(hotel.rating))}
+                    {hotel.rating && (
+                      <div className="hotels-card-rating">
+                        <div className="hotels-card-stars">
+                          {renderStars(parseFloat(hotel.rating))}
+                        </div>
                       </div>
-                      <span className="hotels-card-reviews">
-                        ({hotel.reviews || 0} avis)
-                      </span>
+                    )}
+
+                    <div className="hotels-card-amenities">
+                      {hotel.amenities?.slice(0, 4).map((amenity, i) => (
+                        <span key={i} className="hotels-card-amenity">
+                          {getAmenityIcon(amenity)}
+                          {amenity}
+                        </span>
+                      ))}
                     </div>
-                  )}
 
-                  <div className="hotels-card-amenities">
-                    {hotel.amenities?.slice(0, 4).map((amenity, i) => (
-                      <span key={i} className="hotels-card-amenity">
-                        {getAmenityIcon(amenity)}
-                        {amenity}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="hotels-card-footer">
-                    <div className="hotels-card-buttons">
-                      <Link to={`/hotels/${hotel.id}`} className="hotels-card-btn details">
-                        <Eye size={16} />
-                        Détails
-                      </Link>
-                      <Link to={`/reserver/hotel/${hotel.id}`} className="hotels-card-btn book">
-                        <CreditCard size={16} />
-                        Réserver
-                      </Link>
+                    <div className="hotels-card-footer">
+                      <div className="hotels-card-buttons">
+                        <Link to={`/hotels/${hotel.id}`} className="hotels-card-btn details">
+                          <Eye size={16} />
+                          Détails
+                        </Link>
+                        <Link to={`/reserver/hotel/${hotel.id}`} className="hotels-card-btn book">
+                          <CreditCard size={16} />
+                          Réserver
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* ✅ Load More Button */}
+            {hotelsMeta.current_page < hotelsMeta.last_page && (
+              <div className="hotels-load-more">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="hotels-load-more-btn"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Chargement...
+                    </>
+                  ) : (
+                    <>
+                      Voir plus d'hôtels
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 

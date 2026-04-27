@@ -14,9 +14,9 @@ class HotelController extends Controller
 
     public function indexCl()
     {
-        $hotels = Hotel::with(['service', 'destination'])->get();
+        $hotels = Hotel::with(['service', 'destination'])->paginate(3);
 
-        $data = $hotels->map(function ($h) {
+        $data = $hotels->getCollection()->map(function ($h) {
             return [
                 'id' => $h->id,
                 'name' => $h->service->nomServ,
@@ -26,11 +26,16 @@ class HotelController extends Controller
                 'oldPrix' => $h->service->oldPrix,
                 'rating' => $h->service->rating,
                 'enVedette' => $h->service->enVedette,
-                'amenities' => explode(',', $h->amenities),
+                'amenities' => explode(',', $h->amenities ?? ''),
             ];
         });
 
-        return response()->json($data);
+        return response()->json([
+            'data' => $data,
+            'current_page' => $hotels->currentPage(),
+            'last_page' => $hotels->lastPage(),
+            'total' => $hotels->total(),
+        ]);
     }
 
     public function store(Request $request)

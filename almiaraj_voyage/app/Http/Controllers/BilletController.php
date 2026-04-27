@@ -11,7 +11,7 @@ class BilletController extends Controller
 {
     public function indexCl()
     {
-        $billets = Billet::with('service')->get();
+        $billets = Billet::with('service')->paginate(6);
 
         $data = $billets->map(function ($b) {
             return [
@@ -27,7 +27,12 @@ class BilletController extends Controller
                 'rating' => $b->service->rating,
             ];
         });
-        return response()->json($data);
+         return response()->json([
+            'data' => $data,
+            'current_page' => $billets->currentPage(),
+            'last_page' => $billets->lastPage(),
+            'total' => $billets->total(),
+        ]);
     }
 
     public function store(Request $request)

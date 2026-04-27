@@ -24,7 +24,7 @@ const formSchema = z.object({
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
-  const { login, setAuthenticated, getClient  } = useAuth();
+  const { login, setAuthenticated  } = useAuth();
   const navigate = useNavigate();
 
   const form = useForm({
@@ -44,7 +44,6 @@ export default function Login() {
 
       if (response.status === 200 || response.status === 204) {
         setAuthenticated(true);
-        await getClient();
         navigate("/");
       }
     } catch (error) {

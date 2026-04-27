@@ -1,19 +1,23 @@
-import { MapPin, Star, Clock, Users, Calendar, ArrowRight, Eye, CreditCard } from "lucide-react";
+import { MapPin, Star, Clock, Users, Calendar, ArrowRight, Eye, CreditCard, Loader2 } from "lucide-react";
 import "./styles/featuredTrips.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function FeaturedTrips() {
-  const { voyages, getVoyages } = useAuth();
+  const { voyages, getVoyages, loadingVoyages } = useAuth();
+
   useEffect(() => {
-    getVoyages();
+    const fetchVoyages = async () => {
+      await getVoyages(1);
+    };
+    fetchVoyages();
   }, []);
 
   const renderStars = (rating) => {
     const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+    const fullStars = Math.floor(rating || 0);
+    const hasHalfStar = (rating || 0) % 1 >= 0.5;
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(<Star key={i} className="star-filled" />);
@@ -27,6 +31,12 @@ export default function FeaturedTrips() {
     }
     return stars;
   };
+
+  const displayedTrips = voyages.slice(0, 5);
+
+  if (displayedTrips.length === 0) {
+    return null;
+  }
 
   return (
     <section className="featured-trips">
@@ -44,7 +54,7 @@ export default function FeaturedTrips() {
 
         {/* Trips Grid */}
         <div className="featured-grid">
-          {voyages.slice(0, 5).map((trip) => (
+          {displayedTrips.map((trip) => (
             <div key={trip.id} className="trip-card">
               {/* Image */}
               <div className="trip-image">
@@ -52,7 +62,7 @@ export default function FeaturedTrips() {
                 <div className="trip-overlay"></div>
 
                 {/* Featured Badge */}
-                {trip.featured && (
+                {trip.featured === 1 && (
                   <span className="trip-featured">
                     <Star className="w-3 h-3" />
                     En vedette
@@ -87,10 +97,10 @@ export default function FeaturedTrips() {
                 {/* Title */}
                 <h3 className="trip-title">{trip.nomServ}</h3>
 
-                {/* Rating */}
+                {/* Rating (optionnel - décommenter si besoin) */}
                 {/* {trip.rating && (
                   <div className="trip-rating">
-                    <div className="trip-stars">{renderStars(trip.rating)}</div>
+                    <div className="trip-stars">{renderStars(parseFloat(trip.rating))}</div>
                     <span className="trip-reviews">({trip.reviews || 0} avis)</span>
                   </div>
                 )} */}
@@ -99,7 +109,7 @@ export default function FeaturedTrips() {
                 <div className="trip-details">
                   <div className="trip-detail">
                     <Clock className="w-4 h-4" />
-                    <span>{trip.duration || "7 nuits"}</span>
+                    <span>{trip.duree || trip.duration || "7 jours"}</span>
                   </div>
                   <div className="trip-detail">
                     <Users className="w-4 h-4" />
@@ -113,10 +123,10 @@ export default function FeaturedTrips() {
 
                 {/* Buttons Group */}
                 <div className="trip-buttons">
-                  <a href={`/voyages/${trip.id}`} className="trip-btn-details">
+                  <Link to={`/voyages/${trip.id}`} className="trip-btn-details">
                     <Eye className="w-4 h-4" />
                     Détails
-                  </a>
+                  </Link>
                   <Link to={`/reserver/voyage/${trip.id}`} className="trip-btn-book">
                     <CreditCard className="w-4 h-4" />
                     Réserver
@@ -129,10 +139,10 @@ export default function FeaturedTrips() {
 
         {/* View All Button */}
         <div className="featured-footer">
-          <a href="/services/circuits" className="featured-view-all">
+          <Link to="/services/circuits" className="featured-view-all">
             Tous les voyages
             <ArrowRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

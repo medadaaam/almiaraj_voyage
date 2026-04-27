@@ -45,7 +45,6 @@ export default function HotelDetails() {
         }
     }, [id, getHotelDetails]);
 
-    // تحويل amenities من string إلى array مع icons
     const getAmenitiesList = (amenitiesString) => {
         if (!amenitiesString) return [];
         const amenities = amenitiesString.split(',').map(a => a.trim());
@@ -215,10 +214,10 @@ export default function HotelDetails() {
                             <div className="bg-white rounded-2xl shadow-sm p-6">
                                 <h2 className="text-2xl font-bold mb-4">ℹ️ Informations pratiques</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex items-center gap-3 text-gray-600">
+                                    {/* <div className="flex items-center gap-3 text-gray-600">
                                         <ClockIcon className="w-5 h-5 text-orange-500" />
                                         <span>Check-in: 14:00 | Check-out: 12:00</span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex items-center gap-3 text-gray-600">
                                         <Users className="w-5 h-5 text-orange-500" />
                                         <span>Capacité: Jusqu'à 4 personnes/chambre</span>
@@ -227,10 +226,10 @@ export default function HotelDetails() {
                                         <Phone className="w-5 h-5 text-orange-500" />
                                         <span>Service client 24h/24</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-gray-600">
+                                    {/* <div className="flex items-center gap-3 text-gray-600">
                                         <ShieldCheck className="w-5 h-5 text-orange-500" />
                                         <span>Certifié COVID-19 Safe</span>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
                         </div>

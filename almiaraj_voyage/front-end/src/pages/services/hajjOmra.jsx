@@ -3,15 +3,17 @@ import { Link } from "react-router-dom";
 import {
   Calendar, Users, MapPin, Clock, Phone, Mail, Star, CheckCircle,
   Search, X, Filter, ArrowRight, CreditCard, Shield, Heart, Compass,
-  Hotel, Bus, Coffee, Sun, Moon, Plane
+  Hotel, Bus, Coffee, Loader2
 } from "lucide-react";
 import "./omra.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export default function HajjOmra() {
-  const { hajjOmras, getHajjOmras } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { hajjOmras, getHajjOmras, hajjOmrasMeta, loadingHajjOmras } = useAuth();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // ✅ State للبحث
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,14 +22,23 @@ export default function HajjOmra() {
   const [sortBy, setSortBy] = useState("default");
   const [selectedType, setSelectedType] = useState("all");
 
+  // ✅ جلب البيانات الأولية (الصفحة 1)
   useEffect(() => {
     const fetchHajjOmras = async () => {
-      setLoading(true);
-      await getHajjOmras();
-      setLoading(false);
+      setInitialLoading(true);
+      await getHajjOmras(1);
+      setInitialLoading(false);
     };
     fetchHajjOmras();
   }, []);
+
+  // ✅ تحميل المزيد
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hajjOmrasMeta || hajjOmrasMeta.current_page >= hajjOmrasMeta.last_page) return;
+    setLoadingMore(true);
+    await getHajjOmras(hajjOmrasMeta.current_page + 1);
+    setLoadingMore(false);
+  }, [loadingMore, hajjOmrasMeta, getHajjOmras]);
 
   // ✅ خيارات المدة
   const durationOptions = [
@@ -155,7 +166,7 @@ export default function HajjOmra() {
 
   const suggestions = getUniqueValues();
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="service-loading">
         <div className="service-loading-spinner"></div>
@@ -177,7 +188,7 @@ export default function HajjOmra() {
         </div>
       </div>
 
-      {/* ✅ Search Bar Section */}
+      {/* Search Bar Section */}
       <div className="hajj-search-section">
         <div className="hajj-search-container">
           <div className="hajj-search-wrapper">
@@ -204,8 +215,8 @@ export default function HajjOmra() {
             </div>
 
             <button
-              className={`hajj-filter-toggle ${selectedDuration || selectedPriceRange || selectedType !== "all" ? "active" : ""}`}
-              onClick={() => document.querySelector('.hajj-filters-panel')?.classList.toggle('show')}
+              className={`hajj-filter-toggle ${showFilters ? "active" : ""}`}
+              onClick={() => setShowFilters(!showFilters)}
             >
               <Filter size={16} />
               Filtres
@@ -213,77 +224,79 @@ export default function HajjOmra() {
           </div>
 
           {/* Filtres avancés */}
-          <div className="hajj-filters-panel show">
-            <div className="hajj-filter-group">
-              <label className="hajj-filter-label">🕋 Type de pèlerinage</label>
-              <div className="hajj-type-buttons">
-                <button
-                  className={`hajj-type-btn ${selectedType === "all" ? "active" : ""}`}
-                  onClick={() => setSelectedType("all")}
-                >
-                  Tous
-                </button>
-                <button
-                  className={`hajj-type-btn ${selectedType === "hajj" ? "active" : ""}`}
-                  onClick={() => setSelectedType("hajj")}
-                >
-                  Hajj
-                </button>
-                <button
-                  className={`hajj-type-btn ${selectedType === "omra" ? "active" : ""}`}
-                  onClick={() => setSelectedType("omra")}
-                >
-                  Omra
-                </button>
+          {showFilters && (
+            <div className="hajj-filters-panel">
+              <div className="hajj-filter-group">
+                <label className="hajj-filter-label">🕋 Type de pèlerinage</label>
+                <div className="hajj-type-buttons">
+                  <button
+                    className={`hajj-type-btn ${selectedType === "all" ? "active" : ""}`}
+                    onClick={() => setSelectedType("all")}
+                  >
+                    Tous
+                  </button>
+                  <button
+                    className={`hajj-type-btn ${selectedType === "hajj" ? "active" : ""}`}
+                    onClick={() => setSelectedType("hajj")}
+                  >
+                    Hajj
+                  </button>
+                  <button
+                    className={`hajj-type-btn ${selectedType === "omra" ? "active" : ""}`}
+                    onClick={() => setSelectedType("omra")}
+                  >
+                    Omra
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="hajj-filter-group">
-              <label className="hajj-filter-label">⏱️ Durée du séjour</label>
-              <select
-                value={selectedDuration}
-                onChange={(e) => setSelectedDuration(e.target.value)}
-                className="hajj-filter-select"
-              >
-                {durationOptions.map((opt, i) => (
-                  <option key={i} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
+              <div className="hajj-filter-group">
+                <label className="hajj-filter-label">⏱️ Durée du séjour</label>
+                <select
+                  value={selectedDuration}
+                  onChange={(e) => setSelectedDuration(e.target.value)}
+                  className="hajj-filter-select"
+                >
+                  {durationOptions.map((opt, i) => (
+                    <option key={i} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="hajj-filter-group">
-              <label className="hajj-filter-label">💰 Prix par personne</label>
-              <select
-                value={selectedPriceRange}
-                onChange={(e) => setSelectedPriceRange(e.target.value)}
-                className="hajj-filter-select"
-              >
-                {priceRanges.map((range, i) => (
-                  <option key={i} value={range.value}>{range.label}</option>
-                ))}
-              </select>
-            </div>
+              <div className="hajj-filter-group">
+                <label className="hajj-filter-label">💰 Prix par personne</label>
+                <select
+                  value={selectedPriceRange}
+                  onChange={(e) => setSelectedPriceRange(e.target.value)}
+                  className="hajj-filter-select"
+                >
+                  {priceRanges.map((range, i) => (
+                    <option key={i} value={range.value}>{range.label}</option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="hajj-filter-group">
-              <label className="hajj-filter-label">📊 Trier par</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="hajj-filter-select"
-              >
-                <option value="default">Par défaut</option>
-                <option value="price_asc">Prix croissant</option>
-                <option value="price_desc">Prix décroissant</option>
-                <option value="duration">Durée la plus courte</option>
-              </select>
-            </div>
+              <div className="hajj-filter-group">
+                <label className="hajj-filter-label">📊 Trier par</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="hajj-filter-select"
+                >
+                  <option value="default">Par défaut</option>
+                  <option value="price_asc">Prix croissant</option>
+                  <option value="price_desc">Prix décroissant</option>
+                  <option value="duration">Durée la plus courte</option>
+                </select>
+              </div>
 
-            {(selectedDuration || selectedPriceRange || sortBy !== "default" || selectedType !== "all") && (
-              <button onClick={resetFilters} className="hajj-filter-reset">
-                Réinitialiser les filtres
-              </button>
-            )}
-          </div>
+              {(selectedDuration || selectedPriceRange || sortBy !== "default" || selectedType !== "all") && (
+                <button onClick={resetFilters} className="hajj-filter-reset">
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Résultats count */}
           <div className="hajj-results-count">
@@ -335,57 +348,81 @@ export default function HajjOmra() {
             </button>
           </div>
         ) : (
-          <div className="service-packages-grid">
-            {filteredPackages.map((pkg) => {
-              const discount = getDiscountPercent(pkg.oldPrice, pkg.price);
-              return (
-                <div key={pkg.id} className="service-package-card">
-                  {discount > 0 && (
-                    <span className="service-package-badge">-{discount}%</span>
-                  )}
-
-                  {/* Type Badge */}
-                  <span className={`service-package-type ${pkg.title?.toLowerCase().includes("hajj") ? "hajj" : "omra"}`}>
-                    {pkg.title?.toLowerCase().includes("hajj") ? "🕋 Hajj" : "🕌 Omra"}
-                  </span>
-
-                  <h3 className="service-package-title">{pkg.title}</h3>
-
-                  <div className="service-package-price">
-                    {pkg.oldPrice && (
-                      <span className="service-package-old">{formatPrice(pkg.oldPrice)} DH</span>
+          <>
+            <div className="service-packages-grid">
+              {filteredPackages.map((pkg) => {
+                const discount = getDiscountPercent(pkg.oldPrice, pkg.price);
+                return (
+                  <div key={pkg.id} className="service-package-card">
+                    {discount > 0 && (
+                      <span className="service-package-badge">-{discount}%</span>
                     )}
-                    <span className="service-package-new">{formatPrice(pkg.price)} DH</span>
-                    <span className="service-package-period">/pers</span>
-                  </div>
 
-                  <ul className="service-package-features">
-                    <li><Calendar size={16} /> Départ: {pkg.depart}</li>
-                    <li><Clock size={16} /> Durée: {pkg.duration}</li>
-                    <li><Users size={16} /> Groupe: {pkg.groupSize}</li>
-                    <li><Hotel size={16} /> Hébergement: {pkg.hotel}</li>
-                    <li><Bus size={16} /> Transport: {pkg.transport}</li>
-                    <li><Coffee size={16} /> Repas: {pkg.meals}</li>
-                  </ul>
+                    <span className={`service-package-type ${pkg.title?.toLowerCase().includes("hajj") ? "hajj" : "omra"}`}>
+                      {pkg.title?.toLowerCase().includes("hajj") ? "🕋 Hajj" : "🕌 Omra"}
+                    </span>
 
-                  <div className="service-package-footer">
-                    <span className="service-package-tag">Guide inclus</span>
-                    <span className="service-package-tag">Visites guidées</span>
-                    <span className="service-package-tag">Assistance 24/7</span>
-                  </div>
+                    <h3 className="service-package-title">{pkg.title}</h3>
 
-                  <div className="service-package-buttons">
-                    <Link to={`/hajj-omra/${pkg.id}`} className="service-package-details">
-                      Voir détails
-                    </Link>
-                    <Link to="/contact" className="service-package-btn">
-                      Demander un devis
-                    </Link>
+                    <div className="service-package-price">
+                      {pkg.oldPrice && (
+                        <span className="service-package-old">{formatPrice(pkg.oldPrice)} DH</span>
+                      )}
+                      <span className="service-package-new">{formatPrice(pkg.price)} DH</span>
+                      <span className="service-package-period">/pers</span>
+                    </div>
+
+                    <ul className="service-package-features">
+                      <li><Calendar size={16} /> Départ: {pkg.depart}</li>
+                      <li><Clock size={16} /> Durée: {pkg.duration}</li>
+                      <li><Users size={16} /> Groupe: {pkg.groupSize}</li>
+                      <li><Hotel size={16} /> Hébergement: {pkg.hotel}</li>
+                      <li><Bus size={16} /> Transport: {pkg.transport}</li>
+                      <li><Coffee size={16} /> Repas: {pkg.meals}</li>
+                    </ul>
+
+                    <div className="service-package-footer">
+                      <span className="service-package-tag">Guide inclus</span>
+                      <span className="service-package-tag">Visites guidées</span>
+                      <span className="service-package-tag">Assistance 24/7</span>
+                    </div>
+
+                    <div className="service-package-buttons">
+                      <Link to={`/hajj-omra/${pkg.id}`} className="service-package-details">
+                        Voir détails
+                      </Link>
+                      <Link to="/contact" className="service-package-btn">
+                        Demander un devis
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* ✅ Load More Button */}
+            {hajjOmrasMeta && hajjOmrasMeta.current_page < hajjOmrasMeta.last_page && (
+              <div className="hajj-load-more">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="hajj-load-more-btn"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Chargement...
+                    </>
+                  ) : (
+                    <>
+                      Voir plus d'offres
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

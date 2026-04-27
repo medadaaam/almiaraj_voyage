@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   MapPin,
@@ -8,28 +8,47 @@ import {
   Filter,
   X,
   ChevronDown,
+  Loader2,
+  ArrowRight
 } from "lucide-react";
 import "./destinationsPage.css";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DestinationsPage() {
-  const { getDestination, destinations = [] } = useAuth();
+  const { getDestination, destinations = [], destinationsMeta, loadingDestinations } = useAuth();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedContinent, setSelectedContinent] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+
+  // ✅ جلب البيانات الأولية (الصفحة 1)
   useEffect(() => {
     const fetchDestinations = async () => {
-      await getDestination();
+      setInitialLoading(true);
+      await getDestination(1);
+      setInitialLoading(false);
     };
     fetchDestinations();
   }, []);
 
+  // ✅ تحميل المزيد
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !destinationsMeta || destinationsMeta.current_page >= destinationsMeta.last_page) return;
+    setLoadingMore(true);
+    await getDestination(destinationsMeta.current_page + 1);
+    setLoadingMore(false);
+  }, [loadingMore, destinationsMeta, getDestination]);
+
+  // ✅ إزالة التكرار (بسبب Pagination قد يحدث تكرار)
   const uniqueDestinations = destinations.filter((dest, index, self) =>
     index === self.findIndex((d) => d.pays === dest.pays)
   );
 
+  // ✅ استخراج القارات الفريدة
   const uniqueContinents = [...new Set(uniqueDestinations.map(dest => dest.continente))];
 
+  // ✅ فلترة الوجهات
   const filteredDestinations = uniqueDestinations.filter((dest) => {
     const matchesSearch =
       searchTerm === "" ||
@@ -42,7 +61,22 @@ export default function DestinationsPage() {
     return matchesSearch && matchesContinent;
   });
 
-  
+  // ✅ إعادة ضبط الفلاتر
+  const resetFilters = () => {
+    setSearchTerm("");
+    setSelectedContinent("all");
+  };
+
+  if (initialLoading) {
+    return (
+      <div className="dest-page">
+        <div className="dest-loading">
+          <div className="dest-loading-spinner"></div>
+          <p>Chargement des destinations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dest-page">
@@ -136,61 +170,83 @@ export default function DestinationsPage() {
               <p>Essayez de modifier vos critères de recherche</p>
               <button
                 className="dest-reset-btn"
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedContinent("all");
-                }}
+                onClick={resetFilters}
               >
                 Réinitialiser les filtres
               </button>
             </div>
           ) : (
-            <div className="dest-grid">
-              {filteredDestinations.map((dest) => (
-                <div key={dest.id} className="dest-card">
-                  <div className="dest-card-image">
-                    <img src={dest.image} alt={dest.nom} />
-                    <div className="dest-card-overlay"></div>
-                    {dest.en_vedette === 1 && (
-                      <span className="dest-card-featured">
-                        <Star className="w-3 h-3" />
-                        Populaire
-                      </span>
-                    )}
-                  </div>
-                  <div className="dest-card-content">
-                    <div className="dest-card-header">
-                      <div className="dest-card-location">
-                        <MapPin className="dest-location-icon" />
-                        <span>{dest.pays}</span>
+            <>
+              <div className="dest-grid">
+                {filteredDestinations.map((dest) => (
+                  <div key={dest.id} className="dest-card">
+                    <div className="dest-card-image">
+                      <img src={dest.image} alt={dest.nom} />
+                      <div className="dest-card-overlay"></div>
+                      {dest.en_vedette === 1 && (
+                        <span className="dest-card-featured">
+                          <Star className="w-3 h-3" />
+                          Populaire
+                        </span>
+                      )}
+                    </div>
+                    <div className="dest-card-content">
+                      <div className="dest-card-header">
+                        <div className="dest-card-location">
+                          <MapPin className="dest-location-icon" />
+                          <span>{dest.pays}</span>
+                        </div>
+                      </div>
+                      <p className="dest-card-description">{dest.description}</p>
+                      <div className="dest-card-footer">
+                        <Link
+                          to={`/destinations/${dest.id}/services`}
+                          className="dest-card-link"
+                        >
+                          Voir les offres
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </Link>
                       </div>
                     </div>
-                    <p className="dest-card-description">{dest.description}</p>
-                    <div className="dest-card-footer">
-                      <a
-                        href={`/destinations/${dest.id}/services`}
-                        className="dest-card-link"
-                      >
-                        Voir les offres
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </a>
-                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* ✅ Load More Button */}
+              {destinationsMeta && destinationsMeta.current_page < destinationsMeta.last_page && (
+                <div className="dest-load-more">
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    className="dest-load-more-btn"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Chargement...
+                      </>
+                    ) : (
+                      <>
+                        Voir plus de destinations
+                        <ArrowRight size={18} />
+                      </>
+                    )}
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </section>

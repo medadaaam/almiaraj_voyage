@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Plane, Calendar, MapPin, CreditCard, Shield, Headphones, Globe,
-    Search, ArrowRight, Loader2, Star, X, Eye, ChevronRight
+    Search, ArrowRight, Loader2, Star, X, Eye
 } from "lucide-react";
 import "./billets.css";
 import { useAuth } from "@/context/AuthContext";
@@ -10,8 +10,9 @@ import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 
 export default function VolsBillets() {
-    const { billets, getBillets } = useAuth();
-    const [loading, setLoading] = useState(true);
+    const { billets, getBillets, billetsMeta, loadingBillets } = useAuth();
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [tripType, setTripType] = useState("aller_retour");
     const [filters, setFilters] = useState({
         from: "",
@@ -20,16 +21,27 @@ export default function VolsBillets() {
         return: ""
     });
     const [filteredResults, setFilteredResults] = useState([]);
+    const [showFilters, setShowFilters] = useState(false);
 
+    // ✅ جلب البيانات الأولية (الصفحة 1)
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
-            await getBillets();
-            setLoading(false);
+            setInitialLoading(true);
+            await getBillets(1);
+            setInitialLoading(false);
         };
         fetchData();
     }, []);
 
+    // ✅ تحميل المزيد
+    const loadMore = useCallback(async () => {
+        if (loadingMore || !billetsMeta || billetsMeta.current_page >= billetsMeta.last_page) return;
+        setLoadingMore(true);
+        await getBillets(billetsMeta.current_page + 1);
+        setLoadingMore(false);
+    }, [loadingMore, billetsMeta, getBillets]);
+
+    // ✅ فلترة النتائج
     useEffect(() => {
         if (billets && billets.length > 0) {
             filterBillets();
@@ -126,7 +138,7 @@ export default function VolsBillets() {
         { icon: <Globe />, title: "Destinations monde", desc: "Plus de 500 destinations" }
     ];
 
-    if (loading) {
+    if (initialLoading) {
         return (
             <div className="vols-loading">
                 <div className="vols-loading-spinner"></div>
@@ -272,73 +284,90 @@ export default function VolsBillets() {
                         </button>
                     </div>
                 ) : (
-                    <div className="vols-grid">
-                        {filteredResults.map((vol) => {
-                            const daysCount = getDaysCount(vol.departure, vol.return);
-                            return (
-                                <div key={vol.id} className="vols-card">
-                                    <div className="vols-card-header">
-                                        <div className="vols-airline">
-                                            <div className="vols-airline-icon">
-                                                <Plane size={28} />
-                                            </div>
-                                            <div>
-                                                <h4 className="vols-airline-name">{vol.name}</h4>
-                                                <div className="vols-route">
-                                                    <span>{vol.from}</span>
-                                                    <ArrowRight size={14} />
-                                                    <span>{vol.to}</span>
+                    <>
+                        <div className="vols-grid">
+                            {filteredResults.map((vol) => {
+                                const daysCount = getDaysCount(vol.departure, vol.return);
+                                return (
+                                    <div key={vol.id} className="vols-card">
+                                        <div className="vols-card-header">
+                                            <div className="vols-airline">
+                                                <div className="vols-airline-icon">
+                                                    <Plane size={28} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="vols-airline-name">{vol.name}</h4>
+                                                    <div className="vols-route">
+                                                        <span>{vol.from}</span>
+                                                        <ArrowRight size={14} />
+                                                        <span>{vol.to}</span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="vols-price">
-                                            <span className="vols-price-label">À partir de</span>
-                                            <span className="vols-price-value">{vol.price} DH</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="vols-card-info">
-                                        <div className="vols-info-row">
-                                            <div className="vols-info-item">
-                                                <Calendar size={16} />
-                                                <span>Départ: {formatDate(vol.departure)}</span>
+                                            <div className="vols-price">
+                                                <span className="vols-price-label">À partir de</span>
+                                                <span className="vols-price-value">{vol.price} DH</span>
                                             </div>
-                                            {vol.return && (
+                                        </div>
+
+                                        <div className="vols-card-info">
+                                            <div className="vols-info-row">
                                                 <div className="vols-info-item">
                                                     <Calendar size={16} />
-                                                    <span>Retour: {formatDate(vol.return)}</span>
+                                                    <span>Départ: {formatDate(vol.departure)}</span>
                                                 </div>
-                                            )}
+                                                {vol.return && (
+                                                    <div className="vols-info-item">
+                                                        <Calendar size={16} />
+                                                        <span>Retour: {formatDate(vol.return)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="vols-type-badge">
+                                                <span className={vol.type === 'aller_simple' ? 'vols-type-simple' : 'vols-type-round'}>
+                                                    {vol.type === 'aller_simple' ? 'Aller simple' : `Aller retour (${daysCount} jours)`}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="vols-type-badge">
-                                            <span className={vol.type === 'aller_simple' ? 'vols-type-simple' : 'vols-type-round'}>
-                                                {vol.type === 'aller_simple' ? 'Aller simple' : `Aller retour (${daysCount} jours)`}
-                                            </span>
+
+                                        <div className="vols-card-buttons">
+                                            <Link to={`/billets/${vol.id}`} className="vols-btn-details">
+                                                <Eye size={16} />
+                                                Détails
+                                            </Link>
+                                            <Link to={`/reserver/vol/${vol.id}`} className="vols-btn-book">
+                                                <CreditCard size={16} />
+                                                Réserver
+                                            </Link>
                                         </div>
                                     </div>
+                                );
+                            })}
+                        </div>
 
-                                    {/* <div className="vols-card-footer">
-                                        <div className="vols-rating">
-                                            {renderStars(parseFloat(vol.rating))}
-                                            <span className="vols-rating-value">{vol.rating}</span>
-                                        </div>
-                                    </div> */}
-
-                                    {/* ✅ DEUX BOUTONS : Détails + Réserver */}
-                                    <div className="vols-card-buttons">
-                                        <a href={`/billets/${vol.id}`} className="vols-btn-details">
-                                            <Eye size={16} />
-                                            Détails
-                                        </a>
-                                        <Link to={`/reserver/vol/${vol.id}`} className="vols-btn-book">
-                                            <CreditCard size={16} />
-                                            Réserver
-                                        </Link>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                        {/* ✅ Load More Button */}
+                        {billetsMeta && billetsMeta.current_page < billetsMeta.last_page && (
+                            <div className="vols-load-more">
+                                <button
+                                    onClick={loadMore}
+                                    disabled={loadingMore}
+                                    className="vols-load-more-btn"
+                                >
+                                    {loadingMore ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            Chargement...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Voir plus de vols
+                                            <ArrowRight size={18} />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

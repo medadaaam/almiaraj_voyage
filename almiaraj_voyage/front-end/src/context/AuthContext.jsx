@@ -4,13 +4,19 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const stateContext = createContext({
   user: null,
+  clientProfile: null,
   authenticated: false,
   destinations: [],
   voyages: [],
   hotels: [],
   billets: [],
   hajjOmras: [],
+  hotelsMeta: {},
+  voyagesMeta: {},
+  destinationsMeta: {},
   setUser: () => {},
+  getClientProfile: () => {},
+  updateClientProfile:()=>{},
   logout: () => {},
   getDestination: () => {},
   getVoyages: () => {},
@@ -34,13 +40,30 @@ export function AuthProvider({ children }) {
   const [destinations, setDestination] = useState([]);
   const [voyages, setVoyage] = useState([]);
   const [hajjOmras, setHajjOmras] = useState([]);
-  const [billets, setBillets] = useState([]); // ✅ تصحيح: setBittets → setBillets
+  const [clientProfile, setClientProfile] = useState(null);
+  const [billets, setBillets] = useState([]);
   const [hotels, setHotels] = useState([]);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // جلب المستخدم أولاً
+  // ✅ Meta data for pagination
+  const [hotelsMeta, setHotelsMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+  });
+  const [voyagesMeta, setVoyagesMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+  });
+  const [destinationsMeta, setDestinationsMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+  });
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -61,27 +84,14 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, []);
 
-  // ✅ بعد ما يجيب المستخدم، جلب كل البيانات
+  // ✅ جلب البيانات الأساسية فقط أولاً
   useEffect(() => {
     const fetchAllData = async () => {
       if (loading) return;
-
       setInitialLoading(true);
-
-      // جلب جميع البيانات بالتوازي
-      const promises = [
-        getDestination(),
-        getVoyages(),
-        getHotels(),
-        getBillets(),     // ✅ أضفنا billets
-        getHajjOmras(),   // ✅ أضفنا hajjOmras
-      ];
-
-      await Promise.all(promises);
-
+      await Promise.all([getDestination(), getVoyages(), getHotels()]);
       setInitialLoading(false);
     };
-
     fetchAllData();
   }, [loading]);
 
@@ -89,7 +99,6 @@ export function AuthProvider({ children }) {
     try {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.login(email, password);
-
       if (response.status === 200 || response.status === 204) {
         const userResponse = await AuthApi.getUser();
         setUser(userResponse.data);
@@ -106,7 +115,6 @@ export function AuthProvider({ children }) {
     try {
       await AuthApi.getCsrfToken();
       const response = await AuthApi.register(data);
-
       if (
         response.status === 200 ||
         response.status === 201 ||
@@ -123,11 +131,55 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getDestination = async () => {
+  const updateClientProfile = async (data) => {
     try {
-      const response = await AuthApi.getDestination();
-      if (response.status === 200 && response.data?.destinations) {
-        setDestination(response.data.destinations);
+        const response = await AuthApi.updateClientProfile(data);
+        console.log("Update response:", response.data);
+        if (response.status === 200 && response.data) {
+            return response.data;
+        }
+    } catch (error) {
+        console.error("Error updating client profile:", error);
+        throw error;
+    }
+};
+
+const getClientProfile = async () => {
+    try {
+        const response = await AuthApi.getClientProfile();
+        console.log("Client profile response:", response.data);
+        if (response.status === 200 && response.data) {
+            setClientProfile(response.data);
+            return response.data;
+        }
+    } catch (error) {
+        console.error("Error fetching client profile:", error);
+        return null;
+    }
+};
+
+  // ✅ Destination avec Pagination
+  const getDestination = async (page = 1) => {
+    try {
+      const response = await AuthApi.getDestination(page);
+      if (response.status === 200) {
+        if (response.data?.destinations) {
+          setDestination(response.data.destinations);
+          setDestinationsMeta({
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            total: response.data.total || 0,
+          });
+        } else if (response.data?.data) {
+          setDestination(response.data.data);
+          setDestinationsMeta({
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            total: response.data.total || 0,
+          });
+        } else if (Array.isArray(response.data)) {
+          setDestination(response.data);
+        }
       }
       return response;
     } catch (error) {
@@ -136,11 +188,21 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getVoyages = async () => {
+  // ✅ Voyages avec Pagination
+  const getVoyages = async (page = 1) => {
     try {
-      const response = await AuthApi.getVoyages();
-      if (response.status === 200 && response.data) {
-        setVoyage(response.data);
+      const response = await AuthApi.getVoyages(page);
+      if (response.status === 200) {
+        if (response.data?.data) {
+          setVoyage(response.data.data);
+          setVoyagesMeta({
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            total: response.data.total || 0,
+          });
+        } else if (Array.isArray(response.data)) {
+          setVoyage(response.data);
+        }
       }
       return response;
     } catch (error) {
@@ -149,11 +211,24 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getHajjOmras = async () => {
+  // ✅ Hotels avec Pagination
+  const getHotels = async (page = 1) => {
     try {
-      const response = await AuthApi.getOmraHajj();
-      if (response.status === 200 && response.data) {
-        setHajjOmras(response.data);
+      const response = await AuthApi.getHotels(page);
+      if (response.status === 200) {
+        if (page === 1) {
+          setHotels([]);
+        }
+        if (response.data?.data) {
+          setHotels((prev) => [...prev, ...response.data.data]);
+          setHotelsMeta({
+            current_page: response.data.current_page || 1,
+            last_page: response.data.last_page || 1,
+            total: response.data.total || 0,
+          });
+        } else if (Array.isArray(response.data)) {
+          setHotels((prev) => [...prev, ...response.data]);
+        }
       }
       return response;
     } catch (error) {
@@ -162,11 +237,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getBillets = async () => {
+  // ✅ Billets avec Pagination
+  const getBillets = async (page = 1) => {
     try {
-      const response = await AuthApi.getBillets();
-      if (response.status === 200 && response.data) {
-        setBillets(response.data);
+      const response = await AuthApi.getBillets(page);
+      if (response.status === 200) {
+        if (response.data?.data) {
+          setBillets(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setBillets(response.data);
+        }
       }
       return response;
     } catch (error) {
@@ -175,11 +255,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const getHotels = async () => {
+  // ✅ Hajj Omras avec Pagination
+  const getHajjOmras = async (page = 1) => {
     try {
-      const response = await AuthApi.getHotels();
-      if (response.status === 200 && response.data) {
-        setHotels(response.data);
+      const response = await AuthApi.getOmraHajj(page);
+      if (response.status === 200) {
+        if (response.data?.data) {
+          setHajjOmras(response.data.data);
+        } else if (Array.isArray(response.data)) {
+          setHajjOmras(response.data);
+        }
       }
       return response;
     } catch (error) {
@@ -259,6 +344,8 @@ export function AuthProvider({ children }) {
     <stateContext.Provider
       value={{
         user,
+        clientProfile,
+        getClientProfile,
         login,
         setUser,
         authenticated,
@@ -266,12 +353,16 @@ export function AuthProvider({ children }) {
         logout,
         register,
         loading,
+        updateClientProfile,
         initialLoading,
         getDestination,
         destinations,
+        destinationsMeta,
         getVoyages,
         voyages,
+        voyagesMeta,
         hotels,
+        hotelsMeta,
         billets,
         hajjOmras,
         getHotels,

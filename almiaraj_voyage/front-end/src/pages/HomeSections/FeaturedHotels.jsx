@@ -1,20 +1,23 @@
-import { MapPin, Star, Wifi, Coffee, Car, Utensils, Waves, Dumbbell, ArrowRight, Clock, Users, Calendar, Eye, CreditCard } from "lucide-react";
+import { MapPin, Star, Wifi, Coffee, Car, Utensils, Waves, Dumbbell, ArrowRight, Clock, Users, Calendar, Eye, CreditCard, Loader2 } from "lucide-react";
 import "./styles/featuredHotels.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function FeaturedHotels() {
-    const { hotels, getHotels } = useAuth();
+    const { hotels, getHotels, loadingHotels } = useAuth();
 
     useEffect(() => {
-        getHotels();
+        const fetchHotels = async () => {
+            await getHotels(1);
+        };
+        fetchHotels();
     }, []);
 
     const renderStars = (rating) => {
         const stars = [];
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating % 1 >= 0.5;
+        const fullStars = Math.floor(rating || 0);
+        const hasHalfStar = (rating || 0) % 1 >= 0.5;
 
         for (let i = 0; i < fullStars; i++) {
             stars.push(<Star key={i} className="star-filled" />);
@@ -47,6 +50,13 @@ export default function FeaturedHotels() {
         return icons[amenity] || <Coffee className="w-3 h-3" />;
     };
 
+    // ✅ عرض أول 5 فنادق فقط
+    const displayedHotels = hotels.slice(0, 5);
+
+    if (displayedHotels.length === 0) {
+        return null; // لا شيء يظهر إذا مافيش بيانات
+    }
+
     return (
         <section className="featured-hotels">
             <div className="featured-hotels-container">
@@ -63,7 +73,7 @@ export default function FeaturedHotels() {
 
                 {/* Hotels Grid */}
                 <div className="hotels-grid">
-                    {hotels.slice(0, 5).map((hotel) => (
+                    {displayedHotels.map((hotel) => (
                         <div key={hotel.id} className="hotel-card">
                             {/* Image */}
                             <div className="hotel-image">
@@ -71,7 +81,7 @@ export default function FeaturedHotels() {
                                 <div className="hotel-overlay"></div>
 
                                 {/* Featured Badge */}
-                                {hotel.enVedette && (
+                                {hotel.enVedette === 1 && (
                                     <span className="hotel-featured">
                                         <Star className="w-3 h-3" />
                                         Recommandé
@@ -133,10 +143,10 @@ export default function FeaturedHotels() {
 
                                 {/* Buttons Group */}
                                 <div className="hotel-buttons">
-                                    <a href={`/hotels/${hotel.id}`} className="hotel-btn-details">
+                                    <Link to={`/hotels/${hotel.id}`} className="hotel-btn-details">
                                         <Eye className="w-4 h-4" />
                                         Détails
-                                    </a>
+                                    </Link>
                                     <Link to={`/reserver/hotel/${hotel.id}`} className="hotel-btn-book">
                                         <CreditCard className="w-4 h-4" />
                                         Réserver
@@ -149,10 +159,10 @@ export default function FeaturedHotels() {
 
                 {/* View All Button */}
                 <div className="featured-hotels-footer">
-                    <a href="/services/hotels" className="featured-hotels-view-all">
+                    <Link to="/services/hotels" className="featured-hotels-view-all">
                         Tous les hôtels
                         <ArrowRight className="w-4 h-4" />
-                    </a>
+                    </Link>
                 </div>
             </div>
         </section>

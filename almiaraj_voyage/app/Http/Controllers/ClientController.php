@@ -13,21 +13,39 @@ class ClientController extends Controller
     /**
      * Display a listing of the resource.
      */
-public function index(Request $req)
-{
-    $user = $req->user();
+    public function getProfile(Request $request)
+    {
+        $user = $request->user();
 
-    if (!$user) {
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+
+        // ✅ جلب العميل باستخدام id المشترك
+        $client = Client::where('id', $user->id)->first();
+
+        if (!$client) {
+            // ✅ إذا غير موجود، ننشئه بنفس id المستخدم
+            $client = Client::create([
+                'id' => $user->id,  // نفس id المستخدم
+                'nomCl' => explode(' ', $user->name)[0] ?? '',
+                'prenomCl' => explode(' ', $user->name)[1] ?? '',
+                'email' => $user->email,
+                'numTelCl' => '',
+                'natCl' => 'maroc',
+                'dateInscription' => now(),
+            ]);
+        }
+
         return response()->json([
-            'message' => 'Unauthorized'
-        ], 401);
+            'success' => true,
+            'user' => $user,
+            'client' => $client
+        ]);
     }
-    $client = $user->client;
-
-    return response()->json([
-        'client' => $client
-    ]);
-}
 
     /**
      * Show the form for creating a new resource.
@@ -93,10 +111,35 @@ public function index(Request $req)
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Client $client)
-    {
-        //
+public function update(Request $request)
+{
+    $user = $request->user();
+
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'User not authenticated'
+        ], 401);
     }
+
+    $client = Client::where('id', $user->id)->first();
+
+    if ($client) {
+        $client->update([
+            'nomCl' => $request->nomCl,
+            'prenomCl' => $request->prenomCl,
+            'numTelCl' => $request->numTelCl,
+            'natCl' => $request->natCl,
+            'cin' => $request->cin,
+            'passport' => $request->passport,
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'client' => $client
+    ]);
+}
 
     /**
      * Remove the specified resource from storage.

@@ -13,9 +13,9 @@ class VoyageController extends Controller
 
     public function indexCl()
     {
-        $voyages = Voyage::with(['service', 'destination'])->get();
+        $voyages = Voyage::with(['service', 'destination'])->paginate(6);
 
-        $data = $voyages->map(function ($v) {
+        $data = $voyages->getCollection()->map(function ($v) {
             return [
                 'id' => $v->id,
                 'nomServ' => $v->service->nomServ,
@@ -25,14 +25,18 @@ class VoyageController extends Controller
                 'prix' => $v->service->prix,
                 'oldPrix' => $v->service->oldPrix ?? null,
                 'rating' => $v->service->rating ?? 0,
-                'duration' => \Carbon\Carbon::parse($v->dateDepartV)
-                    ->diffInDays(\Carbon\Carbon::parse($v->dateRetourV)) . ' nuits',
+                'duration' => Carbon::parse($v->dateDepartV)->diffInDays(Carbon::parse($v->dateRetourV)) . ' nuits',
                 'groupSize' => $v->groupSize ?? null,
                 'featured' => $v->service->enVedette ?? false,
             ];
         });
 
-        return response()->json($data);
+        return response()->json([
+            'data' => $data,
+            'current_page' => $voyages->currentPage(),
+            'last_page' => $voyages->lastPage(),
+            'total' => $voyages->total(),
+        ]);
     }
 
 
@@ -109,7 +113,7 @@ class VoyageController extends Controller
 
     public function showCl($id)
     {
-        $voyage = Voyage::with(['service','destination'])->findOrFail($id);
+        $voyage = Voyage::with(['service', 'destination'])->findOrFail($id);
         return response()->json($voyage);
     }
 }

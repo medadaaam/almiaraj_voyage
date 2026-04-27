@@ -36,6 +36,7 @@ import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
 import AdminHotels from "@/pages/adminDashboard/hotel";
 import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
 import AdminBillets from "@/pages/adminDashboard/billiet";
+import ClientProfile from "@/pages/ClientProfile";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -90,7 +91,7 @@ export const route = createBrowserRouter([
         element: <HajjOmra />,
       },
       {
-        path: "/services/voyages",
+        path: "/services/circuits",
         element: <CircuitsTouristiques />,
       }, {
         path: "/services/hotels",
@@ -215,7 +216,11 @@ export const route = createBrowserRouter([
     children: [
       {
         path: "/client",
-        element: <DashboardClient />,
+        element: <ClientProfile />,
+      },
+            {
+        path: "/",
+        element: <Home />,
       },
       {
         path: "/client/profile",

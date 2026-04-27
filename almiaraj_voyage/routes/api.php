@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\BilletController;
-use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientController ;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HajjOmraController;
 use Illuminate\Http\Request;
@@ -14,6 +14,7 @@ use App\Http\Controllers\VoyageController;
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store']);
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
@@ -21,16 +22,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 });
+
+
+
 Route::post('/services', [ServiceController::class, 'store']);
 Route::post('/hotels', [HotelController::class, 'store']);
 // Route::post('/voyages', [VoyageController::class, 'store']);
 Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
 Route::post('/billets', [BilletController::class, 'store']);
 
+Route::middleware('auth:sanctum')->get('/client/profile', [ClientController::class, 'getProfile']);
+Route::middleware('auth:sanctum')->put('/client/profile', [ClientController::class, 'update']);
 
 Route::get('/destinationsCl', [DestinationController::class, 'indexCl']);
 Route::get('/destinationsCl/{id}/services', [DestinationController::class, 'getServicesCl']);
-
 
 Route::get('/billetsCl', [BilletController::class, 'indexCl']);
 Route::get('/omraHajjCl', [HajjOmraController::class, 'indexCl']);
@@ -53,6 +58,5 @@ Route::prefix('voyages')->group(function () {
 Route::get('/destinations', [DestinationController::class, 'index']);
 Route::get('/destinations/search', [VoyageController::class, 'searchDestinations']);
 Route::post('/voyages', [VoyageController::class, 'store']);
-Route::middleware('auth:sanctum')->get('/clients', [ClientController::class, 'index']);
 
 require __DIR__.'/auth.php';

@@ -19,32 +19,43 @@ import {
   CheckCircle,
   Search,
   X,
-  Filter
+  Filter,
+  Loader2
 } from "lucide-react";
 import "./voyages.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export default function CircuitsTouristiques() {
-  const { voyages, getVoyages } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { voyages, getVoyages, voyagesMeta, loadingVoyages } = useAuth();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // ✅ State للبحث
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDestination, setSelectedDestination] = useState("");
   const [selectedDuration, setSelectedDuration] = useState("");
   const [selectedPriceRange, setSelectedPriceRange] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("default");
 
+  // ✅ جلب البيانات الأولية (الصفحة 1)
   useEffect(() => {
     const fetchVoyages = async () => {
-      setLoading(true);
-      await getVoyages();
-      setLoading(false);
+      setInitialLoading(true);
+      await getVoyages(1);
+      setInitialLoading(false);
     };
     fetchVoyages();
   }, []);
+
+  // ✅ تحميل المزيد
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !voyagesMeta || voyagesMeta.current_page >= voyagesMeta.last_page) return;
+    setLoadingMore(true);
+    await getVoyages(voyagesMeta.current_page + 1);
+    setLoadingMore(false);
+  }, [loadingMore, voyagesMeta, getVoyages]);
 
   // ✅ استخراج الوجهات للـ datalist
   const destinations = useMemo(() => {
@@ -81,7 +92,6 @@ export default function CircuitsTouristiques() {
 
     let results = [...voyages];
 
-    // فلترة حسب الكلمة المدخلة
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       results = results.filter(voyage =>
@@ -92,7 +102,6 @@ export default function CircuitsTouristiques() {
       );
     }
 
-    // فلترة حسب الوجهة
     if (selectedDestination) {
       results = results.filter(voyage =>
         voyage.destination?.toLowerCase().includes(selectedDestination.toLowerCase()) ||
@@ -100,7 +109,6 @@ export default function CircuitsTouristiques() {
       );
     }
 
-    // ✅ فلترة حسب المدة (أيام)
     if (selectedDuration) {
       if (selectedDuration === "3-5") {
         results = results.filter(voyage => {
@@ -125,7 +133,6 @@ export default function CircuitsTouristiques() {
       }
     }
 
-    // ✅ فلترة حسب السعر
     if (selectedPriceRange) {
       if (selectedPriceRange === "0-2000") {
         results = results.filter(voyage => voyage.prix < 2000);
@@ -138,7 +145,6 @@ export default function CircuitsTouristiques() {
       }
     }
 
-    // ✅ ترتيب النتائج
     if (sortBy === "price_asc") {
       results.sort((a, b) => a.prix - b.prix);
     } else if (sortBy === "price_desc") {
@@ -152,7 +158,6 @@ export default function CircuitsTouristiques() {
     return results;
   }, [voyages, searchTerm, selectedDestination, selectedDuration, selectedPriceRange, sortBy]);
 
-  // ✅ إعادة ضبط البحث
   const resetSearch = () => {
     setSearchTerm("");
     setSelectedDestination("");
@@ -161,12 +166,10 @@ export default function CircuitsTouristiques() {
     setSortBy("default");
   };
 
-  // ✅ تنسيق السعر
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR').format(price);
   };
 
-  // ✅ حساب نسبة الخصم
   const getDiscountPercent = (oldPrice, price) => {
     if (oldPrice && oldPrice > price) {
       return Math.round(((oldPrice - price) / oldPrice) * 100);
@@ -177,13 +180,8 @@ export default function CircuitsTouristiques() {
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating || 0);
-    const hasHalfStar = (rating || 0) % 1 >= 0.5;
-
     for (let i = 0; i < fullStars; i++) {
       stars.push(<Star key={i} className="star-filled" />);
-    }
-    if (hasHalfStar) {
-      stars.push(<Star key="half" className="star-filled-half" />);
     }
     const emptyStars = 5 - stars.length;
     for (let i = 0; i < emptyStars; i++) {
@@ -199,7 +197,7 @@ export default function CircuitsTouristiques() {
     { icon: <Heart />, title: "Satisfait ou remboursé", desc: "Garantie 100%" }
   ];
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="circuits-loading">
         <div className="circuits-loading-spinner"></div>
@@ -221,7 +219,7 @@ export default function CircuitsTouristiques() {
         </div>
       </div>
 
-      {/* ✅ Search Bar Section */}
+      {/* Search Bar Section */}
       <div className="circuits-search-section">
         <div className="circuits-search-container">
           <div className="circuits-search-wrapper">
@@ -256,7 +254,6 @@ export default function CircuitsTouristiques() {
             </button>
           </div>
 
-          {/* Filtres avancés */}
           {showFilters && (
             <div className="circuits-filters-panel">
               <div className="circuits-filter-group">
@@ -322,7 +319,6 @@ export default function CircuitsTouristiques() {
             </div>
           )}
 
-          {/* Résultats count */}
           <div className="circuits-results-count">
             <p>{filteredVoyages.length} circuit(s) trouvé(s)</p>
           </div>
@@ -346,78 +342,104 @@ export default function CircuitsTouristiques() {
             </button>
           </div>
         ) : (
-          <div className="circuits-grid">
-            {filteredVoyages.map((trip) => {
-              const discount = getDiscountPercent(trip.oldPrix, trip.prix);
-              return (
-                <div key={trip.id} className="circuits-card">
-                  {/* Image */}
-                  <div className="circuits-card-image">
-                    <img src={trip.image} alt={trip.destination} />
-                    <div className="circuits-card-overlay"></div>
+          <>
+            <div className="circuits-grid">
+              {filteredVoyages.map((trip) => {
+                const discount = getDiscountPercent(trip.oldPrix, trip.prix);
+                return (
+                  <div key={trip.id} className="circuits-card">
+                    <div className="circuits-card-image">
+                      <img src={trip.image} alt={trip.destination} />
+                      <div className="circuits-card-overlay"></div>
 
-                    {trip.enVedette === 1 && (
-                      <span className="circuits-card-badge featured">
-                        <Star className="w-3 h-3" />
-                        En vedette
-                      </span>
-                    )}
-
-                    {discount > 0 && (
-                      <span className="circuits-card-badge discount">
-                        -{discount}%
-                      </span>
-                    )}
-
-                    <div className="circuits-card-price">
-                      {trip.oldPrix && (
-                        <span className="circuits-card-price-old">{formatPrice(trip.oldPrix)}DH</span>
+                      {trip.enVedette === 1 && (
+                        <span className="circuits-card-badge featured">
+                          <Star className="w-3 h-3" />
+                          En vedette
+                        </span>
                       )}
-                      <span className="circuits-card-price-new">{formatPrice(trip.prix)}DH</span>
-                      <span className="circuits-card-price-period">/pers</span>
+
+                      {discount > 0 && (
+                        <span className="circuits-card-badge discount">
+                          -{discount}%
+                        </span>
+                      )}
+
+                      <div className="circuits-card-price">
+                        {trip.oldPrix && (
+                          <span className="circuits-card-price-old">{formatPrice(trip.oldPrix)}DH</span>
+                        )}
+                        <span className="circuits-card-price-new">{formatPrice(trip.prix)}DH</span>
+                        <span className="circuits-card-price-period">/pers</span>
+                      </div>
+                    </div>
+
+                    <div className="circuits-card-content">
+                      <div className="circuits-card-location">
+                        <MapPin className="w-4 h-4" />
+                        <span>{trip.destination}, {trip.pays}</span>
+                      </div>
+
+                      <h3 className="circuits-card-title">{trip.nomServ}</h3>
+
+                      <div className="circuits-card-rating">
+                        {renderStars(parseFloat(trip.rating || 0))}
+                      </div>
+
+                      <div className="circuits-card-details">
+                        <div className="circuits-card-detail">
+                          <Clock className="w-4 h-4" />
+                          <span>{trip.duree || 7} jours</span>
+                        </div>
+                        <div className="circuits-card-detail">
+                          <Users className="w-4 h-4" />
+                          <span>{trip.groupSize || 2} personnes</span>
+                        </div>
+                        <div className="circuits-card-detail">
+                          <Calendar className="w-4 h-4" />
+                          <span>Disponible</span>
+                        </div>
+                      </div>
+
+                      <div className="circuits-card-buttons">
+                        <Link to={`/voyages/${trip.id}`} className="circuits-card-btn details">
+                          <Eye size={16} />
+                          Détails
+                        </Link>
+                        <Link to={`/reserver/voyage/${trip.id}`} className="circuits-card-btn book">
+                          <CreditCard size={16} />
+                          Réserver
+                        </Link>
+                      </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
 
-                  {/* Content */}
-                  <div className="circuits-card-content">
-                    <div className="circuits-card-location">
-                      <MapPin className="w-4 h-4" />
-                      <span>{trip.destination}, {trip.pays}</span>
-                    </div>
-
-                    <h3 className="circuits-card-title">{trip.nomServ}</h3>
-
-
-                    <div className="circuits-card-details">
-                      <div className="circuits-card-detail">
-                        <Clock className="w-4 h-4" />
-                        <span>{trip.duree || 7} jours</span>
-                      </div>
-                      <div className="circuits-card-detail">
-                        <Users className="w-4 h-4" />
-                        <span>{trip.groupSize || 2} personnes</span>
-                      </div>
-                      <div className="circuits-card-detail">
-                        <Calendar className="w-4 h-4" />
-                        <span>Disponible</span>
-                      </div>
-                    </div>
-
-                    <div className="circuits-card-buttons">
-                      <a href={`/voyages/${trip.id}`} className="circuits-card-btn details">
-                        <Eye size={16} />
-                        Détails
-                      </a>
-                      <Link to={`/reserver/voyage/${trip.id}`} className="circuits-card-btn book">
-                        <CreditCard size={16} />
-                        Réserver
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            {/* ✅ Load More Button */}
+            {voyagesMeta && voyagesMeta.current_page < voyagesMeta.last_page && (
+              <div className="circuits-load-more">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="circuits-load-more-btn"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Chargement...
+                    </>
+                  ) : (
+                    <>
+                      Voir plus de circuits
+                      <ArrowRight size={18} />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

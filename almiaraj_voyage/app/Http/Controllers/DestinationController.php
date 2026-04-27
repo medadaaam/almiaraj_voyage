@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Destination;
 use App\Http\Controllers\Controller;
-use App\Models\Service;
 use Illuminate\Http\Request;
 
 class DestinationController extends Controller
@@ -12,13 +11,19 @@ class DestinationController extends Controller
     /**
      * Display a listing of the resource.
      */
-      public function indexCl()
+    public function indexCl()
     {
-        $dest = Destination::all();
+        $dest = Destination::paginate(6);
+
         return response()->json([
-            'destinations' => $dest
-        ], 200);
+            'data' => $dest->items(),
+            'destinations' => $dest->items(),
+            'current_page' => $dest->currentPage(),
+            'last_page' => $dest->lastPage(),
+            'total' => $dest->total(),
+        ]);
     }
+
 
 
     public function getServicesCl($id)

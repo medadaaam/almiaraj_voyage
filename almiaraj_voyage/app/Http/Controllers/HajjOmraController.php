@@ -12,6 +12,28 @@ use Carbon\Carbon;
 
 class HajjOmraController extends Controller
 {
+    public function indexCl()
+    {
+        $items = HajjOmra::with('service')->get();
+
+        $data = $items->map(function ($h) {
+            return [
+                'id' => $h->id,
+                'title' => $h->service->nomServ,
+                'depart' => $h->dateDepartHO,
+                'retour' => $h->dateRetourHO,
+                'duration' => $h->duree,
+                'price' => $h->service->prix,
+                'typeChambre' => $h->typeChambre,
+                'formule' => $h->formule,
+                'type' => $h->type,
+                'image' => $h->service->image,
+            ];
+        });
+
+        return response()->json($data);
+    }
+
     public function index()
     {
         $hajjOmras = HajjOmra::with('service')
@@ -82,7 +104,6 @@ class HajjOmraController extends Controller
                 'message' => 'Service Hajj/Omra créé avec succès',
                 'data' => $service->load('hajjOmra')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -179,7 +200,6 @@ class HajjOmraController extends Controller
                 'success' => true,
                 'message' => 'Service Hajj/Omra modifié avec succès'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -213,7 +233,6 @@ class HajjOmraController extends Controller
                 'success' => true,
                 'message' => 'Service supprimé avec succès'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

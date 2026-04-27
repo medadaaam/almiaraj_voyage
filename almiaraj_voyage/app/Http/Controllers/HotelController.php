@@ -11,6 +11,25 @@ use Illuminate\Support\Facades\DB;
 
 class HotelController extends Controller
 {
+    public function indexCl()
+    {
+        $hotels = Hotel::with(['service', 'destination'])->get();
+
+        $data = $hotels->map(function ($h) {
+            return [
+                'id' => $h->id,
+                'name' => $h->service->nomServ,
+                'location' => $h->selected_city ?? ($h->destination->pays ?? ''),
+                'image' => $h->service->image,
+                'price' => $h->service->prix,
+                'rating' => $h->service->rating,
+                'amenities' => $h->amenities,
+                'description' => $h->service->description,
+            ];
+        });
+
+        return response()->json($data);
+    }
     public function index()
     {
         $hotels = Hotel::with(['service', 'destination'])
@@ -73,7 +92,6 @@ class HotelController extends Controller
                 'message' => 'Hôtel créé avec succès',
                 'data' => $service->load('hotel.destination')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -142,7 +160,7 @@ class HotelController extends Controller
                 if ($service->image && Storage::disk('public')->exists($service->image)) {
                     Storage::disk('public')->delete($service->image);
                 }
-                
+
                 $image = $request->file('image');
                 $service->image = $image->store('hotels', 'public');
                 $service->save();
@@ -164,7 +182,6 @@ class HotelController extends Controller
                 'message' => 'Hôtel modifié avec succès',
                 'data' => $service->load('hotel.destination')
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -198,7 +215,6 @@ class HotelController extends Controller
                 'success' => true,
                 'message' => 'Hôtel supprimé avec succès'
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 

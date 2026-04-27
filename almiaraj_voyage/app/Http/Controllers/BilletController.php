@@ -13,6 +13,28 @@ use Carbon\Carbon;
 
 class BilletController extends Controller
 {
+    // For CLIENT/FRONTEND display (formatted for public view)
+    public function indexCl()
+    {
+        $billets = Billet::with('service')->get();
+
+        $data = $billets->map(function ($b) {
+            return [
+                'id' => $b->id,
+                'name' => $b->service->nomServ,
+                'from' => $b->villeDepartBi,
+                'to' => $b->villeArriveeBi,
+                'departure' => $b->dateDepartBi,
+                'return' => $b->dateRetourBi,
+                'type' => $b->typeBi,
+                'price' => $b->service->prix,
+                'image' => $b->service->image,
+                'rating' => $b->service->rating,
+            ];
+        });
+        
+        return response()->json($data);
+    }
     public function index()
     {
         $billets = Billet::with(['service', 'destination'])

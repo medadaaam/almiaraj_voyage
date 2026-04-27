@@ -23,6 +23,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 Route::post('/services', [ServiceController::class, 'store']);
 
+Route::prefix('client')->group(function () {
+    Route::get('/voyages', [VoyageController::class, 'indexCl']);
+    Route::get('/hotels', [HotelController::class, 'indexCl']);
+    Route::get('/hajj-omras', [HajjOmraController::class, 'indexCl']);
+    Route::get('/billets', [BilletController::class, 'indexCl']);
+});
+
 Route::prefix('voyages')->group(function () {
     Route::get('/', [VoyageController::class, 'index']);
     Route::get('/{id}', [VoyageController::class, 'show']);

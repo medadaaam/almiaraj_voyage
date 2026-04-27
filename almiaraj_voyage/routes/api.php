@@ -33,10 +33,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::post('/services', [ServiceController::class, 'store']);
-Route::post('/hotels', [HotelController::class, 'store']);
-// Route::post('/voyages', [VoyageController::class, 'store']);
-Route::post('/hajj-omras', [HajjOmraController::class, 'store']);
-Route::post('/billets', [BilletController::class, 'store']);
+
+Route::prefix('client')->group(function () {
+    Route::get('/voyages', [VoyageController::class, 'indexCl']);
+    Route::get('/hotels', [HotelController::class, 'indexCl']);
+    Route::get('/hajj-omras', [HajjOmraController::class, 'indexCl']);
+    Route::get('/billets', [BilletController::class, 'indexCl']);
+});
 
 Route::middleware('auth:sanctum')->get('/client/profile', [ClientController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->put('/client/profile', [ClientController::class, 'update']);
@@ -60,6 +63,27 @@ Route::prefix('voyages')->group(function () {
     Route::post('/', [VoyageController::class, 'store']);
     Route::put('/{id}', [VoyageController::class, 'update']);
     Route::delete('/{id}', [VoyageController::class, 'destroy']);
+});
+Route::prefix('hotels')->group(function () {
+    Route::get('/', [HotelController::class, 'index']);
+    Route::get('/{id}', [HotelController::class, 'show']);
+    Route::post('/', [HotelController::class, 'store']);
+    Route::put('/{id}', [HotelController::class, 'update']);
+    Route::delete('/{id}', [HotelController::class, 'destroy']);
+});
+Route::prefix('hajj-omras')->group(function () {
+    Route::get('/', [HajjOmraController::class, 'index']);
+    Route::get('/{id}', [HajjOmraController::class, 'show']);
+    Route::post('/', [HajjOmraController::class, 'store']);
+    Route::put('/{id}', [HajjOmraController::class, 'update']);
+    Route::delete('/{id}', [HajjOmraController::class, 'destroy']);
+});
+Route::prefix('billets')->group(function () {
+    Route::get('/', [BilletController::class, 'index']);
+    Route::get('/{id}', [BilletController::class, 'show']);
+    Route::post('/', [BilletController::class, 'store']);
+    Route::put('/{id}', [BilletController::class, 'update']);
+    Route::delete('/{id}', [BilletController::class, 'destroy']);
 });
 
 Route::get('/destinations', [DestinationController::class, 'index']);

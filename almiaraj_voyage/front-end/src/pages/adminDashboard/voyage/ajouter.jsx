@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
 import { Search, MapPin, Globe, X, Calendar, Clock, Upload, Trash2, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AjouterVoyage() {
   const { getDestination, destinations } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     getDestination();
@@ -234,6 +235,7 @@ export default function AjouterVoyage() {
       
       if (response.data.success) {
         alert('Voyage ajouté avec succès!');
+        navigate('/admin/voyages');
         
         // Reset form
         setForm({

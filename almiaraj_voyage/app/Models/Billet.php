@@ -1,4 +1,5 @@
 <?php
+// app/Models/Billet.php
 
 namespace App\Models;
 
@@ -8,10 +9,24 @@ class Billet extends Model
 {
     public $incrementing = false;
     protected $keyType = 'int';
-    protected $fillable = ['id', 'typeBi', 'villeDepartBi', 'destinationBi', 'dateDepartBi', 'dateRetourBi'];
+    
+    protected $fillable = [
+        'id',
+        'typeBi',
+        'villeDepartBi',
+        'villeArriveeBi',
+        'destination_id',
+        'dateDepartBi',
+        'dateRetourBi',
+    ];
     
     public function service()
     {
         return $this->belongsTo(Service::class, 'id', 'id');
+    }
+    
+    public function destination()
+    {
+        return $this->belongsTo(Destination::class);
     }
 }

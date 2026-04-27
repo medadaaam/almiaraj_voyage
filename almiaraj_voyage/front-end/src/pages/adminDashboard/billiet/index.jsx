@@ -1,204 +1,201 @@
 import { Link } from "react-router-dom";
-import {
-    Plane,
-    Calendar,
-    MapPin,
-    CreditCard,
-    Shield,
-    Headphones,
-    Globe,
-    Star,
-    Clock,
-    ArrowRight,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Camera, Trash2, Edit, Eye, Calendar, Plane, MapPin } from "lucide-react";
+import { axiosClient } from "@/api/axios";
 
 export default function AdminBillets() {
+    const [items, setItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [deletingId, setDeletingId] = useState(null);
+    const [imageErrors, setImageErrors] = useState({});
 
-    const billets = [
-        {
-            id: 1,
-            from: "Casablanca",
-            to: "Paris",
-            date: "12 Juin 2026",
-            returnDate: "20 Juin 2026",
-            price: 2800,
-            oldPrice: 3400,
-            airline: "Royal Air Maroc",
-            duration: "3h 10min",
-            rating: 4.8,
-        },
-        {
-            id: 2,
-            from: "Fès",
-            to: "Istanbul",
-            date: "5 Juillet 2026",
-            returnDate: "15 Juillet 2026",
-            price: 4200,
-            oldPrice: 5100,
-            airline: "Turkish Airlines",
-            duration: "4h 30min",
-            rating: 4.9,
-        },
-    ];
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return null;
+        if (imagePath.startsWith('http')) return imagePath;
+        let cleanPath = imagePath.replace(/^public\//, '');
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        return `${baseUrl}/storage/${cleanPath}`;
+    };
 
-    const features = [
-        { icon: <CreditCard />, title: "Paiement sécurisé", desc: "Transactions 100% sécurisées" },
-        { icon: <Shield />, title: "Garantie prix", desc: "Meilleurs prix garantis" },
-        { icon: <Headphones />, title: "Support 24/7", desc: "Assistance avant et après vol" },
-        { icon: <Globe />, title: "Destinations monde", desc: "Plus de 500 destinations" },
-    ];
+    useEffect(() => {
+        fetchItems();
+    }, []);
+
+    const fetchItems = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosClient.get('/billets');
+            
+            let itemsData = [];
+            if (response.data && response.data.data) {
+                itemsData = response.data.data;
+            } else if (Array.isArray(response.data)) {
+                itemsData = response.data;
+            } else {
+                itemsData = [];
+            }
+
+            setItems(itemsData);
+            setError("");
+        } catch (err) {
+            console.error('Error:', err);
+            setError("Erreur lors du chargement");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce billet ?")) {
+            return;
+        }
+
+        try {
+            setDeletingId(id);
+            await axiosClient.delete(`/billets/${id}`);
+            await fetchItems();
+            alert("Billet supprimé avec succès!");
+        } catch (err) {
+            console.error('Error:', err);
+            setError("Erreur lors de la suppression");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleImageError = (id) => {
+        setImageErrors(prev => ({ ...prev, [id]: true }));
+    };
+
+    const getTypeLabel = (type) => {
+        switch(type) {
+            case 'aller_simple': return 'Aller simple';
+            case 'aller_retour': return 'Aller-retour';
+            default: return type;
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fb923c] mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Chargement...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {error}
+            </div>
+        );
+    }
 
     return (
-        <div className="service-flights">
-
-            <div className="flex justify-end">
+        <div className="service-billets">
+            <div className="flex justify-between items-center mb-4">
+                <h1 className="text-2xl font-bold text-gray-800">Gestion des Billets</h1>
                 <Link
-                    to={`/admin/AjouterBillet`}
-                    className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xl hover:bg-blue-600 hover:text-white transition"
+                    to="/admin/ajouterBillet"
+                    className="bg-[#fb923c] text-white px-4 py-2 rounded-md hover:bg-[#ea580c] transition flex items-center gap-2"
                 >
                     + Ajouter un billet
                 </Link>
-            </div><br />
+            </div>
 
-            {/* SEARCH (خليتو) */}
-            <div className="service-flight-search">
-                <div className="service-flight-search-container">
-                    <h3>Rechercher un vol</h3>
-
-                    <div className="service-flight-search-form">
-                        <div className="service-flight-input-group">
-                            <label>Départ</label>
-                            <div className="service-flight-input">
-                                <MapPin size={18} />
-                                <input type="text" placeholder="Ville de départ" />
-                            </div>
-                        </div>
-
-                        <div className="service-flight-input-group">
-                            <label>Destination</label>
-                            <div className="service-flight-input">
-                                <MapPin size={18} />
-                                <input type="text" placeholder="Ville d'arrivée" />
-                            </div>
-                        </div>
-
-                        <div className="service-flight-input-group">
-                            <label>Aller</label>
-                            <div className="service-flight-input">
-                                <Calendar size={18} />
-                                <input type="date" />
-                            </div>
-                        </div>
-
-                        <div className="service-flight-input-group">
-                            <label>Retour</label>
-                            <div className="service-flight-input">
-                                <Calendar size={18} />
-                                <input type="date" />
-                            </div>
-                        </div>
-
-                        <button className="service-flight-search-btn">
-                            Rechercher
-                        </button>
-                    </div>
+            {items.length === 0 ? (
+                <div className="text-center py-12 bg-white rounded-lg shadow">
+                    <p className="text-gray-500">Aucun billet trouvé</p>
+                    <Link to="/admin/ajouterBillet" className="text-[#fb923c] hover:underline mt-2 inline-block">
+                        Ajouter votre premier billet
+                    </Link>
                 </div>
-            </div>
-
-            {/* BILLETS CARDS */}
-            <div className="overflow-x-auto mt-10">
-                <table className="w-full bg-white rounded-lg overflow-hidden shadow-md">
-
-                    {/* HEADER */}
-                    <thead className="bg-[#f1f5f9] text-left">
-                        <tr>
-                            <th className="p-3">Vol</th>
-                            <th className="p-3">Départ</th>
-                            <th className="p-3">Destination</th>
-                            <th className="p-3">Aller</th>
-                            <th className="p-3">Retour</th>
-                            <th className="p-3">Durée</th>
-                            <th className="p-3">Prix</th>
-                            <th className="p-3">Actions</th>
-                        </tr>
-                    </thead>
-
-                    {/* BODY */}
-                    <tbody>
-                        {billets.map((b) => (
-                            <tr key={b.id} className="border-b hover:bg-gray-50">
-
-                                <td className="p-3 font-medium">
-                                    ✈️ {b.airline}
-                                </td>
-
-                                <td className="p-3">{b.from}</td>
-
-                                <td className="p-3 flex items-center gap-2">
-                                    <ArrowRight size={14} />
-                                    {b.to}
-                                </td>
-
-                                <td className="p-3"><Calendar size={16} />{b.date}</td>
-
-                                <td className="p-3"><Calendar size={16} />{b.returnDate}</td>
-
-                                <td className="p-3 flex items-center gap-2">
-                                    <Clock size={14} />
-                                    {b.duration}
-                                </td>
-
-                                <td className="p-3">
-                                    <div className="flex flex-col">
-                                        <span className="text-red-500 line-through text-sm">
-                                            {b.oldPrice} DH
-                                        </span>
-                                        <span className="text-[#fb923c] font-bold">
-                                            {b.price} DH
-                                        </span>
-                                    </div>
-                                </td>
-
-                                {/* ACTIONS */}
-                                <td className="p-3">
-                                    <div className="flex gap-2">
-
-                                        {/* DETAILS */}
-                                        <Link
-                                            to={`/services/details/${b.id}`}
-                                            className="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs hover:bg-blue-600 hover:text-white transition"
-                                        >
-                                            Détails
-                                        </Link>
-
-                                        {/* EDIT */}
-                                        <Link
-                                            to={`/admin/edit/${b.id}`}
-                                            className="bg-green-100 text-green-600 px-2 py-1 rounded-md text-xs hover:bg-green-600 hover:text-white transition"
-                                        >
-                                            Modifier
-                                        </Link>
-
-                                        {/* DELETE */}
-                                        <button
-                                            className="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs hover:bg-red-600 hover:text-white transition"
-                                        >
-                                            Supprimer
-                                        </button>
-
-                                    </div>
-                                </td>
-
+            ) : (
+                <div className="overflow-x-auto bg-white rounded-xl shadow">
+                    <table className="w-full text-left">
+                        <thead className="bg-gray-100 text-gray-600 text-sm">
+                            <tr>
+                                <th className="p-3">Image</th>
+                                <th className="p-3">Nom</th>
+                                <th className="p-3">Type</th>
+                                <th className="p-3">Départ</th>
+                                <th className="p-3">Destination</th>
+                                <th className="p-3">Date départ</th>
+                                <th className="p-3">Prix</th>
+                                <th className="p-3">Action</th>
                             </tr>
-                        ))}
-                    </tbody>
+                        </thead>
+                        <tbody>
+                            {items.map((item) => {
+                                const serviceData = item.service || item;
+                                const itemData = item.billet || item;
+                                const itemId = item.id || itemData.id;
 
-                </table>
-            </div>
-
-
-
-
+                                return (
+                                    <tr key={itemId} className="border-b hover:bg-gray-50 transition">
+                                        <td className="p-3">
+                                            {serviceData.image && !imageErrors[itemId] ? (
+                                                <img
+                                                    src={getImageUrl(serviceData.image)}
+                                                    alt={serviceData.nomServ}
+                                                    className="w-20 h-14 object-cover rounded-md"
+                                                    onError={() => handleImageError(itemId)}
+                                                />
+                                            ) : (
+                                                <div className="w-20 h-14 bg-gray-200 rounded-md flex items-center justify-center">
+                                                    <Camera size={24} className="text-gray-400" />
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="p-3 font-semibold">{serviceData.nomServ || "Sans titre"}</td>
+                                        <td className="p-3">
+                                            <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                                                {getTypeLabel(itemData.typeBi)}
+                                            </span>
+                                        </td>
+                                        <td className="p-3">
+                                            <div className="flex items-center gap-1">
+                                                <Plane size={14} className="text-[#fb923c]" />
+                                                {itemData.villeDepartBi}
+                                            </div>
+                                        </td>
+                                        <td className="p-3">
+                                            <div className="flex items-center gap-1">
+                                                <MapPin size={14} className="text-[#fb923c]" />
+                                                {itemData.destinationBi}
+                                            </div>
+                                        </td>
+                                        <td className="p-3 text-sm">
+                                            <div className="flex items-center gap-1">
+                                                <Calendar size={14} />
+                                                {new Date(itemData.dateDepartBi).toLocaleDateString('fr-FR')}
+                                            </div>
+                                        </td>
+                                        <td className="p-3 font-bold text-[#fb923c]">{serviceData.prix} DH</td>
+                                        <td className="p-3">
+                                            <div className="flex gap-2">
+                                                <Link to={`/admin/showBillet/${itemId}`} className="bg-gray-100 text-gray-600 p-2 rounded-md hover:bg-gray-600 hover:text-white transition" title="Détails">
+                                                    <Eye size={16} />
+                                                </Link>
+                                                <Link to={`/admin/editBillet/${itemId}`} className="bg-green-100 text-green-600 p-2 rounded-md hover:bg-green-600 hover:text-white transition" title="Modifier">
+                                                    <Edit size={16} />
+                                                </Link>
+                                                <button onClick={() => handleDelete(itemId)} disabled={deletingId === itemId} className="bg-red-100 text-red-600 p-2 rounded-md hover:bg-red-600 hover:text-white transition disabled:opacity-50" title="Supprimer">
+                                                    {deletingId === itemId ? <div className="animate-spin h-4 w-4 border-2 border-red-600 rounded-full border-t-transparent"></div> : <Trash2 size={16} />}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 }

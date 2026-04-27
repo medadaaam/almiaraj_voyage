@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('destinations', function (Blueprint $table) {
             $table->id();
-            $table->string("pays",60);
+            $table->string("pays",60)->unique();
             $table->json('villes');
             $table->string("continente",60);
             $table->boolean("en_vedette")->default(false);

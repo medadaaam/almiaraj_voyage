@@ -228,7 +228,7 @@ export default function ModifierVoyage() {
             
             if (response.data.success) {
                 alert('Voyage modifié avec succès!');
-                navigate('/admin');
+                navigate('/admin/voyages');
             }
             
         } catch (error) {

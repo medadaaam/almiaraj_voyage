@@ -4,7 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, MapPin, Star, Calendar, Clock, Users, ChevronRight, Plane, Luggage, CheckCircle, Info, Phone, Hotel, Coffee, Heart, Tag } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-export default function VoyageDetails() {
+export default function VoyageDetailsCl() {
     const { id } = useParams();
     const [voyage, setVoyage] = useState(null);
     const [loading, setLoading] = useState(true);

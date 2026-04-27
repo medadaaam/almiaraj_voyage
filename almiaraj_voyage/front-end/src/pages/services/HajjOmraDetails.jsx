@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import "./omraDetails.css";
 
-export default function HajjOmraDetails() {
+export default function HajjOmraDetailsCl() {
   const { id } = useParams();
   const { getHajjOmraDetails } = useAuth();
   const [packageData, setPackageData] = useState(null);

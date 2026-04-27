@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-export default function HotelDetails() {
+export default function HotelDetailsCl() {
     const { id } = useParams();
     const [hotel, setHotel] = useState(null);
     const [loading, setLoading] = useState(true);

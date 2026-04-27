@@ -27,12 +27,11 @@ import HotelsSejours from "@/pages/services/HotelsSejours";
 import VolsBillets from "@/pages/services/VolsBillets";
 import DashboardClient from "@/pages/DashboardClient";
 import DestinationOffres from "@/pages/DestinationServices";
-import VoyageDetails from "@/pages/VoyageDetails";
-import HotelDetails from "@/pages/HotelDetails";
-import BilletDetails from "@/pages/services/BilletDetails";
-import HajjOmraDetails from "@/pages/services/HajjOmraDetails";
+import VoyageDetailsCl from "@/pages/VoyageDetails";
+import HotelDetailsCl from "@/pages/HotelDetails";
+import BilletDetailsCl from "@/pages/services/BilletDetails";
+import HajjOmraDetailsCl from "@/pages/services/HajjOmraDetails";
 import AdminVoyages from "@/pages/adminDashboard/voyage";
-import ModifierVoyage from "@/pages/adminDashboard/voyage/modifier";
 import AdminHotels from "@/pages/adminDashboard/hotel";
 import AdminHajjOmra from "@/pages/adminDashboard/hajjOmra";
 import AdminBillets from "@/pages/adminDashboard/billiet";
@@ -121,20 +120,20 @@ export const route = createBrowserRouter([
 
       {
         path: "/voyages/:id",
-        element: <VoyageDetails />,
+        element: <VoyageDetailsCl />,
       },
             {
         path: "/hotels/:id",
-        element: <HotelDetails />,
+        element: <HotelDetailsCl />,
       },
 
             {
         path: "/billets/:id",
-        element: <BilletDetails />,
+        element: <BilletDetailsCl />,
       },
                   {
         path: "/hajj-omra/:id",
-        element: <HajjOmraDetails />,
+        element: <HajjOmraDetailsCl />,
       },
     ],
   },

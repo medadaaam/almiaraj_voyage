@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
 import { Calendar, Plane, MapPin, ArrowLeft, Edit, Trash2 } from "lucide-react";
 
-export default function BilletDetails() {
+export default function BilletDetailsCl() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [item, setItem] = useState(null);
@@ -26,16 +26,16 @@ export default function BilletDetails() {
         try {
             setLoading(true);
             const response = await axiosClient.get(`/billets/${id}`);
-            
+
             let itemData = response.data.data || response.data;
             let serviceData = itemData.service || itemData;
             let detailsData = itemData.billet || itemData;
-            
+
             setItem({
                 ...serviceData,
                 ...detailsData,
             });
-            
+
         } catch (err) {
             console.error('Error:', err);
             setError("Billet non trouvé");

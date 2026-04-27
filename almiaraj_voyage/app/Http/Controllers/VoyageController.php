@@ -4,25 +4,42 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Voyage;
-use App\Models\Destination;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VoyageController extends Controller
 {
-    public function index()
+
+    public function indexCl()
     {
-        $voyages = Voyage::with(['service', 'destination'])
-            ->orderBy('id', 'desc')
-            ->get();
+        $voyages = Voyage::with(['service', 'destination'])->paginate(6);
+
+        $data = $voyages->getCollection()->map(function ($v) {
+            return [
+                'id' => $v->id,
+                'nomServ' => $v->service->nomServ,
+                'destination' => $v->destination->nom,
+                'pays' => $v->destination->pays ?? null,
+                'image' => $v->service->image,
+                'prix' => $v->service->prix,
+                'oldPrix' => $v->service->oldPrix ?? null,
+                'rating' => $v->service->rating ?? 0,
+                'duration' => Carbon::parse($v->dateDepartV)->diffInDays(Carbon::parse($v->dateRetourV)) . ' nuits',
+                'groupSize' => $v->groupSize ?? null,
+                'featured' => $v->service->enVedette ?? false,
+            ];
+        });
 
         return response()->json([
-            'success' => true,
-            'data' => $voyages
+            'data' => $data,
+            'current_page' => $voyages->currentPage(),
+            'last_page' => $voyages->lastPage(),
+            'total' => $voyages->total(),
         ]);
     }
+
+
     public function store(Request $request)
     {
         try {
@@ -93,60 +110,10 @@ class VoyageController extends Controller
             ], 500);
         }
     }
-    public function show($id)
+
+    public function showCl($id)
     {
-        try {
-            $voyage = Voyage::with(['service', 'destination'])->find($id);
-
-            if (!$voyage) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Voyage non trouvé'
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'data' => $voyage
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors du chargement du voyage',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-    public function destroy($id)
-    {
-        try {
-            DB::beginTransaction();
-
-            $voyage = Voyage::findOrFail($id);
-            $service = Service::findOrFail($id);
-
-            // Delete image if exists
-            if ($service->image && Storage::disk('public')->exists($service->image)) {
-                Storage::disk('public')->delete($service->image);
-            }
-
-            // Delete voyage (will cascade to service due to foreign key)
-            $voyage->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Voyage deleted successfully'
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete voyage',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+        $voyage = Voyage::with(['service', 'destination'])->findOrFail($id);
+        return response()->json($voyage);
     }
 }

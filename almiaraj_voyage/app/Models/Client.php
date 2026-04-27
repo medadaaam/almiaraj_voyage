@@ -22,7 +22,6 @@ class Client extends Model
         'prenomCl',
         'numTelCl',
         'email',
-        'user_id'
     ];
     public function user()
     {

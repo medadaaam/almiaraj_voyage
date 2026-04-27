@@ -12,37 +12,32 @@ use Carbon\Carbon;
 
 class HajjOmraController extends Controller
 {
+
     public function indexCl()
     {
-        $items = HajjOmra::with('service')->get();
+        $items = HajjOmra::with('service')->paginate(6);
 
-        $data = $items->map(function ($h) {
+        $data = $items->getCollection()->map(function ($h) {
             return [
                 'id' => $h->id,
                 'title' => $h->service->nomServ,
                 'depart' => $h->dateDepartHO,
                 'retour' => $h->dateRetourHO,
-                'duration' => $h->duree,
+                'duration' => $h->duree . ' jours',
                 'price' => $h->service->prix,
-                'typeChambre' => $h->typeChambre,
-                'formule' => $h->formule,
-                'type' => $h->type,
-                'image' => $h->service->image,
+                'oldPrice' => $h->service->oldPrix,
+                'groupSize' => $h->typeChambre,
+                'hotel' => $h->hotel,
+                'transport' => $h->transport,
+                'meals' => $h->meals,
             ];
         });
 
-        return response()->json($data);
-    }
-
-    public function index()
-    {
-        $hajjOmras = HajjOmra::with('service')
-            ->orderBy('id', 'desc')
-            ->get();
-
         return response()->json([
-            'success' => true,
-            'data' => $hajjOmras
+            'data' => $data,
+            'current_page' => $items->currentPage(),
+            'last_page' => $items->lastPage(),
+            'total' => $items->total(),
         ]);
     }
 
@@ -242,5 +237,11 @@ class HajjOmraController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function showCl($id)
+    {
+        $hajjOmra = HajjOmra::with('service')->findOrFail($id);
+        return response()->json($hajjOmra);
     }
 }

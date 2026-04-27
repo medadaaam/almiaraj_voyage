@@ -1,0 +1,730 @@
+/* ================= HAJJ & OMRA DETAILS PAGE ================= */
+.hajj-details-page {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+/* ================= LOADING ================= */
+.hajj-details-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #fb923c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================= ERROR ================= */
+.hajj-details-error {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #f8fafc;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.hajj-details-error h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.hajj-details-error p {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.error-back-btn {
+  padding: 10px 24px;
+  background: #2f6f85;
+  color: white;
+  border-radius: 40px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.error-back-btn:hover {
+  background: #1e5a6e;
+  transform: translateY(-2px);
+}
+
+/* ================= BACK BUTTON ================= */
+.hajj-details-back {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.back-link:hover {
+  color: #fb923c;
+  transform: translateX(-4px);
+}
+
+/* ================= HERO ================= */
+.hajj-details-hero {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  margin: 0 24px 40px;
+  border-radius: 32px;
+  padding: 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hajj-details-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.hero-badges {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.hero-badge.discount {
+  background: #ef4444;
+  color: white;
+}
+
+.hero-badge.featured {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+}
+
+.hero-badge.type.hajj {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.hero-badge.type.omra {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.hero-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.star-filled {
+  width: 18px;
+  height: 18px;
+  fill: #fbbf24;
+  color: #fbbf24;
+}
+
+.star-filled-half {
+  width: 18px;
+  height: 18px;
+  fill: #fbbf24;
+  color: #fbbf24;
+  opacity: 0.5;
+}
+
+.star-empty {
+  width: 18px;
+  height: 18px;
+  color: #cbd5e1;
+}
+
+.rating-value {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.hero-price {
+  margin-bottom: 32px;
+}
+
+.hero-price .old-price {
+  font-size: 1rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-right: 12px;
+}
+
+.hero-price .current-price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fb923c;
+}
+
+.hero-price .price-period {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-left: 4px;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+}
+
+.stat-item svg {
+  color: #fb923c;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #7795c0;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #7d93b7;
+}
+
+/* ================= MAIN CONTENT ================= */
+.hajj-details-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hajj-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+}
+
+/* ================= CARDS ================= */
+.info-card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.info-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+/* Details Grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 16px;
+}
+
+.detail-icon {
+  color: #fb923c;
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.65rem;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Itinéraire */
+.itineraire-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.itineraire-item {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.itineraire-item:hover {
+  background: #f1f5f9;
+  transform: translateX(5px);
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  background: #fb923c;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.step-content h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Included & Not Included */
+.included-list,
+.not-included-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.included-item,
+.not-included-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.included-item .check-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.not-included-item .alert-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+/* ================= SIDEBAR ================= */
+.hajj-details-sidebar {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+}
+
+.booking-card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.price-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.price-section h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.price-display {
+  margin-bottom: 8px;
+}
+
+.price-display .old-price {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-right: 10px;
+}
+
+.price-display .current-price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fb923c;
+}
+
+.savings {
+  font-size: 0.8rem;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 20px 0;
+}
+
+.booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.info-row svg {
+  color: #fb923c;
+}
+
+.highlights h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.highlights ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.highlights li {
+  padding: 6px 0;
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.highlights li::before {
+  content: "✓";
+  color: #10b981;
+  font-weight: 700;
+}
+
+.booking-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.book-now-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.book-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251,146,60,0.3);
+}
+
+.contact-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.contact-btn:hover {
+  background: #e2e8f0;
+}
+
+.payment-methods {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.payment-methods p {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.payment-icons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.8rem;
+}
+
+.guarantee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.guarantee svg {
+  color: #10b981;
+}
+
+/* Contact Card */
+.contact-card {
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.contact-card h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.contact-card p {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.phone-link,
+.email-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  color: #fb923c;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.phone-link:hover,
+.email-link:hover {
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+/* ================= CTA ================= */
+.hajj-details-cta {
+  margin: 40px 24px 60px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-radius: 32px;
+  padding: 48px;
+  text-align: center;
+}
+
+.cta-content h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.cta-content p {
+  color: #94a3b8;
+  margin-bottom: 24px;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: #fb923c;
+  color: white;
+  font-weight: 600;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  background: #ea580c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(251,146,60,0.3);
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 1024px) {
+  .hajj-details-grid {
+    grid-template-columns: 1fr;
+  }
+  .hajj-details-sidebar {
+    position: static;
+  }
+  .details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hajj-details-hero {
+    margin: 0 16px 32px;
+    padding: 32px 24px;
+  }
+  .hero-title {
+    font-size: 1.5rem;
+  }
+  .hero-stats {
+    gap: 24px;
+  }
+  .stat-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 6px;
+  }
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .hajj-details-cta {
+    margin: 32px 16px 40px;
+    padding: 32px 24px;
+  }
+  .cta-content h3 {
+    font-size: 1.2rem;
+  }
+  .booking-buttons {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .hajj-details-hero {
+    padding: 24px 16px;
+  }
+  .hero-title {
+    font-size: 1.2rem;
+  }
+  .hero-price .current-price {
+    font-size: 1.5rem;
+  }
+  .hero-stats {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  .stat-item {
+    flex-direction: row;
+    text-align: left;
+  }
+  .info-card {
+    padding: 20px;
+  }
+  .payment-icons {
+    flex-wrap: wrap;
+  }
+  .itineraire-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+}

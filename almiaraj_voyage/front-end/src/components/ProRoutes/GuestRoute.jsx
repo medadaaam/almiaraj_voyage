@@ -3,14 +3,13 @@ import { useAuth } from "@/context/AuthContext";
 import LoadingPage from "@/pages/LoadingPage";
 
 export default function GuestRoute({ children }) {
-  const { authenticated, loading } = useAuth();
+  const { authenticated, initialLoading } = useAuth(); // ✅ استخدم initialLoading
   const location = useLocation();
 
-  if (loading) {
+  if (initialLoading) {
     return <LoadingPage />;
   }
 
-  // ✅ السماح لصفحات reset-password و forgot-password حتى لو كان المستخدم مسجل
   const allowedPaths = ["/reset-password", "/forgot-password", "/password-reset"];
   const isAllowedPath = allowedPaths.some(path => location.pathname.includes(path));
 

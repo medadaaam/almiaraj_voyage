@@ -11,34 +11,30 @@ use Illuminate\Support\Facades\DB;
 
 class HotelController extends Controller
 {
+
     public function indexCl()
     {
-        $hotels = Hotel::with(['service', 'destination'])->get();
+        $hotels = Hotel::with(['service', 'destination'])->paginate(3);
 
-        $data = $hotels->map(function ($h) {
+        $data = $hotels->getCollection()->map(function ($h) {
             return [
                 'id' => $h->id,
                 'name' => $h->service->nomServ,
-                'location' => $h->selected_city ?? ($h->destination->pays ?? ''),
+                'location' => $h->villeHotel . ', ' . ($h->destination->pays ?? ''),
                 'image' => $h->service->image,
-                'price' => $h->service->prix,
+                'prix' => $h->service->prix,
+                'oldPrix' => $h->service->oldPrix,
                 'rating' => $h->service->rating,
-                'amenities' => $h->amenities,
-                'description' => $h->service->description,
+                'enVedette' => $h->service->enVedette,
+                'amenities' => explode(',', $h->amenities ?? ''),
             ];
         });
 
-        return response()->json($data);
-    }
-    public function index()
-    {
-        $hotels = Hotel::with(['service', 'destination'])
-            ->orderBy('id', 'desc')
-            ->get();
-
         return response()->json([
-            'success' => true,
-            'data' => $hotels
+            'data' => $data,
+            'current_page' => $hotels->currentPage(),
+            'last_page' => $hotels->lastPage(),
+            'total' => $hotels->total(),
         ]);
     }
 
@@ -101,6 +97,12 @@ class HotelController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function showCl($id)
+    {
+        $hotel = Hotel::with(['service', 'destination'])->findOrFail($id);
+        return response()->json($hotel);
     }
 
     public function show($id)

@@ -5,25 +5,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Billet;
-use App\Models\Destination;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Container\Attributes\Storage;
 
 class BilletController extends Controller
 {
-    // For CLIENT/FRONTEND display (formatted for public view)
     public function indexCl()
     {
-        $billets = Billet::with('service')->get();
+        $billets = Billet::with('service')->paginate(6);
 
         $data = $billets->map(function ($b) {
             return [
                 'id' => $b->id,
                 'name' => $b->service->nomServ,
                 'from' => $b->villeDepartBi,
-                'to' => $b->villeArriveeBi,
+                'to' => $b->destinationBi,
                 'departure' => $b->dateDepartBi,
                 'return' => $b->dateRetourBi,
                 'type' => $b->typeBi,
@@ -32,10 +30,19 @@ class BilletController extends Controller
                 'rating' => $b->service->rating,
             ];
         });
-        
+         return response()->json([
+            'data' => $data,
+            'current_page' => $billets->currentPage(),
+            'last_page' => $billets->lastPage(),
+            'total' => $billets->total(),
+
+        ]);
         return response()->json($data);
     }
-    public function index()
+
+
+
+        public function index()
     {
         $billets = Billet::with(['service', 'destination'])
             ->orderBy('id', 'desc')
@@ -105,7 +112,6 @@ class BilletController extends Controller
                 'message' => 'Billet créé avec succès',
                 'data' => $service->load('billet.destination')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -244,4 +250,11 @@ class BilletController extends Controller
             ], 500);
         }
     }
+
+    public function showCl($id) {
+        $billet = Billet::with('service')->findOrFail($id);
+        return response()->json($billet);
+
+    }
+
 }

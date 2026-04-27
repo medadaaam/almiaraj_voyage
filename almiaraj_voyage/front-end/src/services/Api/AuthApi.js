@@ -1,7 +1,6 @@
 import { axiosClient, csrfClient } from "@/api/axios";
 
 const AuthApi = {
-
   getCsrfToken: async () => {
     try {
       const response = await csrfClient.get("/sanctum/csrf-cookie");
@@ -36,8 +35,72 @@ const AuthApi = {
   getUser: async () => {
     return await axiosClient.get("/user");
   },
-    getDestination: async () => {
-    return await axiosClient.get("/destinations");
+
+  getClientProfile: async () => {
+    return await axiosClient.get("/client/profile");
+  },
+  updateClientProfile: async (data) => {
+    return await axiosClient.put("/client/profile", data);
+  },
+
+  // ✅ Destination avec Pagination
+  getDestination: async (page = 1) => {
+    return await axiosClient.get(`/destinationsCl?page=${page}`);
+  },
+
+  getDestinationServices: async (id) => {
+    return await axiosClient.get(`/destinationsCl/${id}/services`);
+  },
+
+  // ✅ Voyages avec Pagination
+  getVoyages: async (page = 1) => {
+    return await axiosClient.get(`/voyagesCl?page=${page}`);
+  },
+
+  // ✅ Hotels avec Pagination
+  getHotels: async (page = 1) => {
+    return await axiosClient.get(`/hotelsCl?page=${page}`);
+  },
+
+  // ✅ Billets avec Pagination
+  getBillets: async (page = 1) => {
+    return await axiosClient.get(`/billetsCl?page=${page}`);
+  },
+
+  // ✅ Hajj Omra avec Pagination
+  getOmraHajj: async (page = 1) => {
+    return await axiosClient.get(`/omraHajjCl?page=${page}`);
+  },
+
+  getOmraHajjDetails: async (id) => {
+    return await axiosClient.get(`/omraHajjCl/${id}`);
+  },
+
+  getHotelDetails: async (id) => {
+    return await axiosClient.get(`/hotelsCl/${id}`);
+  },
+
+  getVoyageDetails: async (id) => {
+    return await axiosClient.get(`/voyagesCl/${id}`);
+  },
+
+  getBilletsDetails: async (id) => {
+    return await axiosClient.get(`/billetsCl/${id}`);
+  },
+  createVoyageReservation: async (data) => {
+    return await axiosClient.post("/reservations/voyage", data);
+  },
+
+  getMyReservations: async () => {
+    return await axiosClient.get("/my-reservations");
+  },
+
+  getReservationDetails: async (id) => {
+    return await axiosClient.get(`/reservations/${id}`);
+  },
+
+  cancelReservation: async (id) => {
+    return await axiosClient.put(`/reservations/${id}/cancel`);
   },
 };
 

@@ -11,15 +11,51 @@ class DestinationController extends Controller
     /**
      * Display a listing of the resource.
      */
-      public function index()
+    public function indexCl()
     {
-        $destinations = Destination::all();
-        return response()->json($destinations); // Return array directly, not wrapped in 'destinations' key
+        $dest = Destination::paginate(6);
+
+        return response()->json([
+            'data' => $dest->items(),
+            'destinations' => $dest->items(),
+            'current_page' => $dest->currentPage(),
+            'last_page' => $dest->lastPage(),
+            'total' => $dest->total(),
+        ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+
+
+    public function getServicesCl($id)
+    {
+        try {
+            $destination = Destination::find($id);
+
+            if (!$destination) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Destination not found'
+                ], 404);
+            }
+
+            $hotels = $destination->hotels()->with('service')->get();
+            $voyages = $destination->voyages()->with('service')->get();
+
+            return response()->json([
+                'success' => true,
+                'destination' => $destination,
+                'offres' => [
+                    'hotels' => $hotels,
+                    'voyages' => $voyages
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
     public function create()
     {
         //

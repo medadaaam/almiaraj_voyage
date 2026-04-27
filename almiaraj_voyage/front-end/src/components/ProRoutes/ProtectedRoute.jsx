@@ -4,16 +4,16 @@ import { LOGIN_ROUTE } from "@/router";
 import LoadingPage from "@/pages/LoadingPage";
 
 export default function ProtectedRoute({ children, role }) {
-  const { authenticated, loading, user } = useAuth();
+  const { authenticated, initialLoading, user } = useAuth();
 
-  if (loading) return <LoadingPage />;
+  if (initialLoading) return <LoadingPage />;
 
   if (!authenticated) {
-    return <Navigate to={LOGIN_ROUTE} />;
+    return <Navigate to={LOGIN_ROUTE} replace />;
   }
 
   if (role && user?.role !== role) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
 
   return children;

@@ -14,18 +14,20 @@ return new class extends Migration
         Schema::disableForeignKeyConstraints();
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('service_id');
-            $table->unsignedBigInteger('client_id');
+            $table->foreignId('service_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('client_id')->constrained()->cascadeOnDelete();
             $table->integer('nbPers');
-            $table->date('dateRes');
-            $table->string('statusRes');
-            $table->date('checkIn')->nullable();
-            $table->date('checkOut')->nullable();
-            $table->string('typeChambre')->nullable();
-            $table->date('dateAnnulation')->nullable();
-            $table->boolean('voucherGenere')->default(false);
-            $table->foreign('service_id')->references('id')->on('services')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->foreign('client_id')->references('id')->on('clients')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->decimal('prixUnitaire', 10, 2);
+            $table->decimal('prixTotal', 10, 2);
+            $table->enum('status', ['pending','confirmed','cancelled'])->default('pending');
+            $table->enum('payment_status', ['unpaid','paid','refunded'])->default('unpaid');
+            $table->date('check_in')->nullable();
+            $table->date('check_out')->nullable();
+            $table->string('type_chambre')->nullable();
+            $table->date('date_depart')->nullable();
+            $table->date('date_retour')->nullable();
+            $table->boolean('voucher_generated')->default(false);
+            $table->string('reference')->unique();
             $table->timestamps();
         });
     }

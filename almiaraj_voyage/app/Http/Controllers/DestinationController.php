@@ -23,6 +23,15 @@ class DestinationController extends Controller
             'total' => $dest->total(),
         ]);
     }
+    public function index()
+    {
+        $destinations = Destination::orderBy('id', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $destinations
+        ]);
+    }
 
 
 

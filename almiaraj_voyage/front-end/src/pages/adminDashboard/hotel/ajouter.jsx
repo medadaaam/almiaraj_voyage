@@ -18,7 +18,6 @@ export default function AjouterHotel() {
     prix: "",
     rating: 0,
     destination_id: "",
-    selectedCity: "",
     image: null,
   });
 
@@ -26,11 +25,10 @@ export default function AjouterHotel() {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   
-  // City selection states
+  // Destination selection states (same as AjouterVoyage)
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
   
   // Common amenities list with icons
   const amenitiesList = [
@@ -61,69 +59,41 @@ export default function AjouterHotel() {
     return acc;
   }, {});
 
-  // Get all cities from all destinations
-  const getAllCities = () => {
-    const cities = [];
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
+
+  // Get all destinations (each destination is a city) - SAME AS AjouterVoyage
+  const getAllDestinations = () => {
     if (Array.isArray(destinations)) {
-      destinations.forEach(dest => {
-        if (Array.isArray(dest.villes)) {
-          dest.villes.forEach(ville => {
-            cities.push({
-              id: `${dest.id}_${ville}`,
-              cityName: ville,
-              country: dest.pays,
-              continent: dest.continente,
-              destinationId: dest.id,
-              destination: dest
-            });
-          });
-        }
-      });
+      return destinations;
     }
-    return cities;
+    return [];
   };
 
-  // Filter cities based on search term
-  const filteredCities = getAllCities().filter(city => 
-    city.cityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    city.country.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter destinations based on search term
+  const filteredDestinations = getAllDestinations().filter(dest => 
+    dest.ville?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    dest.pays?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Handle city selection
-  const handleSelectCity = (city) => {
-    setSelectedCity(city);
+  // Select destination (city)
+  const selectDestination = (dest) => {
+    setSelectedDestination(dest);
     setForm({ 
       ...form, 
-      destination_id: city.destinationId,
-      selectedCity: city.cityName
+      destination_id: dest.id,
     });
-    setSearchTerm(`${city.cityName}, ${city.country}`);
+    setSearchTerm(`${dest.ville}, ${dest.pays}`);
     setShowDropdown(false);
   };
 
   // Clear selection
   const clearSelection = () => {
-    setSelectedCity(null);
+    setSelectedDestination(null);
     setForm({ 
       ...form, 
       destination_id: "",
-      selectedCity: ""
     });
     setSearchTerm("");
-  };
-
-  // Toggle amenity selection
-  const toggleAmenity = (amenity) => {
-    if (selectedAmenities.some(a => a.name === amenity.name)) {
-      setSelectedAmenities(selectedAmenities.filter(a => a.name !== amenity.name));
-    } else {
-      setSelectedAmenities([...selectedAmenities, amenity]);
-    }
-  };
-
-  // Clear all amenities
-  const clearAllAmenities = () => {
-    setSelectedAmenities([]);
   };
 
   // Handle search
@@ -141,6 +111,20 @@ export default function AjouterHotel() {
   // Handle rating
   const handleRatingChange = (rating) => {
     setForm({ ...form, rating });
+  };
+
+  // Toggle amenity selection
+  const toggleAmenity = (amenity) => {
+    if (selectedAmenities.some(a => a.name === amenity.name)) {
+      setSelectedAmenities(selectedAmenities.filter(a => a.name !== amenity.name));
+    } else {
+      setSelectedAmenities([...selectedAmenities, amenity]);
+    }
+  };
+
+  // Clear all amenities
+  const clearAllAmenities = () => {
+    setSelectedAmenities([]);
   };
 
   // Image handling
@@ -163,87 +147,93 @@ export default function AjouterHotel() {
     if (fileInput) fileInput.value = '';
   };
 
-  // Submit form
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
+// Submit form
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError("");
 
-    if (!form.nomServ.trim()) {
-      setError("Veuillez entrer le nom de l'hôtel");
-      setIsSubmitting(false);
-      return;
+  if (!form.nomServ.trim()) {
+    setError("Veuillez entrer le nom de l'hôtel");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (!form.prix || parseFloat(form.prix) <= 0) {
+    setError("Veuillez entrer un prix valide");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (!form.destination_id) {
+    setError("Veuillez sélectionner une ville");
+    setIsSubmitting(false);
+    return;
+  }
+
+  if (selectedAmenities.length === 0) {
+    setError("Veuillez sélectionner au moins un équipement");
+    setIsSubmitting(false);
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('nomServ', form.nomServ);
+    formData.append('description', form.description || '');
+    formData.append('prix', form.prix);
+    formData.append('rating', form.rating);
+    formData.append('destination_id', form.destination_id);
+    
+    // Convert amenities array to JSON string - make sure it's properly formatted
+    const amenitiesArray = selectedAmenities.map(amenity => amenity.name);
+    const amenitiesJSON = JSON.stringify(amenitiesArray);
+    console.log('Sending amenities as JSON:', amenitiesJSON);
+    formData.append('amenities', amenitiesJSON);
+    
+    if (form.image) {
+      formData.append('image', form.image);
     }
 
-    if (!form.prix || parseFloat(form.prix) <= 0) {
-      setError("Veuillez entrer un prix valide");
-      setIsSubmitting(false);
-      return;
+    // Debug: Log all form data
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ':', pair[1]);
     }
 
-    if (!form.destination_id) {
-      setError("Veuillez sélectionner une ville");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (selectedAmenities.length === 0) {
-      setError("Veuillez sélectionner au moins un équipement");
-      setIsSubmitting(false);
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append('nomServ', form.nomServ);
-      formData.append('description', form.description || '');
-      formData.append('prix', form.prix);
-      formData.append('rating', form.rating);
-      formData.append('destination_id', form.destination_id);
-      formData.append('selected_city', form.selectedCity);
+    const response = await axiosClient.post('/hotels', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (response.data.success) {
+      alert('Hôtel ajouté avec succès!');
+      navigate('/admin/hotels');
       
-      const amenitiesArray = selectedAmenities.map(amenity => amenity.name);
-      formData.append('amenities', JSON.stringify(amenitiesArray));
-      
-      if (form.image) {
-        formData.append('image', form.image);
-      }
-
-      const response = await axiosClient.post('/hotels', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      setForm({
+        nomServ: "",
+        description: "",
+        prix: "",
+        rating: 0,
+        destination_id: "",
+        image: null,
       });
+      setSelectedAmenities([]);
+      setSelectedDestination(null);
+      setImagePreview(null);
+      setSearchTerm("");
       
-      if (response.data.success) {
-        alert('Hôtel ajouté avec succès!');
-        navigate('/admin/hotels')
-        
-        setForm({
-          nomServ: "",
-          description: "",
-          prix: "",
-          rating: 0,
-          destination_id: "",
-          selectedCity: "",
-          image: null,
-        });
-        setSelectedAmenities([]);
-        setSelectedCity(null);
-        setImagePreview(null);
-        setSearchTerm("");
-        
-        const fileInput = document.getElementById('image-input');
-        if (fileInput) fileInput.value = '';
-      }
-      
-    } catch (error) {
-      console.error('Error:', error.response?.data);
-      setError(error.response?.data?.message || "Erreur lors de l'ajout");
-    } finally {
-      setIsSubmitting(false);
+      const fileInput = document.getElementById('image-input');
+      if (fileInput) fileInput.value = '';
     }
-  };
+    
+  } catch (error) {
+    console.error('Error:', error.response?.data);
+    setError(error.response?.data?.message || "Erreur lors de l'ajout");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -318,12 +308,13 @@ export default function AjouterHotel() {
             </div>
           </div>
 
-          {/* City Selection */}
+          {/* Destination/City Selection - EXACT SAME PATTERN as AjouterVoyage */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ville de l'hôtel *
             </label>
 
+            {/* Search Input */}
             <div className="relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -346,41 +337,42 @@ export default function AjouterHotel() {
                 )}
               </div>
 
-              {/* Dropdown results */}
-              {showDropdown && searchTerm && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {filteredCities.length > 0 ? (
-                    filteredCities.map((city) => (
-                      <button
-                        key={city.id}
-                        type="button"
-                        onClick={() => handleSelectCity(city)}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 border-b border-gray-100 transition-colors"
-                      >
-                        <MapPin size={16} className="text-[#fb923c]" />
-                        <div>
-                          <div className="font-medium">{city.cityName}</div>
-                          <div className="text-xs text-gray-500">
-                            {city.country} • {city.continent}
-                          </div>
+              {/* Dropdown Results */}
+              {showDropdown && searchTerm && filteredDestinations.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                  {filteredDestinations.map((dest) => (
+                    <button
+                      key={dest.id}
+                      type="button"
+                      onClick={() => selectDestination(dest)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center gap-2"
+                    >
+                      <MapPin size={16} className="text-[#fb923c]" />
+                      <div>
+                        <div className="font-medium">{dest.ville}</div>
+                        <div className="text-xs text-gray-500">
+                          {dest.pays} • {dest.continente}
                         </div>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-gray-500">
-                      Aucune ville trouvée pour "{searchTerm}"
-                    </div>
-                  )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {showDropdown && searchTerm && filteredDestinations.length === 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg p-4 text-center text-gray-500">
+                  Aucune ville trouvée pour "{searchTerm}"
                 </div>
               )}
             </div>
 
-            {selectedCity && (
+            {/* Selected Destination Display */}
+            {selectedDestination && (
               <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <MapPin size={16} className="text-green-600" />
+                  <Globe size={16} className="text-green-600" />
                   <span className="text-sm text-green-700">
-                    <strong>Ville sélectionnée:</strong> {selectedCity.cityName}, {selectedCity.country}
+                    <strong>Ville sélectionnée:</strong> {selectedDestination.ville}, {selectedDestination.pays}
                   </span>
                 </div>
                 <button

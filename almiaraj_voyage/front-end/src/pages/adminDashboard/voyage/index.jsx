@@ -14,14 +14,8 @@ export default function AdminVoyages() {
     // Get the base URL for images
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
-
-        // If it already starts with http, return as is
         if (imagePath.startsWith('http')) return imagePath;
-
-        // Remove any 'public/' prefix if present
         let cleanPath = imagePath.replace(/^public\//, '');
-
-        // For Laravel storage
         const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
         return `${baseUrl}/storage/${cleanPath}`;
     };
@@ -38,7 +32,6 @@ export default function AdminVoyages() {
             console.log('Full response:', response);
             console.log('Voyages data:', response.data);
 
-            // Handle different response structures
             let voyagesData = [];
             if (response.data && response.data.data) {
                 voyagesData = response.data.data;
@@ -81,28 +74,24 @@ export default function AdminVoyages() {
 
     // Helper function to get country from destination
     const getCountry = (voyage) => {
-        // Try to get country from different possible data structures
         if (voyage.destination && voyage.destination.pays) {
             return voyage.destination.pays;
         }
         if (voyage.voyage && voyage.voyage.destination && voyage.voyage.destination.pays) {
             return voyage.voyage.destination.pays;
         }
-        if (voyage.destination_id && voyages.find(v => v.id === voyage.id)?.destination?.pays) {
-            return voyages.find(v => v.id === voyage.id)?.destination?.pays;
-        }
         return "N/A";
     };
 
-    // Helper function to get cities from destination
-    const getCities = (voyage) => {
-        if (voyage.destination && voyage.destination.villes) {
-            return voyage.destination.villes;
+    // Helper function to get the city (ville) from destination
+    const getCity = (voyage) => {
+        if (voyage.destination && voyage.destination.ville) {
+            return voyage.destination.ville;
         }
-        if (voyage.voyage && voyage.voyage.destination && voyage.voyage.destination.villes) {
-            return voyage.voyage.destination.villes;
+        if (voyage.voyage && voyage.voyage.destination && voyage.voyage.destination.ville) {
+            return voyage.voyage.destination.ville;
         }
-        return [];
+        return "N/A";
     };
 
     // Helper function to get duration
@@ -176,7 +165,7 @@ export default function AdminVoyages() {
                                 <th className="p-3">Titre</th>
                                 <th className="p-3">Durée</th>
                                 <th className="p-3">Pays</th>
-                                <th className="p-3">Villes</th>
+                                <th className="p-3">Ville</th>
                                 <th className="p-3">Prix</th>
                                 <th className="p-3">Date Départ</th>
                                 <th className="p-3">Action</th>
@@ -184,7 +173,6 @@ export default function AdminVoyages() {
                         </thead>
                         <tbody>
                             {voyages.map((voyage) => {
-                                // Get the service data (voyage extends service)
                                 const serviceData = voyage.service || voyage;
                                 const voyageData = voyage.voyage || voyage;
                                 const voyageId = voyage.id || voyageData.id;
@@ -198,10 +186,7 @@ export default function AdminVoyages() {
                                                     src={getImageUrl(serviceData.image)}
                                                     alt={serviceData.nomServ}
                                                     className="w-20 h-14 object-cover rounded-md"
-                                                    onError={(e) => {
-                                                        console.error(`Failed to load image: ${getImageUrl(serviceData.image)}`);
-                                                        handleImageError(voyageId);
-                                                    }}
+                                                    onError={() => handleImageError(voyageId)}
                                                 />
                                             ) : (
                                                 <div className="w-20 h-14 bg-gray-200 rounded-md flex items-center justify-center">
@@ -223,7 +208,7 @@ export default function AdminVoyages() {
                                             </div>
                                         </td>
 
-                                        {/* COUNTRY - Fixed to show country instead of city */}
+                                        {/* COUNTRY */}
                                         <td className="p-3">
                                             <div className="flex items-center gap-1">
                                                 <Globe size={14} className="text-[#fb923c]" />
@@ -233,33 +218,13 @@ export default function AdminVoyages() {
                                             </div>
                                         </td>
 
-                                        {/* CITIES - Show all selected cities */}
+                                        {/* CITY - Single city */}
                                         <td className="p-3">
-                                            <div className="flex flex-wrap gap-1">
-                                                {voyageData.selected_cities && voyageData.selected_cities.length > 0 ? (
-                                                    voyageData.selected_cities.slice(0, 3).map((city, i) => (
-                                                        <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-md">
-                                                            <MapPin size={10} className="inline mr-1" />
-                                                            {city}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    getCities(voyageData).length > 0 ? (
-                                                        getCities(voyageData).slice(0, 3).map((city, i) => (
-                                                            <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-md">
-                                                                <MapPin size={10} className="inline mr-1" />
-                                                                {city}
-                                                            </span>
-                                                        ))
-                                                    ) : (
-                                                        <span className="text-xs text-gray-400">Non spécifié</span>
-                                                    )
-                                                )}
-                                                {(voyageData.selected_cities?.length > 3 || getCities(voyageData).length > 3) && (
-                                                    <span className="text-xs text-gray-400">
-                                                        +{(voyageData.selected_cities?.length || getCities(voyageData).length) - 3}
-                                                    </span>
-                                                )}
+                                            <div className="flex items-center gap-1">
+                                                <MapPin size={14} className="text-[#fb923c]" />
+                                                <span className="text-sm">
+                                                    {getCity(voyageData)}
+                                                </span>
                                             </div>
                                         </td>
 
@@ -276,7 +241,6 @@ export default function AdminVoyages() {
                                         {/* ACTIONS */}
                                         <td className="p-3">
                                             <div className="flex gap-2">
-                                                {/* DETAILS */}
                                                 <Link
                                                     to={`/admin/showVoyage/${voyageId}`}
                                                     className="bg-gray-100 text-gray-600 p-2 rounded-md hover:bg-gray-600 hover:text-white transition"
@@ -285,7 +249,6 @@ export default function AdminVoyages() {
                                                     <Eye size={16} />
                                                 </Link>
 
-                                                {/* EDIT */}
                                                 <Link
                                                     to={`/admin/editVoyage/${voyageId}`}
                                                     className="bg-green-100 text-green-600 p-2 rounded-md hover:bg-green-600 hover:text-white transition"
@@ -294,7 +257,6 @@ export default function AdminVoyages() {
                                                     <Edit size={16} />
                                                 </Link>
 
-                                                {/* DELETE */}
                                                 <button
                                                     onClick={() => handleDelete(voyageId)}
                                                     disabled={deletingId === voyageId}

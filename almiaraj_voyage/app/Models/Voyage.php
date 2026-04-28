@@ -11,16 +11,12 @@ class Voyage extends Model
     protected $fillable = [
         'id', 
         'destination_id', 
-        'selected_cities',
         'dateDepartV', 
         'dateRetourV', 
         'programme', 
         'duree'
     ];
     
-    protected $casts = [
-        'selected_cities' => 'array',
-    ];
 
     public function service()
     {

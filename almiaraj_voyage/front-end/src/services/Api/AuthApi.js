@@ -47,6 +47,11 @@ const AuthApi = {
   getDestination: async (page = 1) => {
     return await axiosClient.get(`/destinationsCl?page=${page}`);
   },
+  getAllDestination: async () => {
+    return await axiosClient.get("/destinations");
+  },
+
+
 
   getDestinationServices: async (id) => {
     return await axiosClient.get(`/destinationsCl/${id}/services`);

@@ -26,7 +26,7 @@ export default function AdminHotels() {
         try {
             setLoading(true);
             const response = await axiosClient.get('/hotels');
-            
+
             let hotelsData = [];
             if (response.data && response.data.data) {
                 hotelsData = response.data.data;
@@ -163,11 +163,24 @@ export default function AdminHotels() {
                                         </td>
                                         <td className="p-3">
                                             <div className="flex flex-wrap gap-1">
-                                                {hotelData.amenities?.slice(0, 2).map((amenity, i) => (
-                                                    <span key={i} className="text-xs bg-gray-100 px-2 py-1 rounded-md">
-                                                        {amenity}
-                                                    </span>
-                                                ))}
+                                                {(() => {
+                                                    // Parse amenities if it's a string, or use as is if it's already an array
+                                                    let amenitiesArray = [];
+                                                    if (typeof hotelData.amenities === 'string') {
+                                                        try {
+                                                            amenitiesArray = JSON.parse(hotelData.amenities);
+                                                        } catch (e) {
+                                                            // If it's a comma-separated string, split it
+                                                            amenitiesArray = hotelData.amenities.split(',');
+                                                        }
+                                                    } else if (Array.isArray(hotelData.amenities)) {
+                                                        amenitiesArray = hotelData.amenities;
+                                                    }
+
+                                                    return amenitiesArray.slice(0, 3).map((amenity, idx) => (
+                                                        <span key={idx} className="text-xs text-gray-600">{amenity}</span>
+                                                    ));
+                                                })()}
                                                 {hotelData.amenities?.length > 2 && (
                                                     <span className="text-xs text-gray-400">+{hotelData.amenities.length - 2}</span>
                                                 )}

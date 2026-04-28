@@ -34,12 +34,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/services', [ServiceController::class, 'store']);
 
-Route::prefix('client')->group(function () {
-    Route::get('/voyages', [VoyageController::class, 'indexCl']);
-    Route::get('/hotels', [HotelController::class, 'indexCl']);
-    Route::get('/hajj-omras', [HajjOmraController::class, 'indexCl']);
-    Route::get('/billets', [BilletController::class, 'indexCl']);
-});
+// Route::prefix('client')->group(function () {
+//     Route::get('/voyages', [VoyageController::class, 'indexCl']);
+//     Route::get('/hotels', [HotelController::class, 'indexCl']);
+//     Route::get('/hajj-omras', [HajjOmraController::class, 'indexCl']);
+//     Route::get('/billets', [BilletController::class, 'indexCl']);
+// });
 
 Route::middleware('auth:sanctum')->get('/client/profile', [ClientController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->put('/client/profile', [ClientController::class, 'update']);

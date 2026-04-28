@@ -40,6 +40,17 @@ class HajjOmraController extends Controller
             'total' => $items->total(),
         ]);
     }
+    public function index()
+    {
+        $hajjOmras = HajjOmra::with('service')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $hajjOmras
+        ]);
+    }
 
     public function store(Request $request)
     {
@@ -77,7 +88,7 @@ class HajjOmraController extends Controller
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
                 'prix' => $request->prix,
-                'type' => 'hajj_omra',
+                'type' => 'hajjOmra',
                 'image' => $imagePath,
             ]);
 

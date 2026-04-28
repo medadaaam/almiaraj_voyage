@@ -7,6 +7,7 @@ use App\Http\Controllers\HajjOmraController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HotelController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\VoyageController;
@@ -25,12 +26,24 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations/voyage', [ReservationController::class, 'storeVoyage']);
+    Route::post('/reservations/hotel', [ReservationController::class, 'storeHotel']);
+    Route::post('/billets/reserver', [ReservationController::class, 'storeBillet']);
     Route::get('/my-reservations', [ReservationController::class, 'myReservations']);
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
     Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
 });
 
 
+
+Route::post('/contact/message', [MessageController::class, 'store']);
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-messages', [MessageController::class, 'myMessages']);
+    Route::get('/client/messages/{id}', [MessageController::class, 'showForClient']);
+    Route::post('/client/messages/{id}/reply', [MessageController::class, 'reply']);
+
+});
 
 Route::post('/services', [ServiceController::class, 'store']);
 

@@ -1,4 +1,4 @@
-// src/pages/services/HajjOmraDetails.jsx
+// src/pages/services/HajjOmraDetails.jsxHajjOmraDetailsCl
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import fr from "date-fns/locale/fr";
 import "./omraDetails.css";
 
-export default function HajjOmraDetailsCl() {
+export default function () {
   const { id } = useParams();
   const { getHajjOmraDetails } = useAuth();
   const [packageData, setPackageData] = useState(null);

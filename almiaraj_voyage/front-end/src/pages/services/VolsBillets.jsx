@@ -335,7 +335,7 @@ export default function VolsBillets() {
                                                 <Eye size={16} />
                                                 Détails
                                             </Link>
-                                            <Link to={`/reserver/vol/${vol.id}`} className="vols-btn-book">
+                                            <Link to={`/billets/${vol.id}/reserver`} className="vols-btn-book">
                                                 <CreditCard size={16} />
                                                 Réserver
                                             </Link>

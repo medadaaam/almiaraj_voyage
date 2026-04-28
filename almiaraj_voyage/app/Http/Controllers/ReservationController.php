@@ -14,28 +14,44 @@ use Illuminate\Support\Facades\Log;
 class ReservationController extends Controller
 {
     /**
+     * Générer une référence unique
+     */
+    private function generateReference()
+    {
+        do {
+            $reference = 'RES-' . strtoupper(uniqid());
+        } while (Reservation::where('reference', $reference)->exists());
+
+        return $reference;
+    }
+
+    /**
      * Créer une réservation pour un voyage
      */
     public function storeVoyage(Request $request)
     {
         Log::info('Réservation voyage reçue', ['data' => $request->all()]);
 
-        // Validation des données
         $validator = Validator::make($request->all(), [
             'service_id' => 'required|exists:services,id',
-            'nbPers' => 'required|integer|min:1|max:20',
-            'prixUnitaire' => 'required|numeric|min:0',
-            'date_depart' => 'required|date',
-            'date_retour' => 'required|date|after:date_depart',
-            'passagers' => 'required|array|min:1',
-            'passagers.*.nom' => 'required|string|max:50',
-            'passagers.*.prenom' => 'required|string|max:50',
+            'client_principal.nom' => 'required|string|max:50',
+            'client_principal.prenom' => 'required|string|max:50',
+            'client_principal.email' => 'required|email|max:100',
+            'client_principal.telephone' => 'required|string|max:20',
+            'client_principal.cin' => 'nullable|string|min:6|max:20',
+            'reservation.nb_personnes' => 'required|integer|min:1',
+            'reservation.prix_total' => 'required|numeric|min:0',
+            'reservation.prix_unitaire' => 'required|numeric|min:0',
+            'reservation.demandes_speciales' => 'nullable|string',
+            'passagers' => 'nullable|array',
+            'passagers.*.nom' => 'required_if:passagers,not_empty|string|max:50',
+            'passagers.*.prenom' => 'required_if:passagers,not_empty|string|max:50',
             'passagers.*.cin' => 'nullable|string|max:20',
-            'passagers.*.passport' => 'nullable|string|max:20',
-            'passagers.*.date_naissance' => 'nullable|date'
+            'passagers.*.type_passager' => 'required_if:passagers,not_empty|in:adulte,enfant,nourrisson',
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation échouée', ['errors' => $validator->errors()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation échouée',
@@ -49,92 +65,312 @@ class ReservationController extends Controller
         try {
             DB::beginTransaction();
 
-            // Récupérer le client connecté
-            $client = Client::where('user_id', $user->id)->first();
+            $client = Client::where('id', $user->id)->first();
 
             if (!$client) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Client non trouvé'
-                ], 404);
-            }
-
-            // Récupérer le service
-            $service = Service::find($validated['service_id']);
-            if (!$service) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Service non trouvé'
-                ], 404);
-            }
-
-            // Calculer le prix total
-            $prixTotal = $validated['prixUnitaire'] * $validated['nbPers'];
-
-            // Créer la réservation
-            $reservation = Reservation::create([
-                'service_id' => $validated['service_id'],
-                'client_id' => $client->id,
-                'nbPers' => $validated['nbPers'],
-                'prixUnitaire' => $validated['prixUnitaire'],
-                'prixTotal' => $prixTotal,
-                'status' => 'pending',
-                'payment_status' => 'unpaid',
-                'date_depart' => $validated['date_depart'],
-                'date_retour' => $validated['date_retour'],
-                'voucher_generated' => false,
-                'reference' => $this->generateReference()
-            ]);
-
-            Log::info('Réservation créée', ['reservation_id' => $reservation->id]);
-
-            // Créer les passagers
-            foreach ($validated['passagers'] as $passagerData) {
-                Passager::create([
-                    'reservation_id' => $reservation->id,
-                    'nomPas' => $passagerData['nom'],
-                    'prenomPas' => $passagerData['prenom'],
-                    'cinPas' => $passagerData['cin'] ?? null,
-                    'passportPas' => $passagerData['passport'] ?? null,
-                    'date_naissance' => $passagerData['date_naissance'] ?? null
+                $client = Client::create([
+                    'id' => $user->id,
+                    'nomCl' => $validated['client_principal']['nom'],
+                    'prenomCl' => $validated['client_principal']['prenom'],
+                    'email' => $validated['client_principal']['email'],
+                    'numTelCl' => $validated['client_principal']['telephone'],
+                    'cin' => $validated['client_principal']['cin'] ?? null,
+                    'natCl' => 'maroc',
+                    'dateInscription' => now(),
                 ]);
             }
 
-            Log::info('Passagers créés', ['count' => count($validated['passagers'])]);
+            $reservation = Reservation::create([
+                'service_id' => $validated['service_id'],
+                'client_id' => $client->id,
+                'nbPers' => $validated['reservation']['nb_personnes'],
+                'prixUnitaire' => $validated['reservation']['prix_unitaire'],
+                'prixTotal' => $validated['reservation']['prix_total'],
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
+                'voucher_generated' => false,
+                'reference' => $this->generateReference(),
+            ]);
+
+            Log::info('Réservation voyage créée', ['reservation_id' => $reservation->id]);
+
+            if (!empty($validated['passagers'])) {
+                foreach ($validated['passagers'] as $passagerData) {
+                    Passager::create([
+                        'reservation_id' => $reservation->id,
+                        'nomPas' => $passagerData['nom'],
+                        'prenomPas' => $passagerData['prenom'],
+                        'cinPas' => $passagerData['cin'] ?? null,
+                        'type_passager' => $passagerData['type_passager'] ?? 'adulte',
+                    ]);
+                }
+                Log::info('Passagers voyage créés', ['count' => count($validated['passagers'])]);
+            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Réservation créée avec succès',
+                'message' => 'Réservation voyage créée avec succès',
                 'reservation' => $reservation->load('passagers', 'service')
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erreur création réservation', [
+            Log::error('Erreur création réservation voyage', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création de la réservation',
-                'error' => $e->getMessage()
+                'message' => 'Erreur lors de la création de la réservation: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Générer une référence unique
+     * Créer une réservation pour un billet
      */
-    private function generateReference()
+    public function storeBillet(Request $request)
     {
-        do {
-            $reference = 'RES-' . strtoupper(uniqid());
-        } while (Reservation::where('reference', $reference)->exists());
+        Log::info('Réservation billet reçue', ['data' => $request->all()]);
 
-        return $reference;
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|exists:services,id',
+            'client_principal.nom' => 'required|string|max:50',
+            'client_principal.prenom' => 'required|string|max:50',
+            'client_principal.email' => 'required|email|max:100',
+            'client_principal.telephone' => 'required|string|max:20',
+            'client_principal.passport' => 'nullable|string|min:6|max:20',
+            'reservation.nb_personnes' => 'required|integer|min:1',
+            'reservation.prix_total' => 'required|numeric|min:0',
+            'reservation.prix_unitaire' => 'required|numeric|min:0',
+            'reservation.demandes_speciales' => 'nullable|string',
+            'passagers' => 'nullable|array',
+            'passagers.*.nom' => 'required_if:passagers,not_empty|string|max:50',
+            'passagers.*.prenom' => 'required_if:passagers,not_empty|string|max:50',
+            'passagers.*.passport' => 'nullable|string|max:20',
+            'passagers.*.type_passager' => 'required_if:passagers,not_empty|in:adulte,enfant,nourrisson',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Validation échouée billet', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation échouée',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        $user = $request->user();
+
+        try {
+            DB::beginTransaction();
+
+            $client = Client::where('id', $user->id)->first();
+
+            if (!$client) {
+                $client = Client::create([
+                    'id' => $user->id,
+                    'nomCl' => $validated['client_principal']['nom'],
+                    'prenomCl' => $validated['client_principal']['prenom'],
+                    'email' => $validated['client_principal']['email'],
+                    'numTelCl' => $validated['client_principal']['telephone'],
+                    'passport' => $validated['client_principal']['passport'] ?? null,
+                    'natCl' => 'maroc',
+                    'dateInscription' => now(),
+                ]);
+            }
+
+            $prixUnitaire = $validated['reservation']['prix_unitaire'];
+            $prixTotal = $validated['reservation']['prix_total'];
+            $reference = 'RES-BIL-' . strtoupper(uniqid());
+
+            Log::info('💰 Insertion reservation billet:', [
+                'service_id' => $validated['service_id'],
+                'client_id' => $client->id,
+                'nbPers' => $validated['reservation']['nb_personnes'],
+                'prixUnitaire' => $prixUnitaire,
+                'prixTotal' => $prixTotal,
+                'reference' => $reference
+            ]);
+
+            $reservationId = DB::table('reservations')->insertGetId([
+                'service_id' => $validated['service_id'],
+                'client_id' => $client->id,
+                'nbPers' => $validated['reservation']['nb_personnes'],
+                'prixUnitaire' => $prixUnitaire,
+                'prixTotal' => $prixTotal,
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
+                'voucher_generated' => false,
+                'reference' => $reference,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $reservation = Reservation::find($reservationId);
+
+            if (!empty($validated['passagers'])) {
+                foreach ($validated['passagers'] as $passagerData) {
+                    DB::table('passagers')->insert([
+                        'reservation_id' => $reservationId,
+                        'nomPas' => $passagerData['nom'],
+                        'prenomPas' => $passagerData['prenom'],
+                        'passportPas' => $passagerData['passport'] ?? null,
+                        'type_passager' => $passagerData['type_passager'] ?? 'adulte',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+                Log::info('Passagers billet créés', ['count' => count($validated['passagers'])]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Réservation billet créée avec succès',
+                'reservation' => $reservation->load('passagers', 'service')
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur création réservation billet', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création de la réservation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Créer une réservation pour un hôtel
+     */
+    public function storeHotel(Request $request)
+    {
+        Log::info('Réservation hôtel reçue', ['data' => $request->all()]);
+
+        $validator = Validator::make($request->all(), [
+            'service_id' => 'required|exists:services,id',
+            'client_principal.nom' => 'required|string|max:50',
+            'client_principal.prenom' => 'required|string|max:50',
+            'client_principal.email' => 'required|email|max:100',
+            'client_principal.telephone' => 'required|string|max:20',
+            'client_principal.cin' => 'nullable|string|min:6|max:20',
+            'reservation.check_in' => 'required|date|after_or_equal:today',
+            'reservation.check_out' => 'required|date|after:reservation.check_in',
+            'reservation.type_chambre' => 'required|string|max:50',
+            'reservation.nb_personnes' => 'required|integer|min:1',
+            'reservation.prix_total' => 'required|numeric|min:0',
+            'reservation.prix_unitaire' => 'required|numeric|min:0',
+            'reservation.demandes_speciales' => 'nullable|string',
+            'passagers' => 'nullable|array',
+            'passagers.*.nom' => 'required_if:passagers,not_empty|string|max:50',
+            'passagers.*.prenom' => 'required_if:passagers,not_empty|string|max:50',
+            'passagers.*.cin' => 'nullable|string|max:20',
+            'passagers.*.type_passager' => 'required_if:passagers,not_empty|in:adulte,enfant,nourrisson',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Validation échouée hôtel', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation échouée',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validated = $validator->validated();
+        $user = $request->user();
+
+        try {
+            DB::beginTransaction();
+
+            $client = Client::where('id', $user->id)->first();
+
+            if (!$client) {
+                $client = Client::create([
+                    'id' => $user->id,
+                    'nomCl' => $validated['client_principal']['nom'],
+                    'prenomCl' => $validated['client_principal']['prenom'],
+                    'email' => $validated['client_principal']['email'],
+                    'numTelCl' => $validated['client_principal']['telephone'],
+                    'cin' => $validated['client_principal']['cin'] ?? null,
+                    'natCl' => 'maroc',
+                    'dateInscription' => now(),
+                ]);
+            }
+
+            // ✅ Debug avant insertion
+            Log::info('Valeurs à insérer:', [
+                'service_id' => $validated['service_id'],
+                'client_id' => $client->id,
+                'nbPers' => $validated['reservation']['nb_personnes'],
+                'prixUnitaire' => $validated['reservation']['prix_unitaire'],
+                'prixTotal' => $validated['reservation']['prix_total'],
+                'check_in' => $validated['reservation']['check_in'],
+                'check_out' => $validated['reservation']['check_out'],
+                'type_chambre' => $validated['reservation']['type_chambre'],
+            ]);
+
+            // ✅ استخدم insert بدل create باش تتجاوز أي مشكلة
+            $reservationId = DB::table('reservations')->insertGetId([
+                'service_id' => $validated['service_id'],
+                'client_id' => $client->id,
+                'nbPers' => $validated['reservation']['nb_personnes'],
+                'prixUnitaire' => $validated['reservation']['prix_unitaire'],
+                'prixTotal' => $validated['reservation']['prix_total'],
+                'status' => 'pending',
+                'payment_status' => 'unpaid',
+                'voucher_generated' => false,
+                'reference' => $this->generateReference(),
+                'check_in' => $validated['reservation']['check_in'],
+                'check_out' => $validated['reservation']['check_out'],
+                'type_chambre' => $validated['reservation']['type_chambre'],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $reservation = Reservation::find($reservationId);
+
+            Log::info('Réservation hôtel créée', ['reservation_id' => $reservationId, 'prixTotal' => $validated['reservation']['prix_total']]);
+
+            if (!empty($validated['passagers'])) {
+                foreach ($validated['passagers'] as $passagerData) {
+                    Passager::create([
+                        'reservation_id' => $reservationId,
+                        'nomPas' => $passagerData['nom'],
+                        'prenomPas' => $passagerData['prenom'],
+                        'cinPas' => $passagerData['cin'] ?? null,
+                        'type_passager' => $passagerData['type_passager'] ?? 'adulte',
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Réservation hôtel créée avec succès',
+                'reservation' => $reservation->load('passagers', 'service')
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur création réservation hôtel', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création de la réservation: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -143,13 +379,13 @@ class ReservationController extends Controller
     public function myReservations(Request $request)
     {
         $user = $request->user();
-        $client = Client::where('user_id', $user->id)->first();
+        $client = Client::where('id', $user->id)->first();
 
         if (!$client) {
             return response()->json([
-                'success' => false,
-                'message' => 'Client non trouvé'
-            ], 404);
+                'success' => true,
+                'reservations' => []
+            ]);
         }
 
         $reservations = Reservation::with(['service', 'passagers'])
@@ -169,7 +405,7 @@ class ReservationController extends Controller
     public function show($id, Request $request)
     {
         $user = $request->user();
-        $client = Client::where('user_id', $user->id)->first();
+        $client = Client::where('id', $user->id)->first();
 
         if (!$client) {
             return response()->json([
@@ -202,7 +438,7 @@ class ReservationController extends Controller
     public function cancel($id, Request $request)
     {
         $user = $request->user();
-        $client = Client::where('user_id', $user->id)->first();
+        $client = Client::where('id', $user->id)->first();
 
         if (!$client) {
             return response()->json([
@@ -230,8 +466,7 @@ class ReservationController extends Controller
         }
 
         $reservation->update([
-            'status' => 'cancelled',
-            'dateAnnulation' => now()
+            'status' => 'cancelled'
         ]);
 
         return response()->json([

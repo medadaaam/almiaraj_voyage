@@ -26,7 +26,7 @@ class Reservation extends Model
         'reference'
     ];
 
-    // ✅ تحويل الأنواع
+
     protected $casts = [
         'check_in' => 'date',
         'check_out' => 'date',
@@ -34,8 +34,6 @@ class Reservation extends Model
         'date_retour' => 'date',
         'voucher_generated' => 'boolean',
         'nbPers' => 'integer',
-        'prixUnitaire' => 'decimal:2',
-        'prixTotal' => 'decimal:2'
     ];
 
     // ✅ Constantes pour les statuts

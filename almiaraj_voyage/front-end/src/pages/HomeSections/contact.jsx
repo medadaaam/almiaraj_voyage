@@ -1,17 +1,57 @@
-import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
+// src/pages/Contact.jsx
+import { useState, useEffect } from "react";
+import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthApi from "@/services/Api/AuthApi";
 import "./styles/contact.css";
 
 export default function Contact() {
+  const { user, clientProfile, getClientProfile } = useAuth();
+  const [clientLoaded, setClientLoaded] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    nom: "",
+    prenom: "",
     email: "",
-    phone: "",
-    subject: "",
+    telephone: "",
+    sujet: "",
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+
+  // Charger le profil client (seulement si connecté)
+  useEffect(() => {
+    if (user) {
+      const loadClient = async () => {
+        await getClientProfile();
+        setClientLoaded(true);
+      };
+      loadClient();
+    } else {
+      setClientLoaded(true); // Pour les guests, on considère comme chargé
+    }
+  }, [user]);
+
+  // Remplir les champs avec les données du client (si connecté)
+  useEffect(() => {
+    if (user && clientLoaded && clientProfile?.client) {
+      setFormData(prev => ({
+        ...prev,
+        nom: clientProfile.client.nomCl || "",
+        prenom: clientProfile.client.prenomCl || "",
+        email: clientProfile.client.email || "",
+        telephone: clientProfile.client.numTelCl || "",
+      }));
+    } else if (user && clientLoaded) {
+      const nameParts = user.name?.split(" ") || [];
+      setFormData(prev => ({
+        ...prev,
+        nom: nameParts[0] || "",
+        prenom: nameParts.slice(1).join(" ") || "",
+        email: user.email || "",
+      }));
+    }
+  }, [clientProfile, clientLoaded, user]);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,22 +62,44 @@ export default function Contact() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setIsSubmitting(true);
+    setSubmitStatus(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Form submitted:", formData);
-      setSubmitStatus({
-        type: 'success',
-        message: 'Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.'
+    try {
+      // ✅ Utiliser AuthApi directement (pas besoin de auth)
+      const response = await AuthApi.sendContactMessage({
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        telephone: formData.telephone,
+        sujet: formData.sujet,
+        message: formData.message,
+        type: "contact",
       });
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
-      setIsSubmitting(false);
 
-      // Clear success message after 5 seconds
-      setTimeout(() => setSubmitStatus(null), 5000);
-    }, 1500);
+      if (response.data?.success) {
+        setSubmitStatus({
+          type: 'success',
+          message: 'Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.'
+        });
+        setFormData(prev => ({ ...prev, sujet: "", message: "" }));
+
+        setTimeout(() => setSubmitStatus(null), 5000);
+      } else {
+        setSubmitStatus({
+          type: 'error',
+          message: response.data?.message || "Une erreur s'est produite. Veuillez réessayer."
+        });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      setSubmitStatus({
+        type: 'error',
+        message: error.response?.data?.message || "Une erreur s'est produite. Veuillez réessayer."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -71,9 +133,7 @@ export default function Contact() {
         {/* Header */}
         <div className="contact-header">
           <span className="contact-badge">Prenez contact</span>
-          <h2 className="contact-title">
-            Contactez-nous
-          </h2>
+          <h2 className="contact-title">Contactez-nous</h2>
           <p className="contact-subtitle">
             Nous sommes plus qu'heureux d'avoir de vos nouvelles
           </p>
@@ -98,21 +158,39 @@ export default function Contact() {
                 </div>
               )}
 
-              {/* Name */}
-              <div className="form-group">
-                <label htmlFor="name" className="form-label">
-                  Nom complet <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="form-input"
-                  placeholder="Votre nom"
-                />
+              {/* Nom & Prénom */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="prenom" className="form-label">
+                    Prénom <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="prenom"
+                    name="prenom"
+                    value={formData.prenom}
+                    onChange={handleChange}
+                    required
+                    className="form-input"
+                    placeholder="Votre prénom"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="nom" className="form-label">
+                    Nom <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="nom"
+                    name="nom"
+                    value={formData.nom}
+                    onChange={handleChange}
+                    required
+                    className="form-input"
+                    placeholder="Votre nom"
+                  />
+                </div>
               </div>
 
               {/* Email & Phone */}
@@ -134,31 +212,31 @@ export default function Contact() {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="phone" className="form-label">
+                  <label htmlFor="telephone" className="form-label">
                     Téléphone
                   </label>
                   <input
                     type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
+                    id="telephone"
+                    name="telephone"
+                    value={formData.telephone}
                     onChange={handleChange}
                     className="form-input"
-                    placeholder="+212 6 00 00 00 00"
+                    placeholder="0612345678"
                   />
                 </div>
               </div>
 
-              {/* Subject */}
+              {/* Sujet */}
               <div className="form-group">
-                <label htmlFor="subject" className="form-label">
+                <label htmlFor="sujet" className="form-label">
                   Sujet <span className="required">*</span>
                 </label>
                 <input
                   type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
+                  id="sujet"
+                  name="sujet"
+                  value={formData.sujet}
                   onChange={handleChange}
                   required
                   className="form-input"
@@ -187,7 +265,7 @@ export default function Contact() {
               <button type="submit" className="submit-button" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <div className="spinner"></div>
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Envoi en cours...
                   </>
                 ) : (

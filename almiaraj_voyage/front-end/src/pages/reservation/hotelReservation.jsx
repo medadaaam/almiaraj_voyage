@@ -1,6 +1,5 @@
-// src/pages/reservation.jsx
+// src/pages/reservations/HotelReservation.jsx
 import { Button } from "@/components/ui/button";
-
 import {
   Form,
   FormControl,
@@ -9,92 +8,163 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader, Users, Hotel, CreditCard, Plus, Trash2, UserPlus, IdCard, ChevronDown, ChevronRight, CheckCircle, Edit } from "lucide-react";
+import {
+  Loader,
+  Users,
+  Plus,
+  Trash2,
+  UserPlus,
+  IdCard,
+  CheckCircle,
+  Edit,
+  Hotel,
+  Calendar,
+  MapPin,
+  Star,
+  Loader2,
+  Phone,
+  Mail,
+  MessageCircle,
+  CreditCard,
+  Shield,
+  Clock,
+} from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LOGIN_ROUTE } from "@/router";
-import { axiosClient } from "@/api/axios";
+import "./hotelReservation.css";
 
-// Schéma pour un passager individuel
-const passagerSchema = z.object({
-  nom: z.string().min(2, "Nom doit contenir au moins 2 caractères"),
-  prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères"),
-  cin: z.string().min(6, "CIN doit contenir au moins 6 caractères").max(20, "CIN trop long"),
-  nationalite: z.string().optional(), // Make nationalite optional
-});
+const getPassagerSchema = (type_passager) => {
+  let baseSchema = {
+    nom: z.string().min(2, "Nom doit contenir au moins 2 caractères"),
+    prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères"),
+    type_passager: z.enum(["adulte", "enfant", "nourrisson"]),
+  };
 
-// Schéma principal pour la réservation
-const formSchema = z.object({
-    nom: z.string().min(2, "Nom doit contenir au moins 2 caractères").max(50),
-    prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères").max(50),
+  if (type_passager === "adulte") {
+    baseSchema.cin = z
+      .string()
+      .min(6, "CIN doit contenir au moins 6 caractères")
+      .max(20, "CIN trop long");
+  } else {
+    baseSchema.cin = z.string().optional();
+  }
+
+  return z.object(baseSchema);
+};
+
+const formSchema = z
+  .object({
+    nom: z.string().min(2, "Nom doit contenir au moins 2 caractères"),
+    prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères"),
     email: z.string().email("Email invalide"),
-    telephone: z.string().min(10, "Téléphone invalide").max(15),
-    cin: z.string().min(6, "CIN doit contenir au moins 6 caractères").max(20, "CIN trop long"),
-    nationalite: z.string().optional(), // Add this
-    checkIn: z.string().min(1, "Date d'arrivée requise"),
-    checkOut: z.string().min(1, "Date de départ requise"),
-    typeChambre: z.string().min(1, "Veuillez sélectionner un type de chambre"),
-    passagers: z.array(passagerSchema),
+    telephone: z.string().min(10, "Téléphone invalide"),
+    cin: z.string().optional(),
+    check_in: z.string().min(1, "Date d'arrivée requise"),
+    check_out: z.string().min(1, "Date de départ requise"),
+    type_chambre: z.string().min(1, "Veuillez sélectionner un type de chambre"),
+    passagers: z.array(z.any()),
     demandesSpeciales: z.string().optional(),
     terms: z.literal(true, {
-        errorMap: () => ({
-            message: "Vous devez accepter les conditions de réservation",
-        }),
+      errorMap: () => ({ message: "Vous devez accepter les conditions" }),
     }),
-}).refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
+  })
+  .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
     message: "La date de départ doit être postérieure à la date d'arrivée",
-    path: ["checkOut"],
-});
+    path: ["check_out"],
+  });
 
-export default function HotelsReservation() {
-  const { authenticated } = useAuth();
+export default function HotelReservation() {
+  const { id } = useParams();
+  const {
+    authenticated,
+    user,
+    getClientProfile,
+    updateClientProfile,
+    clientProfile,
+    getHotelDetails,
+    createHotelReservation,
+  } = useAuth();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (!authenticated) {
-      navigate(LOGIN_ROUTE);
-    };
-  }, [authenticated]);
-
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedPassagers, setExpandedPassagers] = useState({});
   const [confirmedPassagers, setConfirmedPassagers] = useState({});
-  const { user } = useAuth();
-  const location = useLocation();
+  const [clientLoaded, setClientLoaded] = useState(false);
+  const [hotel, setHotel] = useState(null);
+  const [loadingHotel, setLoadingHotel] = useState(true);
+  const [passagerTypes, setPassagerTypes] = useState({});
+  const [typesChambre, setTypesChambre] = useState([]);
 
-  const hotelId = location.state?.hotelId || new URLSearchParams(location.search).get('hotelId');
-  const hotelData = location.state?.hotelData || null;
+  const fetchedHotelRef = useRef(false);
+  const fetchedClientRef = useRef(false);
+
+  useEffect(() => {
+    const fetchHotel = async () => {
+      if (fetchedHotelRef.current) return;
+      fetchedHotelRef.current = true;
+      setLoadingHotel(true);
+      try {
+        const hotelData = await getHotelDetails(id);
+        if (hotelData && hotelData.id) {
+          setHotel(hotelData);
+          if (hotelData.chambre_types && hotelData.chambre_types.length > 0) {
+            setTypesChambre(hotelData.chambre_types);
+          }
+        } else {
+          setError("Hôtel non trouvé");
+        }
+      } catch (err) {
+        console.error("Error fetching hotel:", err);
+        setError("Erreur lors du chargement de l'hôtel");
+      } finally {
+        setLoadingHotel(false);
+      }
+    };
+    if (id) {
+      fetchHotel();
+    } else {
+      setLoadingHotel(false);
+      setError("ID de l'hôtel manquant");
+    }
+  }, [id, getHotelDetails]);
+
+  useEffect(() => {
+    const loadClient = async () => {
+      if (fetchedClientRef.current) return;
+      fetchedClientRef.current = true;
+      try {
+        await getClientProfile();
+      } catch (err) {
+        console.error("Error loading client:", err);
+      } finally {
+        setClientLoaded(true);
+      }
+    };
+    loadClient();
+  }, [getClientProfile]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-    nom: user?.nom || "",
-    prenom: user?.prenom || "",
-    email: user?.email || "",
-    telephone: user?.telephone || "",
-    cin: user?.cin || "",
-    nationalite: user?.nationalite || "",
-    checkIn: "",
-    checkOut: "",
-    typeChambre: "",
-    passagers: [],
-    demandesSpeciales: "",
-    terms: false,
-},
+      nom: "",
+      prenom: "",
+      email: "",
+      telephone: "",
+      cin: "",
+      check_in: "",
+      check_out: "",
+      type_chambre: "",
+      passagers: [],
+      demandesSpeciales: "",
+      terms: false,
+    },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -102,110 +172,130 @@ export default function HotelsReservation() {
     name: "passagers",
   });
 
-  const typesChambre = [
-    { value: "single", label: "Single (1 personne)", prix: 800, maxPersonnes: 1 },
-    { value: "double", label: "Double (2 personnes)", prix: 1200, maxPersonnes: 2 },
-    { value: "suite", label: "Suite (4 personnes)", prix: 2000, maxPersonnes: 4 },
-    { value: "family", label: "Familiale (6 personnes)", prix: 2500, maxPersonnes: 6 },
-  ];
+  const watchCheckIn = form.watch("check_in");
+  const watchCheckOut = form.watch("check_out");
+  const watchTypeChambre = form.watch("type_chambre");
 
-  const countries = [
-    { value: "ma", label: "Maroc 🇲🇦" },
-    { value: "fr", label: "France 🇫🇷" },
-    { value: "es", label: "Espagne 🇪🇸" },
-    { value: "it", label: "Italie 🇮🇹" },
-    { value: "de", label: "Allemagne 🇩🇪" },
-    { value: "us", label: "États-Unis 🇺🇸" },
-    { value: "uk", label: "Royaume-Uni 🇬🇧" },
-    { value: "ca", label: "Canada 🇨🇦" },
-    { value: "tn", label: "Tunisie 🇹🇳" },
-    { value: "dz", label: "Algérie 🇩🇿" },
-  ];
+  useEffect(() => {
+    if (clientLoaded && clientProfile?.client) {
+      form.setValue("nom", clientProfile.client.nomCl || "");
+      form.setValue("prenom", clientProfile.client.prenomCl || "");
+      form.setValue("email", clientProfile.client.email || user?.email || "");
+      form.setValue("telephone", clientProfile.client.numTelCl || "");
+      form.setValue("cin", clientProfile.client.cin || "");
+    } else if (user && clientLoaded) {
+      const nameParts = user.name?.split(" ") || [];
+      form.setValue("nom", nameParts[0] || "");
+      form.setValue("prenom", nameParts.slice(1).join(" ") || "");
+      form.setValue("email", user.email || "");
+    }
+  }, [clientProfile, clientLoaded, user, form]);
 
-  const watchCheckIn = form.watch("checkIn");
-  const watchCheckOut = form.watch("checkOut");
-  const watchTypeChambre = form.watch("typeChambre");
+  useEffect(() => {
+    if (!authenticated && !loading) {
+      navigate(LOGIN_ROUTE);
+    }
+  }, [authenticated, loading, navigate]);
+
+  const calculerNuits = () => {
+    if (watchCheckIn && watchCheckOut) {
+      const start = new Date(watchCheckIn);
+      const end = new Date(watchCheckOut);
+      const diffTime = end - start;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    }
+    return 0;
+  };
 
   const calculerPrixTotal = () => {
-    if (watchCheckIn && watchCheckOut && watchTypeChambre) {
-      const checkInDate = new Date(watchCheckIn);
-      const checkOutDate = new Date(watchCheckOut);
-      const nuits = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-      const chambre = typesChambre.find(c => c.value === watchTypeChambre);
-      if (chambre && nuits > 0) {
-        return chambre.prix * nuits;
-      }
+    const chambre = typesChambre.find((c) => c.value === watchTypeChambre);
+    const nuits = calculerNuits();
+    if (chambre && nuits > 0) {
+      return chambre.prix * nuits;
     }
     return 0;
   };
 
   const isNombrePassagersValide = () => {
-    const chambre = typesChambre.find(c => c.value === watchTypeChambre);
+    const chambre = typesChambre.find((c) => c.value === watchTypeChambre);
     if (chambre && fields.length > 0) {
-      return fields.length <= chambre.maxPersonnes;
+      return fields.length <= (chambre.max_personnes || chambre.maxPersonnes);
     }
     return true;
   };
 
   const ajouterPassager = () => {
     const newIndex = fields.length;
+    const defaultType = "adulte";
+    setPassagerTypes((prev) => ({ ...prev, [newIndex]: defaultType }));
+
     append({
       nom: "",
       prenom: "",
       cin: "",
-      nationalite: "",
+      type_passager: defaultType,
     });
-    // Auto-expand the new passager
+
     setExpandedPassagers({ ...expandedPassagers, [newIndex]: true });
     setConfirmedPassagers({ ...confirmedPassagers, [newIndex]: false });
   };
 
   const supprimerPassager = (index) => {
     remove(index);
-    // Clean up states
     const newExpanded = { ...expandedPassagers };
     const newConfirmed = { ...confirmedPassagers };
+    const newTypes = { ...passagerTypes };
     delete newExpanded[index];
     delete newConfirmed[index];
-    // Re-index remaining passagers
+    delete newTypes[index];
+
     const reindexedExpanded = {};
     const reindexedConfirmed = {};
-    Object.keys(newExpanded).forEach(key => {
-      if (parseInt(key) > index) {
-        reindexedExpanded[parseInt(key) - 1] = newExpanded[key];
-      } else if (parseInt(key) < index) {
-        reindexedExpanded[key] = newExpanded[key];
-      }
+    const reindexedTypes = {};
+    Object.keys(newExpanded).forEach((key) => {
+      const numKey = parseInt(key);
+      if (numKey > index) reindexedExpanded[numKey - 1] = newExpanded[key];
+      else if (numKey < index) reindexedExpanded[key] = newExpanded[key];
     });
-    Object.keys(newConfirmed).forEach(key => {
-      if (parseInt(key) > index) {
-        reindexedConfirmed[parseInt(key) - 1] = newConfirmed[key];
-      } else if (parseInt(key) < index) {
-        reindexedConfirmed[key] = newConfirmed[key];
-      }
+    Object.keys(newConfirmed).forEach((key) => {
+      const numKey = parseInt(key);
+      if (numKey > index) reindexedConfirmed[numKey - 1] = newConfirmed[key];
+      else if (numKey < index) reindexedConfirmed[key] = newConfirmed[key];
     });
+    Object.keys(newTypes).forEach((key) => {
+      const numKey = parseInt(key);
+      if (numKey > index) reindexedTypes[numKey - 1] = newTypes[key];
+      else if (numKey < index) reindexedTypes[key] = newTypes[key];
+    });
+
     setExpandedPassagers(reindexedExpanded);
     setConfirmedPassagers(reindexedConfirmed);
+    setPassagerTypes(reindexedTypes);
+  };
+
+  const updatePassagerType = (index, value) => {
+    setPassagerTypes((prev) => ({ ...prev, [index]: value }));
+    form.setValue(`passagers.${index}.type_passager`, value);
+    if (value !== "adulte") {
+      form.setValue(`passagers.${index}.cin`, "");
+    }
   };
 
   const togglePassager = (index) => {
     if (confirmedPassagers[index]) {
-      // If confirmed, allow editing
       setConfirmedPassagers({ ...confirmedPassagers, [index]: false });
       setExpandedPassagers({ ...expandedPassagers, [index]: true });
     } else {
       setExpandedPassagers({
         ...expandedPassagers,
-        [index]: !expandedPassagers[index]
+        [index]: !expandedPassagers[index],
       });
     }
   };
 
   const confirmPassager = async (index) => {
-    // Validate the specific passager fields
-    const passagerData = form.getValues(`passagers.${index}`);
     const isValid = await form.trigger(`passagers.${index}`);
-
     if (isValid) {
       setConfirmedPassagers({ ...confirmedPassagers, [index]: true });
       setExpandedPassagers({ ...expandedPassagers, [index]: false });
@@ -220,7 +310,13 @@ export default function HotelsReservation() {
   const getPassagerSummary = (index) => {
     const passager = form.getValues(`passagers.${index}`);
     if (passager && passager.prenom && passager.nom) {
-      return `${passager.prenom} ${passager.nom}`;
+      const type =
+        passager.type_passager === "adulte"
+          ? "👤 Adulte"
+          : passager.type_passager === "enfant"
+            ? "🧒 Enfant"
+            : "🍼 Nourrisson";
+      return `${passager.prenom} ${passager.nom} (${type})`;
     }
     return "Informations incomplètes";
   };
@@ -229,24 +325,68 @@ export default function HotelsReservation() {
     setLoading(true);
     setError("");
 
-    // Check if all passagers are confirmed
+    if (!values.check_in || !values.check_out) {
+      setError("Veuillez sélectionner les dates d'arrivée et de départ");
+      setLoading(false);
+      return;
+    }
+
+    const start = new Date(values.check_in);
+    const end = new Date(values.check_out);
+    if (isNaN(start) || isNaN(end)) {
+      setError("Dates invalides");
+      setLoading(false);
+      return;
+    }
+
     const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
-    if (!allConfirmed) {
+    if (!allConfirmed && fields.length > 0) {
       setError("Veuillez confirmer tous les passagers avant de continuer");
       setLoading(false);
       return;
     }
 
     if (!isNombrePassagersValide()) {
-      const chambre = typesChambre.find(c => c.value === watchTypeChambre);
-      setError(`Le type de chambre sélectionné ne peut accueillir que ${chambre.maxPersonnes} personne(s). Vous avez ajouté ${fields.length} passager(s).`);
+      const chambre = typesChambre.find((c) => c.value === watchTypeChambre);
+      setError(
+        `Le type de chambre sélectionné ne peut accueillir que ${chambre?.max_personnes || chambre?.maxPersonnes} personne(s).`,
+      );
       setLoading(false);
       return;
     }
 
+    for (let i = 0; i < values.passagers.length; i++) {
+      const p = values.passagers[i];
+      if (p.type_passager === "adulte" && (!p.cin || p.cin.length < 6)) {
+        setError(`Le passager ${i + 1} (adulte) doit avoir un CIN valide`);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
+      await updateClientProfile({
+        nomCl: values.nom,
+        prenomCl: values.prenom,
+        email: values.email,
+        numTelCl: values.telephone,
+        cin: values.cin,
+      });
+      await getClientProfile();
+    } catch (updateErr) {
+      console.warn("Profile update failed:", updateErr);
+    }
+
+    try {
+      const startDate = new Date(values.check_in);
+      const endDate = new Date(values.check_out);
+      const nuits = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+      const chambre = typesChambre.find((c) => c.value === values.type_chambre);
+      const prixUnitaire = chambre ? chambre.prix : 0;
+      const prixTotal = prixUnitaire * nuits;
+
       const reservationData = {
-        service_id: parseInt(hotelId), // Change from hotel_id to service_id
+        service_id: parseInt(id),
         client_principal: {
           nom: values.nom,
           prenom: values.prenom,
@@ -255,532 +395,534 @@ export default function HotelsReservation() {
           cin: values.cin,
         },
         reservation: {
-          check_in: values.checkIn,
-          check_out: values.checkOut,
-          type_chambre: values.typeChambre,
-          nombre_passagers: values.passagers.length + 1, // +1 for the main client
-          prix_total: calculerPrixTotal(),
+          check_in: values.check_in,
+          check_out: values.check_out,
+          type_chambre: values.type_chambre,
+          nb_personnes: fields.length + 1,
+          prix_total: prixTotal,
+          prix_unitaire: prixUnitaire,
           demandes_speciales: values.demandesSpeciales || "",
         },
-        passagers: values.passagers.map(p => ({
-          nom: p.nom,
-          prenom: p.prenom,
-          cin: p.cin,
-          nationalite: p.nationalite || null
-        })),
+        passagers: values.passagers,
       };
 
-      console.log("Sending data:", reservationData); // Debug log
-
-      const response = await axiosClient.post('/reservations', reservationData);
-
-      if (response.status === 201 || response.status === 200) {
-        navigate("/reservation-confirmation", {
+      const response = await createHotelReservation(reservationData);
+      if (response?.success) {
+        navigate("/client/orders", {
           state: {
-            reservation: reservationData,
-            hotel: hotelData,
-            reservationId: response.data.data.reservation.id
-          }
+            message:
+              "✅ Votre réservation a été envoyée avec succès ! Notre équipe la traitera dans les plus brefs délais et vous contactera pour confirmation.",
+            type: "success",
+          },
         });
-      }
-
-    } catch (err) {
-      console.error("Erreur:", err);
-
-      if (err.response?.status === 401) {
-        setError("Vous devez être connecté pour effectuer une réservation");
-        setTimeout(() => {
-          navigate(LOGIN_ROUTE);
-        }, 2000);
-      } else if (err.response?.status === 422) {
-        const errors = err.response.data.errors;
-        console.log("Validation errors:", errors); // Debug log
-
-        // Handle validation errors
-        if (errors['client_principal.nom']) {
-          form.setError("nom", { message: errors['client_principal.nom'][0] });
-        }
-        if (errors['client_principal.prenom']) {
-          form.setError("prenom", { message: errors['client_principal.prenom'][0] });
-        }
-        if (errors['client_principal.email']) {
-          form.setError("email", { message: errors['client_principal.email'][0] });
-        }
-        if (errors['client_principal.telephone']) {
-          form.setError("telephone", { message: errors['client_principal.telephone'][0] });
-        }
-        if (errors['client_principal.cin']) {
-          form.setError("cin", { message: errors['client_principal.cin'][0] });
-        }
-        if (errors['reservation.check_in']) {
-          form.setError("checkIn", { message: errors['reservation.check_in'][0] });
-        }
-        if (errors['reservation.check_out']) {
-          form.setError("checkOut", { message: errors['reservation.check_out'][0] });
-        }
-        if (errors['reservation.type_chambre']) {
-          form.setError("typeChambre", { message: errors['reservation.type_chambre'][0] });
-        }
-        if (errors.service_id) {
-          setError("Erreur: Hôtel non trouvé");
-        }
-        if (errors.passagers) {
-          setError("Veuillez vérifier les informations des passagers");
-        }
-
-        if (Object.keys(errors).length === 0) {
-          setError(err.response.data.message || "Données incorrectes");
-        }
       } else {
-        setError(err.response?.data?.message || "Une erreur s'est produite");
+        setError(response?.message || "Une erreur s'est produite");
       }
+    } catch (err) {
+      console.error("Reservation error:", err);
+      setError(err.response?.data?.message || "Une erreur s'est produite");
     } finally {
       setLoading(false);
     }
   };
 
+  if (loadingHotel || !clientLoaded) {
+    return (
+      <div className="hotel-reservation-loading">
+        <div className="hotel-reservation-loading-spinner"></div>
+        <p>Chargement...</p>
+      </div>
+    );
+  }
+
+  if (error && !hotel) {
+    return (
+      <div className="hotel-reservation-error">
+        <div className="error-icon">🏨</div>
+        <h2>Erreur</h2>
+        <p>{error}</p>
+        <Link to="/services/hotels">Retour aux hôtels</Link>
+      </div>
+    );
+  }
+
+  if (!hotel) {
+    return (
+      <div className="hotel-reservation-error">
+        <div className="error-icon">🏨</div>
+        <h2>Hôtel non trouvé</h2>
+        <Link to="/services/hotels">Retour aux hôtels</Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-center mb-2">Réservation d'hôtel</h2>
-      {hotelData && (
-        <p className="text-center text-gray-600 mb-6">{hotelData.nom}</p>
-      )}
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-              {error}
+    <div className="hotel-reservation-page">
+      <div className="hotel-reservation-container">
+        {/* Hotel Card */}
+        <div className="hotel-reservation-card">
+          <div className="hotel-reservation-header">
+            <div className="hotel-reservation-type">
+              <Hotel size={20} />
+              <span>Hôtel</span>
+              {hotel.service?.enVedette === 1 && (
+                <span className="hotel-reservation-badge">
+                  <Star size={12} />
+                  Populaire
+                </span>
+              )}
             </div>
-          )}
-
-          {/* Section: Informations du client principal */}
-          <div className="border-b pb-4">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Informations du client principal
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="prenom"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prénom <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Votre prénom" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="nom"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Votre nom" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="exemple@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="telephone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder="0612345678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="mt-4">
-              <FormField
-                control={form.control}
-                name="cin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <IdCard className="w-4 h-4" />
-                      Numéro CIN <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="Ex: AB123456" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="hotel-reservation-price">
+              <span className="price-label">À partir de</span>
+              <span className="price-value">{hotel.service?.prix} DH</span>
+              <span className="price-period">/nuit</span>
             </div>
           </div>
 
-          {/* Section: Détails du séjour */}
-          <div className="border-b pb-4">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Hotel className="w-5 h-5" />
-              Détails du séjour
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="checkIn"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date d'arrivée <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <h1 className="hotel-reservation-title">{hotel.service?.nomServ}</h1>
 
-              <FormField
-                control={form.control}
-                name="checkOut"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Date de départ <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        min={watchCheckIn || new Date().toISOString().split('T')[0]}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="mt-4">
-              <FormField
-                control={form.control}
-                name="typeChambre"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Type de chambre <span className="text-red-500">*</span></FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisir le type de chambre" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {typesChambre.map((chambre) => (
-                          <SelectItem key={chambre.value} value={chambre.value}>
-                            {chambre.label} - {chambre.prix} DH/nuit (Max: {chambre.maxPersonnes} pers)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <div className="hotel-reservation-location">
+            <MapPin size={16} />
+            <span>{hotel.villeHotel}</span>
           </div>
 
-          {/* Section: Informations des passagers */}
-          <div className="border-b pb-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <UserPlus className="w-5 h-5" />
-                Informations des passagers
-              </h3>
-              <Button
-                type="button"
-                onClick={ajouterPassager}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Ajouter un passager
-              </Button>
-            </div>
+          <div className="hotel-reservation-rating">
+            <Star size={14} />
+            <span>{hotel.service?.rating} / 5</span>
+          </div>
+        </div>
 
-            {fields.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed">
-                <UserPlus className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                <p className="text-gray-500">Aucun passager ajouté</p>
-                <p className="text-sm text-gray-400">Cliquez sur "Ajouter un passager" pour commencer</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="border rounded-lg overflow-hidden">
-                      {/* Passager Header (always visible) */}
-                      <div
-                        className={`flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors ${confirmedPassagers[index] ? 'bg-green-50' : 'bg-white'
-                          }`}
-                        onClick={() => togglePassager(index)}
-                      >
-                        <div className="flex items-center gap-3">
-                          {expandedPassagers[index] ? (
-                            <ChevronDown className="w-5 h-5 text-gray-500" />
-                          ) : (
-                            <ChevronRight className="w-5 h-5 text-gray-500" />
-                          )}
-                          <div>
-                            <h4 className="font-medium">
-                              Passager {index + 1}
-                              {confirmedPassagers[index] && (
-                                <CheckCircle className="w-4 h-4 text-green-500 inline ml-2" />
-                              )}
-                            </h4>
-                            {confirmedPassagers[index] && (
-                              <p className="text-sm text-gray-600">
-                                {getPassagerSummary(index)}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            supprimerPassager(index);
-                          }}
-                          className="text-red-500 hover:text-red-700 bg-transparent hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+        {/* Form */}
+        <div className="hotel-reservation-form-container">
+          <h2 className="hotel-reservation-form-title">Réservation d'hôtel</h2>
 
-                      {/* Passager Form (expandable) */}
-                      {expandedPassagers[index] && (
-                        <div className="p-4 border-t bg-gray-50">
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name={`passagers.${index}.prenom`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Prénom <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Prénom du passager" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="hotel-reservation-form"
+            >
+              {error && (
+                <div className="hotel-reservation-error-message">
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </div>
+              )}
 
-                            <FormField
-                              control={form.control}
-                              name={`passagers.${index}.nom`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Nom <span className="text-red-500">*</span></FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Nom du passager" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="mt-4">
-                            <FormField
-                              control={form.control}
-                              name={`passagers.${index}.cin`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="flex items-center gap-2">
-                                    <IdCard className="w-4 h-4" />
-                                    Numéro CIN <span className="text-red-500">*</span>
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Numéro CIN" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-
-                          <div className="flex justify-end gap-2 mt-4">
-                            {confirmedPassagers[index] ? (
-                              <Button
-                                type="button"
-                                onClick={() => editPassager(index)}
-                                variant="outline"
-                                className="flex items-center gap-2"
-                              >
-                                <Edit className="w-4 h-4" />
-                                Modifier
-                              </Button>
-                            ) : (
-                              <Button
-                                type="button"
-                                onClick={() => confirmPassager(index)}
-                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="w-4 h-4" />
-                                Confirmer le passager
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              {/* Client Principal */}
+              <div className="form-section">
+                <h3 className="form-section-title">
+                  <Users size={18} />
+                  Informations du client principal
+                </h3>
+                <div className="form-grid-2">
+                  <FormField
+                    control={form.control}
+                    name="prenom"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prénom</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled className="bg-gray-100" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="nom"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled className="bg-gray-100" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
+                <div className="form-grid-2">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled className="bg-gray-100" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="telephone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Téléphone</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled className="bg-gray-100" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="cin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <IdCard size={14} /> CIN
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: AB1234567" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Détails du séjour */}
+              <div className="form-section">
+                <h3 className="form-section-title">
+                  <Calendar size={18} />
+                  Détails du séjour
+                </h3>
+                <div className="form-grid-2">
+                  <FormField
+                    control={form.control}
+                    name="check_in"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Check In *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            min={new Date().toISOString().split("T")[0]}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="check_out"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel> Check Out *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            min={
+                              watchCheckIn ||
+                              new Date().toISOString().split("T")[0]
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="type_chambre"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type de chambre *</FormLabel>
+                      <FormControl>
+                        <select {...field} className="hotel-reservation-select">
+                          <option value="">
+                            Sélectionner un type de chambre
+                          </option>
+                          {typesChambre.map((chambre) => (
+                            <option key={chambre.value} value={chambre.value}>
+                              {chambre.label} - {chambre.prix} DH/nuit (Max:{" "}
+                              {chambre.max_personnes || chambre.maxPersonnes}{" "}
+                              pers)
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Passagers */}
+              <div className="form-section">
+                <div className="form-section-header">
+                  <h3 className="form-section-title">
+                    <UserPlus size={18} />
+                    Informations des passagers
+                  </h3>
+                  <Button
+                    type="button"
+                    onClick={ajouterPassager}
+                    variant="outline"
+                    className="add-passenger-btn"
+                  >
+                    <Plus size={14} />
+                    Ajouter un passager
+                  </Button>
+                </div>
+
+                {fields.length === 0 ? (
+                  <div className="empty-passengers">
+                    <UserPlus size={48} />
+                    <p>Aucun passager ajouté</p>
+                    <span>
+                      Cliquez sur "Ajouter un passager" pour ajouter des enfants
+                    </span>
+                  </div>
+                ) : (
+                  <div className="passengers-list">
+                    {fields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className={`passenger-item ${confirmedPassagers[index] ? "confirmed" : ""}`}
+                      >
+                        <div
+                          className="passenger-header"
+                          onClick={() => togglePassager(index)}
+                        >
+                          <div className="passenger-header-left">
+                            <h4>Passager {index + 1}</h4>
+                            {confirmedPassagers[index] && (
+                              <CheckCircle size={16} className="check-icon" />
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              supprimerPassager(index);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+
+                        {expandedPassagers[index] && (
+                          <div className="passenger-form">
+                            <FormField
+                              control={form.control}
+                              name={`passagers.${index}.type_passager`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Type de passager</FormLabel>
+                                  <FormControl>
+                                    <select
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        updatePassagerType(
+                                          index,
+                                          e.target.value,
+                                        );
+                                      }}
+                                      className="passenger-type-select"
+                                    >
+                                      <option value="adulte">👤 Adulte</option>
+                                      <option value="enfant">
+                                        🧒 Enfant (2-12 ans)
+                                      </option>
+                                      <option value="nourrisson">
+                                        🍼 Nourrisson (-2 ans)
+                                      </option>
+                                    </select>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <div className="form-grid-2">
+                              <FormField
+                                control={form.control}
+                                name={`passagers.${index}.prenom`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Prénom *</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Prénom" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`passagers.${index}.nom`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Nom *</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Nom" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            {passagerTypes[index] === "adulte" && (
+                              <FormField
+                                control={form.control}
+                                name={`passagers.${index}.cin`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                      <IdCard size={14} /> CIN *
+                                    </FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        placeholder="AA123456"
+                                        {...field}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
+                            <div className="passenger-actions">
+                              {confirmedPassagers[index] ? (
+                                <Button
+                                  type="button"
+                                  onClick={() => editPassager(index)}
+                                  variant="outline"
+                                >
+                                  Modifier
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  onClick={() => confirmPassager(index)}
+                                  className="confirm-btn"
+                                >
+                                  Confirmer
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {confirmedPassagers[index] &&
+                          !expandedPassagers[index] && (
+                            <div className="passenger-summary">
+                              <span>{getPassagerSummary(index)}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => editPassager(index)}
+                              >
+                                Modifier
+                              </Button>
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {watchTypeChambre && fields.length > 0 && (
-                  <div className={`mt-4 p-3 rounded-md ${isNombrePassagersValide() ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                  <div
+                    className={`capacity-warning ${isNombrePassagersValide() ? "valid" : "invalid"}`}
+                  >
                     {isNombrePassagersValide() ? (
-                      <p className="text-sm">✓ {fields.length} passager(s) pour une chambre {typesChambre.find(c => c.value === watchTypeChambre)?.label}</p>
+                      <span>
+                        ✓ {fields.length} passager(s) pour cette chambre
+                      </span>
                     ) : (
-                      <p className="text-sm">⚠️ La chambre {typesChambre.find(c => c.value === watchTypeChambre)?.label} ne peut accueillir que {typesChambre.find(c => c.value === watchTypeChambre)?.maxPersonnes} personne(s). Vous avez ajouté {fields.length} passager(s).</p>
+                      <span>
+                        ⚠️ La chambre ne peut accueillir que{" "}
+                        {typesChambre.find((c) => c.value === watchTypeChambre)
+                          ?.max_personnes ||
+                          typesChambre.find((c) => c.value === watchTypeChambre)
+                            ?.maxPersonnes}{" "}
+                        personne(s).
+                      </span>
                     )}
                   </div>
                 )}
-
-                {/* Show warning if not all passagers are confirmed */}
-                {fields.length > 0 && !fields.every((_, index) => confirmedPassagers[index]) && (
-                  <div className="mt-4 p-3 rounded-md bg-yellow-50 text-yellow-700">
-                    <p className="text-sm">⚠️ Veuillez confirmer tous les passagers avant de continuer</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Section: Options supplémentaires */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              Options supplémentaires
-            </h3>
-
-            <FormField
-              control={form.control}
-              name="demandesSpeciales"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Demandes spéciales</FormLabel>
-                  <FormControl>
-                    <textarea
-                      {...field}
-                      className="w-full border rounded-md p-2 min-h-[100px]"
-                      placeholder="Régime alimentaire, besoins spécifiques, etc..."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Section: Récapitulatif et prix */}
-          {(watchCheckIn && watchCheckOut && watchTypeChambre) && (
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2 text-lg">Récapitulatif de la réservation</h3>
-              <div className="space-y-2 text-sm">
-                <p>📅 Nuits: <strong>{Math.ceil((new Date(watchCheckOut) - new Date(watchCheckIn)) / (1000 * 60 * 60 * 24))}</strong> nuits</p>
-                <p>👥 Nombre total de passagers: <strong>{fields.length}</strong></p>
-                <p>🏨 Type de chambre: <strong>{typesChambre.find(c => c.value === watchTypeChambre)?.label}</strong></p>
-                <p className="text-lg font-bold mt-2">💰 Prix total: <span className="text-green-600">{calculerPrixTotal()} DH</span></p>
               </div>
-            </div>
-          )}
 
-          {/* Section: Conditions */}
-          <FormField
-            control={form.control}
-            name="terms"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-center space-x-2">
-                  <FormControl>
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="w-4 h-4 border border-gray-300 rounded"
-                    />
-                  </FormControl>
-                  <FormLabel className="text-sm font-medium">
-                    J'accepte les{" "}
-                    <a href="/conditions" className="text-blue-600 hover:underline">
-                      conditions de réservation
-                    </a>
-                  </FormLabel>
+              {/* Prix total */}
+              {watchCheckIn && watchCheckOut && watchTypeChambre && (
+                <div className="price-summary">
+                  <div className="price-summary-row">
+                    <span>
+                      Prix total ({calculerNuits()} nuit(s), {fields.length + 1}{" "}
+                      personne(s))
+                    </span>
+                    <span className="price-summary-value">
+                      {calculerPrixTotal()} DH
+                    </span>
+                  </div>
+                  <div className="price-summary-detail">
+                    {
+                      typesChambre.find((c) => c.value === watchTypeChambre)
+                        ?.prix
+                    }{" "}
+                    DH × {calculerNuits()} nuits
+                  </div>
                 </div>
-                <FieldDescription>
-                  En cochant cette case, vous acceptez nos conditions générales de vente et d'annulation.
-                </FieldDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+              )}
 
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#2f6f85] hover:bg-[#25596b] text-white font-semibold py-3"
-          >
-            {loading ? (
-              <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" />
-                Réservation en cours...
-              </>
-            ) : (
-              "Confirmer la réservation"
-            )}
-          </Button>
-        </form>
-      </Form>
+              {/* Terms */}
+              <FormField
+                control={form.control}
+                name="terms"
+                render={({ field }) => (
+                  <FormItem className="terms-item">
+                    <div className="terms-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                      />
+                      <FormLabel>
+                        J'accepte les conditions de réservation
+                      </FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-      <p className="mt-6 text-sm/6 text-center">
-        <span className="text-gray-600">
-          Une question ?{" "}
-        </span>
-        <Link
-          to="/contact"
-          className="font-semibold hover:text-orange-700 text-orange-500"
-        >
-          Contactez-nous
-        </Link>
-      </p>
+              <Button type="submit" disabled={loading} className="submit-btn">
+                {loading ? (
+                  <Loader className="animate-spin" />
+                ) : (
+                  <CreditCard size={18} />
+                )}
+                {loading
+                  ? "Réservation en cours..."
+                  : "Confirmer la réservation"}
+              </Button>
+            </form>
+          </Form>
+          <p className="mt-6 text-center text-sm">
+            <Link to="/contact" className="text-orange-500 hover:underline">
+              Contactez-nous
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

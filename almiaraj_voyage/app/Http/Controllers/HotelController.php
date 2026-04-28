@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Hotel;
-use App\Models\Destination;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -114,8 +113,50 @@ class HotelController extends Controller
 
     public function showCl($id)
     {
-        $hotel = Hotel::with(['service', 'destination'])->findOrFail($id);
-        return response()->json($hotel);
+        try {
+            $hotel = Hotel::with(['service', 'destination'])->findOrFail($id);
+
+            $chambreTypes = [
+                ['value' => 'single', 'label' => 'Single (1 personne)', 'prix' => $hotel->service->prix ?? 800, 'max_personnes' => 1],
+                ['value' => 'double', 'label' => 'Double (2 personnes)', 'prix' => ($hotel->service->prix ?? 800) * 2, 'max_personnes' => 2],
+                ['value' => 'suite', 'label' => 'Suite (4 personnes)', 'prix' => ($hotel->service->prix ?? 800) * 4, 'max_personnes' => 4],
+                ['value' => 'family', 'label' => 'Familiale (6 personnes)', 'prix' => ($hotel->service->prix ?? 800) * 6, 'max_personnes' => 6],
+            ];
+
+            $responseData = [
+                'id' => $hotel->id,
+                'villeHotel' => $hotel->villeHotel,
+                'amenities' => $hotel->amenities,
+                'destination_id' => $hotel->destination_id,
+                'chambre_types' => $chambreTypes,
+                'service' => $hotel->service ? [
+                    'id' => $hotel->service->id,
+                    'nomServ' => $hotel->service->nomServ,
+                    'description' => $hotel->service->description,
+                    'prix' => $hotel->service->prix,
+                    'oldPrix' => $hotel->service->oldPrix,
+                    'image' => $hotel->service->image,
+                    'type' => $hotel->service->type,
+                    'rating' => $hotel->service->rating,
+                    'enVedette' => $hotel->service->enVedette,
+                ] : null,
+                'destination' => $hotel->destination ? [
+                    'id' => $hotel->destination->id,
+                    'nom' => $hotel->destination->nom,
+                    'pays' => $hotel->destination->pays,
+                    'continente' => $hotel->destination->continente,
+                    'description' => $hotel->destination->description,
+                    'image' => $hotel->destination->image,
+                ] : null,
+            ];
+
+            return response()->json($responseData);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function show($id)

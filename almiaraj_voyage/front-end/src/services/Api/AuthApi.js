@@ -92,8 +92,17 @@ const AuthApi = {
   getBilletsDetails: async (id) => {
     return await axiosClient.get(`/billetsCl/${id}`);
   },
+
   createVoyageReservation: async (data) => {
     return await axiosClient.post("/reservations/voyage", data);
+  },
+
+  createBilletReservation: async (data) => {
+    return await axiosClient.post("/billets/reserver", data);
+  },
+
+  createHotelReservation: async (data) => {
+    return await axiosClient.post("/reservations/hotel", data);
   },
 
   getMyReservations: async () => {
@@ -107,6 +116,16 @@ const AuthApi = {
   cancelReservation: async (id) => {
     return await axiosClient.put(`/reservations/${id}/cancel`);
   },
+
+  sendContactMessage: async (data) => {
+    return await axiosClient.post("/contact/message", data);
+  },
+  getMyMessages: async () => {
+    return await axiosClient.get("/my-messages");
+  },
+getClientMessageDetails(messageId) {
+    return axiosClient.get(`/client/messages/${messageId}`);
+},
 };
 
 export default AuthApi;

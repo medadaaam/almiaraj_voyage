@@ -1,4 +1,4 @@
-// src/pages/reservations/VoyageReservation.jsx
+// src/pages/reservations/BilletReservation.jsx
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,7 +29,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LOGIN_ROUTE } from "@/router";
 
 // Schéma pour un passager individuel
@@ -41,12 +41,12 @@ const getPassagerSchema = (type_passager) => {
   };
 
   if (type_passager === "adulte") {
-    baseSchema.cin = z
+    baseSchema.passport = z
       .string()
-      .min(6, "CIN doit contenir au moins 6 caractères")
-      .max(20, "CIN trop long");
+      .min(6, "Passeport doit contenir au moins 6 caractères")
+      .max(20, "Passeport trop long");
   } else {
-    baseSchema.cin = z.string().optional();
+    baseSchema.passport = z.string().optional();
   }
 
   return z.object(baseSchema);
@@ -58,17 +58,18 @@ const formSchema = z.object({
   prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères"),
   email: z.string().email("Email invalide"),
   telephone: z.string().min(10, "Téléphone invalide"),
-  cin: z
+  passport: z
     .string()
-    .min(6, "CIN doit contenir au moins 6 caractères")
-    .max(10, "CIN trop long"),
+    .min(6, "Passeport doit contenir au moins 6 caractères")
+    .max(20, "Passeport trop long"),
   passagers: z.array(z.any()),
+  demandesSpeciales: z.string().optional(),
   terms: z.literal(true, {
     errorMap: () => ({ message: "Vous devez accepter les conditions" }),
   }),
 });
 
-export default function VoyageReservation() {
+export default function BilletReservation() {
   const { id } = useParams();
   const {
     authenticated,
@@ -76,8 +77,8 @@ export default function VoyageReservation() {
     getClientProfile,
     updateClientProfile,
     clientProfile,
-    createVoyageReservation,
-    getVoyageDetails,
+    getBilletsDetails,
+    createBilletReservation,
   } = useAuth();
   const navigate = useNavigate();
 
@@ -86,29 +87,59 @@ export default function VoyageReservation() {
   const [expandedPassagers, setExpandedPassagers] = useState({});
   const [confirmedPassagers, setConfirmedPassagers] = useState({});
   const [clientLoaded, setClientLoaded] = useState(false);
-  const [voyage, setVoyage] = useState(null);
-  const [loadingVoyage, setLoadingVoyage] = useState(true);
+  const [billet, setBillet] = useState(null);
+  const [loadingBillet, setLoadingBillet] = useState(true);
   const [passagerTypes, setPassagerTypes] = useState({});
 
-  // Charger le voyage
+  const fetchedBilletRef = useRef(false);
+  const fetchedClientRef = useRef(false);
+
+  // Charger le billet
   useEffect(() => {
-    const fetchVoyage = async () => {
-      setLoadingVoyage(true);
-      const voyageData = await getVoyageDetails(id);
-      setVoyage(voyageData);
-      setLoadingVoyage(false);
+    const fetchBillet = async () => {
+      if (fetchedBilletRef.current) return;
+      fetchedBilletRef.current = true;
+
+      setLoadingBillet(true);
+      try {
+        const billetData = await getBilletsDetails(id);
+        console.log("Billet data:", billetData);
+        if (billetData && billetData.id) {
+          setBillet(billetData);
+        } else {
+          setError("Billet non trouvé");
+        }
+      } catch (err) {
+        console.error("Error fetching billet:", err);
+        setError("Erreur lors du chargement du billet");
+      } finally {
+        setLoadingBillet(false);
+      }
     };
-    fetchVoyage();
-  }, [id]);
+    if (id) {
+      fetchBillet();
+    } else {
+      setLoadingBillet(false);
+      setError("ID du billet manquant");
+    }
+  }, [id, getBilletsDetails]);
 
   // Charger le profil client
   useEffect(() => {
     const loadClient = async () => {
-      await getClientProfile();
-      setClientLoaded(true);
+      if (fetchedClientRef.current) return;
+      fetchedClientRef.current = true;
+
+      try {
+        await getClientProfile();
+      } catch (err) {
+        console.error("Error loading client:", err);
+      } finally {
+        setClientLoaded(true);
+      }
     };
     loadClient();
-  }, []);
+  }, [getClientProfile]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -117,9 +148,9 @@ export default function VoyageReservation() {
       prenom: "",
       email: "",
       telephone: "",
-      cin: "",
+      passport: "",
       passagers: [],
-
+      demandesSpeciales: "",
       terms: false,
     },
   });
@@ -136,8 +167,8 @@ export default function VoyageReservation() {
       form.setValue("prenom", clientProfile.client.prenomCl || "");
       form.setValue("email", clientProfile.client.email || user?.email || "");
       form.setValue("telephone", clientProfile.client.numTelCl || "");
-      form.setValue("cin", clientProfile.client.cin || "");
-    } else if (user) {
+      form.setValue("passport", clientProfile.client.passport || "");
+    } else if (user && clientLoaded) {
       const nameParts = user.name?.split(" ") || [];
       form.setValue("nom", nameParts[0] || "");
       form.setValue("prenom", nameParts.slice(1).join(" ") || "");
@@ -152,6 +183,22 @@ export default function VoyageReservation() {
     }
   }, [authenticated, loading, navigate]);
 
+  const calculerPrixTotal = () => {
+    if (billet?.service?.prix) {
+      return parseFloat(billet.service.prix) * (fields.length + 1);
+    }
+    return 0;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   const ajouterPassager = () => {
     const newIndex = fields.length;
     const defaultType = "adulte";
@@ -160,7 +207,7 @@ export default function VoyageReservation() {
     append({
       nom: "",
       prenom: "",
-      cin: "",
+      passport: "",
       type_passager: defaultType,
     });
 
@@ -205,7 +252,7 @@ export default function VoyageReservation() {
     setPassagerTypes((prev) => ({ ...prev, [index]: value }));
     form.setValue(`passagers.${index}.type_passager`, value);
     if (value !== "adulte") {
-      form.setValue(`passagers.${index}.cin`, "");
+      form.setValue(`passagers.${index}.passport`, "");
     }
   };
 
@@ -248,56 +295,38 @@ export default function VoyageReservation() {
     return "Informations incomplètes";
   };
 
-  const calculerPrixTotal = () => {
-    if (voyage?.service?.prix) {
-      return voyage.service.prix * (fields.length + 1);
-    }
-    return 0;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
   const onSubmit = async (values) => {
     setLoading(true);
     setError("");
 
-    // ✅ pas besoin de vérifier allConfirmed si pas de passagers
-    if (fields.length > 0) {
-      const allConfirmed = fields.every(
-        (_, index) => confirmedPassagers[index],
-      );
-      if (!allConfirmed) {
-        setError("Veuillez confirmer tous les passagers avant de continuer");
+    const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
+    if (!allConfirmed && fields.length > 0) {
+      setError("Veuillez confirmer tous les passagers avant de continuer");
+      setLoading(false);
+      return;
+    }
+
+    for (let i = 0; i < values.passagers.length; i++) {
+      const p = values.passagers[i];
+      if (
+        p.type_passager === "adulte" &&
+        (!p.passport || p.passport.length < 6)
+      ) {
+        setError(
+          `Le passager ${i + 1} (adulte) doit avoir un passeport valide`,
+        );
         setLoading(false);
         return;
       }
-
-      // Validation: les adultes doivent avoir CIN
-      for (let i = 0; i < values.passagers.length; i++) {
-        const p = values.passagers[i];
-        if (p.type_passager === "adulte" && (!p.cin || p.cin.length < 6)) {
-          setError(`Le passager ${i + 1} (adulte) doit avoir un CIN valide`);
-          setLoading(false);
-          return;
-        }
-      }
     }
 
-    // Mettre à jour le profil client
     try {
       await updateClientProfile({
         nomCl: values.nom,
         prenomCl: values.prenom,
         email: values.email,
         numTelCl: values.telephone,
-        cin: values.cin,
+        passport: values.passport,
       });
       await getClientProfile();
     } catch (updateErr) {
@@ -305,6 +334,15 @@ export default function VoyageReservation() {
     }
 
     try {
+      const prixUnitaire = billet?.service?.prix
+        ? parseFloat(billet.service.prix)
+        : 0;
+      const prixTotal = prixUnitaire * (fields.length + 1);
+
+      console.log("💰 Prix unitaire:", prixUnitaire);
+      console.log("💰 Prix total:", prixTotal);
+      console.log("👥 Nombre de passagers:", fields.length + 1);
+
       const reservationData = {
         service_id: parseInt(id),
         client_principal: {
@@ -312,24 +350,22 @@ export default function VoyageReservation() {
           prenom: values.prenom,
           email: values.email,
           telephone: values.telephone,
-          cin: values.cin,
+          passport: values.passport,
         },
         reservation: {
           nb_personnes: fields.length + 1,
-          prix_total: calculerPrixTotal(),
-          prix_unitaire: voyage?.service?.prix,
-          date_depart: voyage?.dateDepartV,
-          date_retour: voyage?.dateRetourV,
+          prix_total: prixTotal,
+          prix_unitaire: prixUnitaire,
+          demandes_speciales: values.demandesSpeciales || "",
         },
         passagers: values.passagers,
       };
 
-      console.log("Reservation data sent:", reservationData);
+      console.log("Billet reservation data sent:", reservationData);
 
-      const reservationResponse =
-        await createVoyageReservation(reservationData);
+      const response = await createBilletReservation(reservationData);
 
-      if (reservationResponse?.success) {
+      if (response?.success) {
         navigate("/client/orders", {
           state: {
             message:
@@ -338,7 +374,7 @@ export default function VoyageReservation() {
           },
         });
       } else {
-        setError(reservationResponse?.message || "Une erreur s'est produite");
+        setError(response?.message || "Une erreur s'est produite");
       }
     } catch (err) {
       console.error("Reservation error:", err);
@@ -348,7 +384,7 @@ export default function VoyageReservation() {
     }
   };
 
-  if (loadingVoyage || !clientLoaded) {
+  if (loadingBillet || !clientLoaded) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="animate-spin text-orange-500" size={40} />
@@ -357,12 +393,24 @@ export default function VoyageReservation() {
     );
   }
 
-  if (!voyage) {
+  if (error && !billet) {
     return (
       <div className="text-center py-20">
-        <h2 className="text-2xl font-bold mb-4">Voyage non trouvé</h2>
-        <Link to="/services/circuits" className="text-orange-500">
-          Retour aux circuits
+        <h2 className="text-2xl font-bold mb-4">Erreur</h2>
+        <p className="text-gray-500 mb-6">{error}</p>
+        <Link to="/services/flights" className="text-orange-500">
+          Retour aux vols
+        </Link>
+      </div>
+    );
+  }
+
+  if (!billet) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold mb-4">Billet non trouvé</h2>
+        <Link to="/services/flights" className="text-orange-500">
+          Retour aux vols
         </Link>
       </div>
     );
@@ -370,61 +418,50 @@ export default function VoyageReservation() {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
-      {/* Carte du voyage */}
+      {/* Carte du billet */}
       <div className="bg-gradient-to-r from-[#2f6f85] to-[#1e4a5f] rounded-2xl p-6 text-white mb-8">
         <div className="flex flex-wrap justify-between items-start gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Plane size={20} />
-              <span className="text-sm opacity-80">Voyage organisé</span>
-              {voyage.service?.enVedette === 1 && (
+              <span className="text-sm opacity-80">Vol</span>
+              {billet.service?.enVedette === 1 && (
                 <span className="bg-yellow-500 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
                   <Star size={12} className="fill-white" /> Populaire
                 </span>
               )}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold mb-2">
-              {voyage.service?.nomServ}
+              {billet.service?.nomServ}
             </h1>
             <div className="flex items-center gap-2 text-white/80">
               <MapPin size={16} />
               <span>
-                {voyage.destination?.nom}, {voyage.destination?.pays}
+                {billet.villeDepartBi} → {billet.destinationBi}
               </span>
+            </div>
+            <div className="flex items-center gap-2 text-white/80 mt-1">
+              <Calendar size={14} />
+              <span>Départ: {formatDate(billet.dateDepartBi)}</span>
+              {billet.dateRetourBi && (
+                <>
+                  <span className="mx-1">→</span>
+                  <Calendar size={14} />
+                  <span>Retour: {formatDate(billet.dateRetourBi)}</span>
+                </>
+              )}
             </div>
           </div>
           <div className="text-right">
             <div className="text-sm opacity-80 mb-1">À partir de</div>
-            <div className="text-3xl font-bold">{voyage.service?.prix} DH</div>
+            <div className="text-3xl font-bold">{billet.service?.prix} DH</div>
             <div className="text-sm opacity-80">/personne</div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-white/20">
-          <div className="flex items-center gap-3">
-            <Calendar size={18} className="opacity-70" />
-            <div>
-              <div className="text-xs opacity-70">Dates</div>
-              <div className="text-sm font-medium">
-                {formatDate(voyage.dateDepartV)} →{" "}
-                {formatDate(voyage.dateRetourV)}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Users size={18} className="opacity-70" />
-            <div>
-              <div className="text-xs opacity-70">Groupe</div>
-              <div className="text-sm font-medium">
-                {voyage.groupSize || 20} personnes max
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
       <h2 className="text-2xl font-bold text-center mb-2">
-        Réservation de voyage
+        Réservation de vol
       </h2>
 
       <Form {...form}>
@@ -522,12 +559,12 @@ export default function VoyageReservation() {
             <div className="mt-4">
               <FormField
                 control={form.control}
-                name="cin"
+                name="passport"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <IdCard className="w-4 h-4" />
-                      CIN
+                      Passport <span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -565,6 +602,9 @@ export default function VoyageReservation() {
               <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed">
                 <UserPlus className="w-12 h-12 mx-auto text-gray-400 mb-2" />
                 <p className="text-gray-500">Aucun passager ajouté</p>
+                <p className="text-sm text-gray-400">
+                  Cliquez sur "Ajouter un passager" pour ajouter des enfants
+                </p>
               </div>
             ) : (
               <>
@@ -575,7 +615,9 @@ export default function VoyageReservation() {
                       className="border rounded-lg overflow-hidden"
                     >
                       <div
-                        className={`flex justify-between items-center p-4 cursor-pointer ${confirmedPassagers[index] ? "bg-green-50" : "bg-white"}`}
+                        className={`flex justify-between items-center p-4 cursor-pointer ${
+                          confirmedPassagers[index] ? "bg-green-50" : "bg-white"
+                        }`}
                         onClick={() => togglePassager(index)}
                       >
                         <div className="flex items-center gap-3">
@@ -668,22 +710,21 @@ export default function VoyageReservation() {
                               />
                             </div>
 
-                            {/* CIN : seulement pour adulte */}
                             {passagerTypes[index] === "adulte" && (
                               <div>
                                 <FormField
                                   control={form.control}
-                                  name={`passagers.${index}.cin`}
+                                  name={`passagers.${index}.passport`}
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel className="flex items-center gap-2">
                                         <IdCard className="w-4 h-4" />
-                                        CIN{" "}
+                                        Passport{" "}
                                         <span className="text-red-500">*</span>
                                       </FormLabel>
                                       <FormControl>
                                         <Input
-                                          placeholder="AA123456"
+                                          placeholder="AB1234567"
                                           {...field}
                                         />
                                       </FormControl>
@@ -730,6 +771,8 @@ export default function VoyageReservation() {
               </>
             )}
           </div>
+
+
           {/* Prix total */}
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
             <div className="flex justify-between items-center">
@@ -741,7 +784,7 @@ export default function VoyageReservation() {
               </span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {voyage.service?.prix} DH x {fields.length + 1} personne(s)
+              {billet.service?.prix} DH x {fields.length + 1} personne(s)
             </div>
           </div>
 

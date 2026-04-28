@@ -323,7 +323,7 @@ export default function HotelsSejours() {
                           <Eye size={16} />
                           Détails
                         </Link>
-                        <Link to={`/reserver/hotel/${hotel.id}`} className="hotels-card-btn book">
+                        <Link to={`/hotels/${hotel.id}/reserver`} className="hotels-card-btn book">
                           <CreditCard size={16} />
                           Réserver
                         </Link>

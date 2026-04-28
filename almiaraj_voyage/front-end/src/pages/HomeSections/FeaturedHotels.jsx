@@ -147,7 +147,7 @@ export default function FeaturedHotels() {
                                         <Eye className="w-4 h-4" />
                                         Détails
                                     </Link>
-                                    <Link to={`/reserver/hotel/${hotel.id}`} className="hotel-btn-book">
+                                    <Link to={`/hotels/${hotel.id}/reserver`} className="hotel-btn-book">
                                         <CreditCard className="w-4 h-4" />
                                         Réserver
                                     </Link>

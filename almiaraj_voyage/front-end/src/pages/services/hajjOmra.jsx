@@ -388,11 +388,8 @@ export default function HajjOmra() {
                     </div>
 
                     <div className="service-package-buttons">
-                      <Link to={`/hajj-omra/${pkg.id}`} className="service-package-details">
+                      <Link to={`/hajj-omra/${pkg.id}/reserver`} className="service-package-details">
                         Voir détails
-                      </Link>
-                      <Link to="/contact" className="service-package-btn">
-                        Demander un devis
                       </Link>
                     </div>
                   </div>

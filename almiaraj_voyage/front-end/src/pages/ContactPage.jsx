@@ -1,42 +1,122 @@
-import { useState } from "react";
-import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Clock, MessageCircle } from "lucide-react";
+// src/pages/ContactPage.jsx
+import { useState, useEffect } from "react";
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  MessageCircle,
+  Loader2,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthApi from "@/services/Api/AuthApi";
 import "./contactPage.css";
 
 export default function ContactPage() {
+  const { user, clientProfile, getClientProfile } =
+    useAuth();
+  const [clientLoaded, setClientLoaded] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    nom: "",
+    prenom: "",
     email: "",
-    phone: "",
-    subject: "",
-    message: ""
+    telephone: "",
+    sujet: "",
+    message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  // Charger le profil client (si connecté)
+  useEffect(() => {
+    if (user) {
+      const loadClient = async () => {
+        await getClientProfile();
+        setClientLoaded(true);
+      };
+      loadClient();
+    } else {
+      setClientLoaded(true);
+    }
+  }, [user]);
+
+  // Remplir les champs avec les données du client (si connecté)
+  useEffect(() => {
+    if (user && clientLoaded && clientProfile?.client) {
+      setFormData((prev) => ({
+        ...prev,
+        nom: clientProfile.client.nomCl || "",
+        prenom: clientProfile.client.prenomCl || "",
+        email: clientProfile.client.email || "",
+        telephone: clientProfile.client.numTelCl || "",
+      }));
+    } else if (user && clientLoaded) {
+      const nameParts = user.name?.split(" ") || [];
+      setFormData((prev) => ({
+        ...prev,
+        nom: nameParts[0] || "",
+        prenom: nameParts.slice(1).join(" ") || "",
+        email: user.email || "",
+      }));
+    }
+  }, [clientProfile, clientLoaded, user]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
+  console.log("FINAL DATA:", {
+  ...formData,
+  type: "contact",
+});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setIsSubmitting(true);
+    setSubmitStatus(null);
+    console.log(formData);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Form submitted:", formData);
+    try {
+const response = await AuthApi.sendContactMessage({
+  ...formData,
+  type: "contact",
+});
+      console.log(formData);
+      console.log("Response reçue:", response); // Pour debug
+
+      // ✅ CORRECTION ICI
+      if (response?.data?.success) {
+        setSubmitStatus({
+          type: "success",
+          message:
+            "Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.",
+        });
+        setFormData((prev) => ({ ...prev, sujet: "", message: "" }));
+        setTimeout(() => setSubmitStatus(null), 5000);
+      } else {
+        setSubmitStatus({
+          type: "error",
+          message:
+            response?.data?.message ||
+            "Une erreur s'est produite. Veuillez réessayer.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
       setSubmitStatus({
-        type: 'success',
-        message: 'Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.'
+        type: "error",
+        message:
+          error.response?.data?.message ||
+          "Une erreur s'est produite. Veuillez réessayer.",
       });
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+    } finally {
       setIsSubmitting(false);
-
-      setTimeout(() => setSubmitStatus(null), 5000);
-    }, 1500);
+    }
   };
 
   const contactInfo = [
@@ -46,7 +126,7 @@ export default function ContactPage() {
       value: "almiarajvoyage.fes@gmail.com",
       details: "Nous répondons sous 24h",
       color: "#3b82f6",
-      bgColor: "#eff6ff"
+      bgColor: "#eff6ff",
     },
     {
       icon: <Phone className="contact-info-icon" />,
@@ -54,31 +134,35 @@ export default function ContactPage() {
       value: "05 35 65 79 79",
       details: "Lun-Ven, 9h-13h 15h-19h",
       color: "#10b981",
-      bgColor: "#ecfdf5"
+      bgColor: "#ecfdf5",
     },
     {
       icon: <MapPin className="contact-info-icon" />,
       title: "Adresse",
-      value: "3ème Étage, ATLAS, BUREAUX ALMADINA 3, N°33 Rue Assilah, Fès 30000",
+      value:
+        "3ème Étage, ATLAS, BUREAUX ALMADINA 3, N°33 Rue Assilah, Fès 30000",
       details: "Maroc",
       color: "#ef4444",
-      bgColor: "#fef2f2"
-    }
+      bgColor: "#fef2f2",
+    },
   ];
 
   const faqs = [
     {
       question: "Quels sont les délais de réponse ?",
-      answer: "Nous répondons à tous les messages dans un délai maximum de 24h ouvrées."
+      answer:
+        "Nous répondons à tous les messages dans un délai maximum de 24h ouvrées.",
     },
     {
       question: "Puis-je modifier ma réservation ?",
-      answer: "Oui, vous pouvez modifier votre réservation jusqu'à 7 jours avant le départ."
+      answer:
+        "Oui, vous pouvez modifier votre réservation jusqu'à 7 jours avant le départ.",
     },
     {
       question: "Proposez-vous des paiements en ligne sécurisés ?",
-      answer: "Oui, nous acceptons les paiements par carte bancaire via notre plateforme sécurisée."
-    }
+      answer:
+        "Oui, nous acceptons les paiements par carte bancaire via notre plateforme sécurisée.",
+    },
   ];
 
   return (
@@ -100,7 +184,10 @@ export default function ContactPage() {
           <div className="contact-info-grid">
             {contactInfo.map((info, index) => (
               <div key={index} className="contact-info-card">
-                <div className="contact-info-icon-wrapper" style={{ backgroundColor: info.bgColor }}>
+                <div
+                  className="contact-info-icon-wrapper"
+                  style={{ backgroundColor: info.bgColor }}
+                >
                   <div style={{ color: info.color }}>{info.icon}</div>
                 </div>
                 <div>
@@ -118,7 +205,6 @@ export default function ContactPage() {
       <section className="contact-form-section">
         <div className="container">
           <div className="contact-form-grid">
-
             {/* Form */}
             <div className="contact-form-wrapper">
               <div className="form-header">
@@ -129,7 +215,7 @@ export default function ContactPage() {
               <form onSubmit={handleSubmit} className="contact-form">
                 {submitStatus && (
                   <div className={`submit-message ${submitStatus.type}`}>
-                    {submitStatus.type === 'success' ? (
+                    {submitStatus.type === "success" ? (
                       <CheckCircle className="w-5 h-5" />
                     ) : (
                       <AlertCircle className="w-5 h-5" />
@@ -140,19 +226,40 @@ export default function ContactPage() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Nom complet <span className="required">*</span></label>
+                    <label className="form-label">
+                      Prénom <span className="required">*</span>
+                    </label>
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
+                      name="prenom"
+                      value={formData.prenom}
+                      onChange={handleChange}
+                      required
+                      className="form-input"
+                      placeholder="Votre prénom"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      Nom <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="nom"
+                      value={formData.nom}
                       onChange={handleChange}
                       required
                       className="form-input"
                       placeholder="Votre nom"
                     />
                   </div>
+                </div>
+
+                <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Email <span className="required">*</span></label>
+                    <label className="form-label">
+                      Email <span className="required">*</span>
+                    </label>
                     <input
                       type="email"
                       name="email"
@@ -163,36 +270,38 @@ export default function ContactPage() {
                       placeholder="votre@email.com"
                     />
                   </div>
-                </div>
-
-                <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Téléphone</label>
                     <input
                       type="tel"
-                      name="phone"
-                      value={formData.phone}
+                      name="telephone"
+                      value={formData.telephone}
                       onChange={handleChange}
                       className="form-input"
                       placeholder="+212 6 00 00 00 00"
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Sujet <span className="required">*</span></label>
-                    <input
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                      className="form-input"
-                      placeholder="Sujet de votre message"
-                    />
-                  </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Message <span className="required">*</span></label>
+                  <label className="form-label">
+                    Sujet <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="sujet"
+                    value={formData.sujet}
+                    onChange={handleChange}
+                    required
+                    className="form-input"
+                    placeholder="Sujet de votre message"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    Message <span className="required">*</span>
+                  </label>
                   <textarea
                     name="message"
                     value={formData.message}
@@ -204,10 +313,14 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <button type="submit" className="submit-button" disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  className="submit-button"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <>
-                      <div className="spinner"></div>
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Envoi en cours...
                     </>
                   ) : (
@@ -234,7 +347,10 @@ export default function ContactPage() {
                 ></iframe>
                 <div className="map-address">
                   <MapPin className="w-4 h-4" />
-                  <span>3ème Étage, ATLAS, BUREAUX ALMADINA 3, N°33 Rue Assilah, Fès 30000</span>
+                  <span>
+                    3ème Étage, ATLAS, BUREAUX ALMADINA 3, N°33 Rue Assilah, Fès
+                    30000
+                  </span>
                 </div>
               </div>
 
@@ -245,9 +361,18 @@ export default function ContactPage() {
                   <h3>Horaires d'ouverture</h3>
                 </div>
                 <ul className="hours-list">
-                  <li><span>Lundi - Vendredi</span><span>9:00 - 13:00 & 15:00 - 18:00</span></li>
-                  <li><span>Samedi</span><span>9:00 - 13:00</span></li>
-                  <li><span>Dimanche</span><span>Fermé</span></li>
+                  <li>
+                    <span>Lundi - Vendredi</span>
+                    <span>9:00 - 13:00 & 15:00 - 18:00</span>
+                  </li>
+                  <li>
+                    <span>Samedi</span>
+                    <span>9:00 - 13:00</span>
+                  </li>
+                  <li>
+                    <span>Dimanche</span>
+                    <span>Fermé</span>
+                  </li>
                 </ul>
               </div>
 
@@ -264,7 +389,6 @@ export default function ContactPage() {
                 </ul>
               </div>
             </div>
-
           </div>
         </div>
       </section>

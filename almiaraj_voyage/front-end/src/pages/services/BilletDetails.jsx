@@ -272,7 +272,7 @@ export default function BilletDetails() {
                             </div>
 
                             <div className="billet-buttons">
-                                <Link to={`/reserver/billet/${billet.id}`} className="billet-btn-book">
+                                <Link to={`/billets/${billet.id}/reserver`} className="billet-btn-book">
                                     Réserver maintenant
                                     <ChevronRight size={18} />
                                 </Link>

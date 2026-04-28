@@ -406,7 +406,7 @@ export default function CircuitsTouristiques() {
                           <Eye size={16} />
                           Détails
                         </Link>
-                        <Link to={`/reserver/voyage/${trip.id}`} className="circuits-card-btn book">
+                        <Link to={`/voyages/${trip.id}/reserver`} className="circuits-card-btn book">
                           <CreditCard size={16} />
                           Réserver
                         </Link>

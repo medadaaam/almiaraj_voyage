@@ -377,7 +377,7 @@ export default function Search() {
                                                 </div>
                                                 <div className="result-buttons">
                                                     <a href={`/hotels/${hotel.id}`} className="result-details">Détails</a>
-                                                    <Link to={`/reserver/hotel/${hotel.id}`} className="result-book">Réserver</Link>
+                                                    <Link to={`/hotels/${hotel.id}/reserver`} className="result-book">Réserver</Link>
                                                 </div>
                                             </div>
                                         </div>

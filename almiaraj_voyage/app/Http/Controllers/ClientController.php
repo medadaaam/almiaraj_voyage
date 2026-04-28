@@ -121,21 +121,37 @@ public function update(Request $request)
         ], 401);
     }
 
+    // ✅ البحث بـ id (لأن الـ id مشترك بين users و clients)
     $client = Client::where('id', $user->id)->first();
 
-    if ($client) {
+    if (!$client) {
+        // ✅ إنشاء عميل إذا غير موجود
+        $client = Client::create([
+            'id' => $user->id,
+            'nomCl' => $request->nomCl ?? '',
+            'prenomCl' => $request->prenomCl ?? '',
+            'email' => $user->email,
+            'numTelCl' => $request->numTelCl ?? '',
+            'natCl' => $request->natCl ?? 'maroc',
+            'cin' => $request->cin ?? null,
+            'passport' => $request->passport ?? null,
+            'dateInscription' => now(),
+        ]);
+    } else {
+        // ✅ تحديث العميل الموجود
         $client->update([
-            'nomCl' => $request->nomCl,
-            'prenomCl' => $request->prenomCl,
-            'numTelCl' => $request->numTelCl,
-            'natCl' => $request->natCl,
-            'cin' => $request->cin,
-            'passport' => $request->passport,
+            'nomCl' => $request->nomCl ?? $client->nomCl,
+            'prenomCl' => $request->prenomCl ?? $client->prenomCl,
+            'numTelCl' => $request->numTelCl ?? $client->numTelCl,
+            'natCl' => $request->natCl ?? $client->natCl,
+            'cin' => $request->cin ?? $client->cin,
+            'passport' => $request->passport ?? $client->passport,
         ]);
     }
 
     return response()->json([
         'success' => true,
+        'message' => 'Profil mis à jour avec succès',
         'client' => $client
     ]);
 }

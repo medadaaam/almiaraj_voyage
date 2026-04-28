@@ -9,24 +9,24 @@ class Voyage extends Model
     public $incrementing = false;
     protected $keyType = 'int';
     protected $fillable = [
-        'id', 
-        'destination_id', 
+        'id',
+        'destination_id',
         'selected_cities',
-        'dateDepartV', 
-        'dateRetourV', 
-        'programme', 
+        'dateDepartV',
+        'dateRetourV',
+        'programme',
         'duree'
     ];
-    
-    protected $casts = [
-        'selected_cities' => 'array',
-    ];
+
+    // protected $casts = [
+    //     'selected_cities' => 'array',
+    // ];
 
     public function service()
     {
         return $this->belongsTo(Service::class, 'id', 'id');
     }
-    
+
     public function destination()
     {
         return $this->belongsTo(Destination::class);

@@ -276,10 +276,10 @@ export default function BilletDetails() {
                                     Réserver maintenant
                                     <ChevronRight size={18} />
                                 </Link>
-                                <button className="billet-btn-contact">
+                                <Link to='/contact' className="billet-btn-contact">
                                     <Phone size={16} />
                                     Poser une question
-                                </button>
+                                </Link>
                             </div>
 
                             {/* <div className="billet-payment">
@@ -322,7 +322,7 @@ export default function BilletDetails() {
                 <div className="billet-cta-content">
                     <h3>Prêt à partir à l'aventure ?</h3>
                     <p>Réservez maintenant et profitez des meilleurs tarifs</p>
-                    <Link to={`/reserver/billet/${billet.id}`} className="billet-cta-btn">
+                    <Link to={`/services/flights`} className="billet-cta-btn">
                         Réserver ce vol
                         <ChevronRight size={18} />
                     </Link>

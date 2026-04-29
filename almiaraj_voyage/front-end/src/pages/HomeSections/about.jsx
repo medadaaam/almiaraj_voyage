@@ -1,21 +1,28 @@
 import { Users, Globe, Award, Heart, MapPin, Clock, Headphones, Shield } from "lucide-react";
+import { useEffect, useRef } from "react";
 import "./styles/about.css";
 
 export default function About() {
+  const imageRef = useRef(null);
+  const contentRef = useRef(null);
+  const statsRef = useRef(null);
+  const featuresRef = useRef(null);
+  const headerRef = useRef(null);
+
   const stats = [
     {
       icon: <Users className="stat-icon" />,
-      value: "10k+",
+      value: "5k+",
       label: "Clients satisfaits"
     },
     {
       icon: <Globe className="stat-icon" />,
-      value: "50+",
+      value: "30+",
       label: "Destinations"
     },
     {
       icon: <Award className="stat-icon" />,
-      value: "15+",
+      value: "6+",
       label: "Années d'expérience"
     },
     {
@@ -48,12 +55,48 @@ export default function About() {
     }
   ];
 
+  // ✅ مراقبة التمرير - triggerOnce: false (يحدث كل مرة)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // إضافة الكلاس عند الدخول
+            entry.target.classList.add("visible");
+          } else {
+            // ✅ إزالة الكلاس عند الخروج (لكي يعيد الظهور في المرة القادمة)
+            entry.target.classList.remove("visible");
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false } // ✅ triggerOnce: false
+    );
+
+    // مراقبة جميع العناصر
+    const elements = [
+      headerRef.current,
+      imageRef.current,
+      contentRef.current,
+      statsRef.current,
+      featuresRef.current
+    ];
+
+    elements.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="about-section">
       <div className="about-container">
 
-        {/* Header */}
-        <div className="about-header">
+        {/* Header - تأثير fade-in من الأعلى (كل مرة) */}
+        <div
+          ref={headerRef}
+          className="about-header fade-in-up"
+        >
           <span className="about-badge">Qui sommes-nous ?</span>
           <h2 className="about-title">
             Votre partenaire de confiance pour des voyages inoubliables
@@ -66,8 +109,11 @@ export default function About() {
         {/* Content Grid */}
         <div className="about-grid">
 
-          {/* Image Section */}
-          <div className="about-image-wrapper">
+          {/* ✅ Image Section - ظهور من اليسار (كل مرة) */}
+          <div
+            ref={imageRef}
+            className="about-image-wrapper slide-in-left"
+          >
             <div className="about-image">
               <img
                 src="https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg"
@@ -75,14 +121,17 @@ export default function About() {
               />
               <div className="about-image-overlay"></div>
               <div className="about-experience">
-                <span className="experience-years">15+</span>
+                <span className="experience-years">6+</span>
                 <span className="experience-text">Années d'excellence</span>
               </div>
             </div>
           </div>
 
-          {/* Content Section */}
-          <div className="about-content-wrapper">
+          {/* ✅ Content Section - ظهور من اليمين (كل مرة) */}
+          <div
+            ref={contentRef}
+            className="about-content-wrapper slide-in-right"
+          >
             <div className="about-content">
               <h3 className="about-content-title">
                 Une agence dédiée à créer des expériences uniques
@@ -100,10 +149,17 @@ export default function About() {
                 compétitifs, des options flexibles et des paiements sécurisés.
               </p>
 
-              {/* Stats */}
-              <div className="about-stats">
+              {/* ✅ Stats - ظهور تدريجي (كل مرة) */}
+              <div
+                ref={statsRef}
+                className="about-stats fade-in-up"
+              >
                 {stats.map((stat, index) => (
-                  <div key={index} className="about-stat">
+                  <div
+                    key={index}
+                    className="about-stat"
+                    style={{ transitionDelay: `${index * 0.1}s` }}
+                  >
                     <div className="stat-icon-wrapper">{stat.icon}</div>
                     <div className="stat-value">{stat.value}</div>
                     <div className="stat-label">{stat.label}</div>
@@ -111,10 +167,17 @@ export default function About() {
                 ))}
               </div>
 
-              {/* Features */}
-              <div className="about-features">
+              {/* ✅ Features - ظهور تدريجي (كل مرة) */}
+              <div
+                ref={featuresRef}
+                className="about-features fade-in-up"
+              >
                 {features.map((feature, index) => (
-                  <div key={index} className="about-feature">
+                  <div
+                    key={index}
+                    className="about-feature"
+                    style={{ transitionDelay: `${index * 0.1}s` }}
+                  >
                     <div className="feature-icon-wrapper">{feature.icon}</div>
                     <div>
                       <h4 className="feature-title">{feature.title}</h4>

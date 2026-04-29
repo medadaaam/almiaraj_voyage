@@ -11,6 +11,19 @@ use Illuminate\Support\Facades\DB;
 class VoyageController extends Controller
 {
 
+
+    public function index()
+    {
+        $voyages = Voyage::with(['service', 'destination'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $voyages
+        ]);
+    }
+
     public function indexCl()
     {
         $voyages = Voyage::with(['service', 'destination'])->paginate(6);

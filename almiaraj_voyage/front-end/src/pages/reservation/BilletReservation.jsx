@@ -24,6 +24,7 @@ import {
   MapPin,
   Star,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -64,8 +65,8 @@ const formSchema = z.object({
     .max(20, "Passeport trop long"),
   passagers: z.array(z.any()),
   demandesSpeciales: z.string().optional(),
-  terms: z.literal(true, {
-    errorMap: () => ({ message: "Vous devez accepter les conditions" }),
+  terms: z.boolean().refine((val) => val === true, {
+    message: "Vous devez accepter les conditions",
   }),
 });
 
@@ -79,6 +80,8 @@ export default function BilletReservation() {
     clientProfile,
     getBilletsDetails,
     createBilletReservation,
+    checkReservationLimits, // ✅ Ajouté
+    reservationLimits, // ✅ Ajouté
   } = useAuth();
   const navigate = useNavigate();
 
@@ -90,9 +93,27 @@ export default function BilletReservation() {
   const [billet, setBillet] = useState(null);
   const [loadingBillet, setLoadingBillet] = useState(true);
   const [passagerTypes, setPassagerTypes] = useState({});
+  const [limitsChecked, setLimitsChecked] = useState(false);
+  const [showLimitsWarning, setShowLimitsWarning] = useState(false);
 
   const fetchedBilletRef = useRef(false);
   const fetchedClientRef = useRef(false);
+
+  // ✅ Vérifier les limites de réservation au chargement
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (authenticated && !limitsChecked) {
+        await checkReservationLimits();
+        setLimitsChecked(true);
+
+        // Afficher un avertissement si les limites sont proches
+        if (reservationLimits.remaining_today <= 1 || reservationLimits.remaining_pending <= 1) {
+          setShowLimitsWarning(true);
+        }
+      }
+    };
+    checkLimits();
+  }, [authenticated, limitsChecked, checkReservationLimits, reservationLimits]);
 
   // Charger le billet
   useEffect(() => {
@@ -295,9 +316,43 @@ export default function BilletReservation() {
     return "Informations incomplètes";
   };
 
+  // ✅ Vérification des limites avant soumission
+  const canProceedWithReservation = () => {
+    if (!reservationLimits.can_reserve) {
+      setError(reservationLimits.message || "Vous ne pouvez pas faire de nouvelle réservation pour le moment");
+      return false;
+    }
+
+    if (reservationLimits.remaining_today <= 0) {
+      setError(`Vous avez atteint la limite de ${reservationLimits.max_per_day} réservations par jour. Veuillez réessayer demain.`);
+      return false;
+    }
+
+    if (reservationLimits.remaining_pending <= 0) {
+      setError(`Vous avez trop de réservations en attente (${reservationLimits.pending_count}/${reservationLimits.max_pending}). Veuillez finaliser ou annuler certaines réservations.`);
+      return false;
+    }
+
+    return true;
+  };
+
   const onSubmit = async (values) => {
     setLoading(true);
     setError("");
+
+    // ✅ Vérifier les limites de réservation avant tout
+    if (!canProceedWithReservation()) {
+      setLoading(false);
+      return;
+    }
+
+    // Rafraîchir les limites pour être sûr
+    const freshLimits = await checkReservationLimits();
+    if (!freshLimits?.allowed) {
+      setError(freshLimits?.message || "Vous ne pouvez pas faire cette réservation pour le moment");
+      setLoading(false);
+      return;
+    }
 
     const allConfirmed = fields.every((_, index) => confirmedPassagers[index]);
     if (!allConfirmed && fields.length > 0) {
@@ -366,6 +421,9 @@ export default function BilletReservation() {
       const response = await createBilletReservation(reservationData);
 
       if (response?.success) {
+        // ✅ Rafraîchir les limites après réservation réussie
+        await checkReservationLimits();
+
         navigate("/client/orders", {
           state: {
             message:
@@ -378,11 +436,40 @@ export default function BilletReservation() {
       }
     } catch (err) {
       console.error("Reservation error:", err);
-      setError(err.response?.data?.message || "Une erreur s'est produite");
+      // ✅ Gérer l'erreur de limite depuis le backend
+      if (err.response?.status === 429) {
+        setError(err.response?.data?.message || "Limite de réservations atteinte");
+        await checkReservationLimits(); // Rafraîchir les limites
+      } else {
+        setError(err.response?.data?.message || "Une erreur s'est produite");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Afficher un message d'avertissement si les limites sont atteintes
+  if (!reservationLimits.can_reserve && limitsChecked && authenticated) {
+    return (
+      <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
+        <div className="bg-yellow-50 border border-yellow-400 text-yellow-700 px-6 py-6 rounded-lg text-center">
+          <AlertCircle size={48} className="mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-xl font-bold mb-2">Limite de réservations atteinte</h2>
+          <p className="mb-4">{reservationLimits.message || "Vous avez atteint la limite de réservations autorisées."}</p>
+          <div className="bg-white rounded-lg p-4 mb-4 text-left">
+            <p className="font-semibold mb-2">📊 Vos limites actuelles :</p>
+            <ul className="space-y-1 text-sm">
+              <li>📅 Réservations aujourd'hui : {reservationLimits.used_today} / {reservationLimits.max_per_day}</li>
+              <li>⏳ Réservations en attente : {reservationLimits.pending_count} / {reservationLimits.max_pending}</li>
+            </ul>
+          </div>
+          <Link to="/client" className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600">
+            Retour au dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loadingBillet || !clientLoaded) {
     return (
@@ -418,6 +505,19 @@ export default function BilletReservation() {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
+      {/* ✅ Avertissement limites */}
+      {showLimitsWarning && reservationLimits.can_reserve && (
+        <div className="mb-6 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+          <div className="flex items-center gap-2 text-yellow-700">
+            <AlertCircle size={18} />
+            <span className="text-sm">
+              ⚠️ Attention : Il vous reste {reservationLimits.remaining_today} réservation(s) possible(s) aujourd'hui
+              et {reservationLimits.remaining_pending} réservation(s) en attente possible(s).
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Carte du billet */}
       <div className="bg-gradient-to-r from-[#2f6f85] to-[#1e4a5f] rounded-2xl p-6 text-white mb-8">
         <div className="flex flex-wrap justify-between items-start gap-4">
@@ -580,7 +680,7 @@ export default function BilletReservation() {
             </div>
           </div>
 
-          {/* Informations des passagers */}
+          {/* Informations des passagers - reste identique */}
           <div className="border-b pb-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -772,7 +872,6 @@ export default function BilletReservation() {
             )}
           </div>
 
-
           {/* Prix total */}
           <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
             <div className="flex justify-between items-center">
@@ -814,7 +913,7 @@ export default function BilletReservation() {
 
           <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || !reservationLimits.can_reserve}
             className="w-full bg-[#2f6f85] hover:bg-[#25596b] text-white py-3"
           >
             {loading ? (

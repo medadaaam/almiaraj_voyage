@@ -1,5 +1,4 @@
-// src/pages/Contact.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AuthApi from "@/services/Api/AuthApi";
@@ -8,6 +7,8 @@ import "./styles/contact.css";
 export default function Contact() {
   const { user, clientProfile, getClientProfile } = useAuth();
   const [clientLoaded, setClientLoaded] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -18,6 +19,28 @@ export default function Contact() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+
+  // ✅ مراقبة التمرير
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   // Charger le profil client (seulement si connecté)
   useEffect(() => {
@@ -127,7 +150,10 @@ export default function Contact() {
   ];
 
   return (
-    <section className="contact-section">
+    <section
+      ref={sectionRef}
+      className={`contact-section ${isVisible ? "visible" : ""}`}
+    >
       <div className="contact-container">
 
         {/* Header */}
@@ -281,7 +307,11 @@ export default function Contact() {
           {/* Contact Info */}
           <div className="contact-info-wrapper">
             {contactInfo.map((info, index) => (
-              <div key={index} className="contact-info-card">
+              <div
+                key={index}
+                className="contact-info-card"
+                style={{ transitionDelay: `${index * 0.1}s` }}
+              >
                 <div className="contact-info-icon-wrapper" style={{ backgroundColor: info.bgColor }}>
                   <div style={{ color: info.color }}>{info.icon}</div>
                 </div>

@@ -1,17 +1,40 @@
 import { MapPin, Star, Compass, Globe, ArrowRight } from "lucide-react";
 import "./styles/destinations.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Destinations() {
   const { getDestination, destinations = [], loadingDestinations } = useAuth();
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
       await getDestination(1);
     };
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false },
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   // ✅ إزالة التكرار
@@ -23,14 +46,15 @@ export default function Destinations() {
   // ✅ عرض الـ 6 الأوائل فقط
   const displayedDestinations = uniqueDestinations.slice(0, 6);
 
-
-
   if (displayedDestinations.length === 0) {
     return null; // لا شيء يظهر إذا مافيش بيانات
   }
 
   return (
-    <section className="destinations-section">
+    <section
+      ref={sectionRef}
+      className={`destinations-section ${isVisible ? "visible" : ""}`}
+    >
       <div className="destinations-container">
         {/* Header */}
         <div className="destinations-header">

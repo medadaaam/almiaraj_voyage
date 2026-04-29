@@ -5,7 +5,31 @@ import "./styles/testimonials.css";
 export default function Testimonials() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const intervalRef = useRef(null);
+  const sectionRef = useRef(null);
+
+  // ✅ مراقبة التمرير
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const testimonials = [
     {
@@ -112,7 +136,10 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="testimonials-section">
+    <section
+      ref={sectionRef}
+      className={`testimonials-section ${isVisible ? "visible" : ""}`}
+    >
       <div className="testimonials-container">
 
         {/* Header */}
@@ -131,8 +158,12 @@ export default function Testimonials() {
 
           {/* Cards Container */}
           <div className="testimonials-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-            {testimonials.map((testimonial) => (
-              <div key={testimonial.id} className="testimonial-card">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={testimonial.id}
+                className="testimonial-card"
+                style={{ transitionDelay: `${index * 0.1}s` }}
+              >
                 <div className="testimonial-content">
                   {/* Quote Icon */}
                   <div className="quote-icon">

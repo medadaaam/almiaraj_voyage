@@ -1,17 +1,41 @@
 import { MapPin, Star, Clock, Users, Calendar, ArrowRight, Eye, CreditCard, Loader2 } from "lucide-react";
 import "./styles/featuredTrips.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 
 export default function FeaturedTrips() {
-  const { voyages, getVoyages, loadingVoyages } = useAuth();
+  const { voyages, getVoyages } = useAuth();
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
     const fetchVoyages = async () => {
       await getVoyages(1);
     };
     fetchVoyages();
+  }, []);
+
+  // ✅ مراقبة التمرير
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   const renderStars = (rating) => {
@@ -39,7 +63,10 @@ export default function FeaturedTrips() {
   }
 
   return (
-    <section className="featured-trips">
+    <section
+      ref={sectionRef}
+      className={`featured-trips ${isVisible ? "visible" : ""}`}
+    >
       <div className="featured-trips-container">
         {/* Header */}
         <div className="featured-trips-header">
@@ -54,8 +81,12 @@ export default function FeaturedTrips() {
 
         {/* Trips Grid */}
         <div className="featured-grid">
-          {displayedTrips.map((trip) => (
-            <div key={trip.id} className="trip-card">
+          {displayedTrips.map((trip, index) => (
+            <div
+              key={trip.id}
+              className="trip-card"
+              style={{ transitionDelay: `${index * 0.1}s` }}
+            >
               {/* Image */}
               <div className="trip-image">
                 <img src={trip.image} alt={trip.destination} />
@@ -96,14 +127,6 @@ export default function FeaturedTrips() {
 
                 {/* Title */}
                 <h3 className="trip-title">{trip.nomServ}</h3>
-
-                {/* Rating (optionnel - décommenter si besoin) */}
-                {/* {trip.rating && (
-                  <div className="trip-rating">
-                    <div className="trip-stars">{renderStars(parseFloat(trip.rating))}</div>
-                    <span className="trip-reviews">({trip.reviews || 0} avis)</span>
-                  </div>
-                )} */}
 
                 {/* Details */}
                 <div className="trip-details">

@@ -10,9 +10,58 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
+    /**
+     * Vérifier les limites de réservation pour un client
+     */
+    private function checkReservationLimits($clientId)
+    {
+        // Limite de réservations par jour
+        $maxPerDay = 4;
+
+        // Compter les réservations aujourd'hui
+        $todayCount = Reservation::where('client_id', $clientId)
+            ->whereDate('created_at', Carbon::today())
+            ->count();
+
+        if ($todayCount >= $maxPerDay) {
+            return [
+                'allowed' => false,
+                'message' => "Vous avez atteint la limite de {$maxPerDay} réservations par jour. Veuillez réessayer demain.",
+                'remaining_today' => 0,
+                'used_today' => $todayCount,
+                'max_per_day' => $maxPerDay
+            ];
+        }
+
+        // Limite de réservations en attente
+        $maxPending = 3;
+        $pendingCount = Reservation::where('client_id', $clientId)
+            ->where('status', 'pending')
+            ->count();
+
+        if ($pendingCount >= $maxPending) {
+            return [
+                'allowed' => false,
+                'message' => "Vous avez trop de réservations en attente ({$pendingCount}/{$maxPending}). Veuillez finaliser ou annuler certaines réservations.",
+                'pending_count' => $pendingCount,
+                'max_pending' => $maxPending
+            ];
+        }
+
+        return [
+            'allowed' => true,
+            'remaining_today' => $maxPerDay - $todayCount,
+            'used_today' => $todayCount,
+            'max_per_day' => $maxPerDay,
+            'pending_count' => $pendingCount,
+            'max_pending' => $maxPending
+        ];
+    }
+
     /**
      * Générer une référence unique
      */
@@ -80,6 +129,16 @@ class ReservationController extends Controller
                 ]);
             }
 
+            // ✅ Vérifier les limites AVANT de créer la réservation
+            $limits = $this->checkReservationLimits($client->id);
+            if (!$limits['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $limits['message'],
+                    'limits' => $limits
+                ], 429);
+            }
+
             $reservation = Reservation::create([
                 'service_id' => $validated['service_id'],
                 'client_id' => $client->id,
@@ -112,7 +171,8 @@ class ReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Réservation voyage créée avec succès',
-                'reservation' => $reservation->load('passagers', 'service')
+                'reservation' => $reservation->load('passagers', 'service'),
+                'limits' => $limits
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -183,6 +243,16 @@ class ReservationController extends Controller
                 ]);
             }
 
+            // ✅ Vérifier les limites AVANT de créer la réservation
+            $limits = $this->checkReservationLimits($client->id);
+            if (!$limits['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $limits['message'],
+                    'limits' => $limits
+                ], 429);
+            }
+
             $prixUnitaire = $validated['reservation']['prix_unitaire'];
             $prixTotal = $validated['reservation']['prix_total'];
             $reference = 'RES-BIL-' . strtoupper(uniqid());
@@ -232,7 +302,8 @@ class ReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Réservation billet créée avec succès',
-                'reservation' => $reservation->load('passagers', 'service')
+                'reservation' => $reservation->load('passagers', 'service'),
+                'limits' => $limits
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -306,19 +377,16 @@ class ReservationController extends Controller
                 ]);
             }
 
-            // ✅ Debug avant insertion
-            Log::info('Valeurs à insérer:', [
-                'service_id' => $validated['service_id'],
-                'client_id' => $client->id,
-                'nbPers' => $validated['reservation']['nb_personnes'],
-                'prixUnitaire' => $validated['reservation']['prix_unitaire'],
-                'prixTotal' => $validated['reservation']['prix_total'],
-                'check_in' => $validated['reservation']['check_in'],
-                'check_out' => $validated['reservation']['check_out'],
-                'type_chambre' => $validated['reservation']['type_chambre'],
-            ]);
+            // ✅ Vérifier les limites AVANT de créer la réservation
+            $limits = $this->checkReservationLimits($client->id);
+            if (!$limits['allowed']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $limits['message'],
+                    'limits' => $limits
+                ], 429);
+            }
 
-            // ✅ استخدم insert بدل create باش تتجاوز أي مشكلة
             $reservationId = DB::table('reservations')->insertGetId([
                 'service_id' => $validated['service_id'],
                 'client_id' => $client->id,
@@ -357,7 +425,8 @@ class ReservationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Réservation hôtel créée avec succès',
-                'reservation' => $reservation->load('passagers', 'service')
+                'reservation' => $reservation->load('passagers', 'service'),
+                'limits' => $limits
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -472,6 +541,29 @@ class ReservationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Réservation annulée avec succès'
+        ]);
+    }
+
+    /**
+     * Vérifier les limites de réservation
+     */
+    public function checkLimits(Request $request)
+    {
+        $user = $request->user();
+        $client = Client::where('id', $user->id)->first();
+
+        if (!$client) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Client non trouvé'
+            ], 404);
+        }
+
+        $limits = $this->checkReservationLimits($client->id);
+
+        return response()->json([
+            'success' => true,
+            'limits' => $limits
         ]);
     }
 }

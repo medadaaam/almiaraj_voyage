@@ -348,3 +348,88 @@
     margin-top: 30px;
   }
 }
+
+
+/* ================= SCROLL ANIMATIONS ================= */
+
+/* الحالة المخفية للعناصر */
+.testimonials-section .testimonials-header {
+  opacity: 0;
+  transform: translateY(-30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testimonials-section .testimonial-card {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testimonials-section .slider-nav {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testimonials-section .slider-dots {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الحالة الظاهرة (عند التمرير) */
+.testimonials-section.visible .testimonials-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.testimonials-section.visible .testimonial-card {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.testimonials-section.visible .slider-nav {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.testimonials-section.visible .slider-dots {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* تأخيرات مختلفة للبطاقات */
+.testimonials-section.visible .testimonial-card:nth-child(1) { transition-delay: 0.1s; }
+.testimonials-section.visible .testimonial-card:nth-child(2) { transition-delay: 0.2s; }
+.testimonials-section.visible .testimonial-card:nth-child(3) { transition-delay: 0.3s; }
+.testimonials-section.visible .testimonial-card:nth-child(4) { transition-delay: 0.4s; }
+
+/* تأخير للأزرار */
+.testimonials-section.visible .slider-nav {
+  transition-delay: 0.3s;
+}
+
+.testimonials-section.visible .slider-dots {
+  transition-delay: 0.4s;
+}
+
+/* تأثير hover للبطاقات مع الشفافية */
+.testimonial-card {
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  filter: brightness(0.98);
+}
+
+/* ✅ احترام إعدادات المستخدم */
+@media (prefers-reduced-motion: reduce) {
+  .testimonials-section .testimonials-header,
+  .testimonials-section .testimonial-card,
+  .testimonials-section .slider-nav,
+  .testimonials-section .slider-dots {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

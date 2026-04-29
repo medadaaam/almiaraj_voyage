@@ -11,9 +11,23 @@ use Illuminate\Support\Facades\DB;
 class HotelController extends Controller
 {
 
+
+    public function index()
+    {
+        $hotels = Hotel::with(['service', 'destination'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $hotels
+        ]);
+    }
+
+
     public function indexCl()
     {
-        $hotels = Hotel::with(['service', 'destination'])->paginate(3);
+        $hotels = Hotel::with(['service', 'destination'])->paginate(6);
 
         $data = $hotels->getCollection()->map(function ($h) {
             return [

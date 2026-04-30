@@ -26,20 +26,30 @@ import { useState, useEffect, useRef } from "react";
 const formSchema = z
   .object({
     nom: z.string().min(2, "Nom doit contenir au moins 2 caractères").max(30),
-    prenom: z.string().min(2, "Prénom doit contenir au moins 2 caractères").max(30),
+    prenom: z
+      .string()
+      .min(2, "Prénom doit contenir au moins 2 caractères")
+      .max(30),
     email: z.string().email("Email invalide"),
-    password: z.string().min(8, "Mot de passe doit contenir au moins 8 caractères"),
+    password: z
+      .string()
+      .min(8, "Mot de passe doit contenir au moins 8 caractères"),
     password_confirmation: z.string(),
     numTel: z.string().min(10, "Téléphone invalide").max(15),
     nat: z.string().min(1, "Veuillez sélectionner une nationalité"),
-    terms: z.literal(true, {
-      errorMap: () => ({ message: "Vous devez accepter les conditions" }),
+    terms: z.boolean().refine((val) => val === true, {
+      message: "Vous devez accepter les conditions",
     }),
   })
-  .refine((data) => !data.password_confirmation || data.password === data.password_confirmation, {
-    message: "Les mots de passe ne correspondent pas",
-    path: ["password_confirmation"],
-  });
+  .refine(
+    (data) =>
+      !data.password_confirmation ||
+      data.password === data.password_confirmation,
+    {
+      message: "Les mots de passe ne correspondent pas",
+      path: ["password_confirmation"],
+    },
+  );
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
@@ -79,7 +89,7 @@ export default function Register() {
 
   useEffect(() => {
     if (error && formRef.current) {
-      formRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      formRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
   }, [error]);
 
@@ -101,7 +111,7 @@ export default function Register() {
         else if (errors.password) setError(errors.password[0]);
         else setError(err.response.data.message || "Données incorrectes");
       } else {
-        setError(err.response?.data?.message || "Une erreur s'est produite");
+        setError(err.response?.data?.message || "Une erreur s'est produite. Veuillez réessayer dans quelques instants.");
       }
     } finally {
       setLoading(false);
@@ -112,7 +122,9 @@ export default function Register() {
     <div className="auth-card-scrollable aa" ref={formRef}>
       <div className="auth-card-header">
         <h1 className="auth-card-title">Inscription</h1>
-        <p className="auth-card-subtitle">Créez votre compte et partez à l'aventure</p>
+        <p className="auth-card-subtitle">
+          Créez votre compte et partez à l'aventure
+        </p>
       </div>
 
       <Form {...form}>
@@ -136,7 +148,11 @@ export default function Register() {
                   <FormControl>
                     <div className="auth-input-wrapper">
                       <User size={18} className="auth-input-icon" />
-                      <Input placeholder="Votre prénom" {...field} className="auth-input" />
+                      <Input
+                        placeholder="Votre prénom"
+                        {...field}
+                        className="auth-input"
+                      />
                     </div>
                   </FormControl>
                   <FormMessage className="auth-error-text" />
@@ -155,7 +171,11 @@ export default function Register() {
                   <FormControl>
                     <div className="auth-input-wrapper">
                       <User size={18} className="auth-input-icon" />
-                      <Input placeholder="Votre nom" {...field} className="auth-input" />
+                      <Input
+                        placeholder="Votre nom"
+                        {...field}
+                        className="auth-input"
+                      />
                     </div>
                   </FormControl>
                   <FormMessage className="auth-error-text" />
@@ -176,7 +196,12 @@ export default function Register() {
                 <FormControl>
                   <div className="auth-input-wrapper">
                     <Mail size={18} className="auth-input-icon" />
-                    <Input type="email" placeholder="exemple@email.com" {...field} className="auth-input" />
+                    <Input
+                      type="email"
+                      placeholder="exemple@email.com"
+                      {...field}
+                      className="auth-input"
+                    />
                   </div>
                 </FormControl>
                 <FormMessage className="auth-error-text" />
@@ -197,7 +222,12 @@ export default function Register() {
                   <FormControl>
                     <div className="auth-input-wrapper">
                       <Phone size={18} className="auth-input-icon" />
-                      <Input type="tel" placeholder="0612345678" {...field} className="auth-input" />
+                      <Input
+                        type="tel"
+                        placeholder="0612345678"
+                        {...field}
+                        className="auth-input"
+                      />
                     </div>
                   </FormControl>
                   <FormMessage className="auth-error-text" />
@@ -285,10 +315,16 @@ export default function Register() {
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="auth-password-toggle"
                     >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showConfirmPassword ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
                 </FormControl>

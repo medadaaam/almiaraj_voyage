@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import "./layout.css";
 import { useAuth } from "@/context/AuthContext";
 import { LOGIN_ROUTE } from "@/router";
@@ -9,6 +9,9 @@ import DashboardLink from "@/pages/dashboardLink";
 export default function LayoutClient() {
   const { authenticated, logout, user } = useAuth();
   const navigate = useNavigate();
+
+  // ✅ State pour le loading du logout
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [showSticky, setShowSticky] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,9 +24,19 @@ export default function LayoutClient() {
   const langTimeout = useRef(null);
   const stickyLangTimeout = useRef(null);
 
+  // ✅ Fonction logout avec loading
   const logoutCallback = async () => {
-    await logout();
-    navigate(LOGIN_ROUTE);
+    if (isLoggingOut) return; // Évite les clics multiples
+
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate(LOGIN_ROUTE);
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   useEffect(() => {
@@ -148,22 +161,6 @@ export default function LayoutClient() {
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <circle cx="12" cy="8" r="3" strokeWidth={1.5} />
-          <path strokeWidth={1.5} d="M6 20c0-3 3-5 6-5s6 2 6 5" />
-        </svg>
-      ),
-      title: "Voyages sur mesure",
-      desc: "Créez votre voyage personnalisé selon vos envies et votre budget.",
-      link: "/services/customVoyage",
-    },
-    {
-      icon: (
-        <svg
-          className="w-8 h-8"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
           <path strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       ),
@@ -173,11 +170,11 @@ export default function LayoutClient() {
     },
   ];
 
-  const languages = [
-    { code: "fr", name: "Français", flag: "https://flagcdn.com/w20/fr.png" },
-    { code: "en", name: "English", flag: "https://flagcdn.com/w20/us.png" },
-    { code: "ar", name: "العربية", flag: "https://flagcdn.com/w20/sa.png" },
-  ];
+//   const languages = [
+//     { code: "fr", name: "Français", flag: "https://flagcdn.com/w20/fr.png" },
+//     { code: "en", name: "English", flag: "https://flagcdn.com/w20/us.png" },
+//     { code: "ar", name: "العربية", flag: "https://flagcdn.com/w20/sa.png" },
+//   ];
 
   const navLinks = [
     { name: "Accueil", path: "/" },
@@ -197,7 +194,7 @@ export default function LayoutClient() {
 
         {/* Menu */}
         <div className="fixed top-20 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6">
             {services.map((service, index) => (
               <a
                 key={index}
@@ -206,23 +203,18 @@ export default function LayoutClient() {
              transition-all duration-300
              hover:-translate-y-2 hover:shadow-xl hover:border-gray-200 text-center"
               >
-                {/* Icon */}
                 <div
                   className="mb-3 text-[#fb923c] text-2xl transition-all duration-300
                   group-hover:text-[#2f6f85] group-hover:scale-110 flex justify-center"
                 >
                   {service.icon}
                 </div>
-
-                {/* Title */}
                 <h4
                   className="font-semibold text-gray-800 text-sm mb-1
                  transition-colors duration-300 "
                 >
                   {service.title}
                 </h4>
-
-                {/* Description */}
                 <p className="text-xs text-gray-500 leading-relaxed">
                   {service.desc}
                 </p>
@@ -233,6 +225,27 @@ export default function LayoutClient() {
       </>
     );
   };
+
+  // ✅ Composant bouton logout avec loading
+  const LogoutButton = ({ className }) => (
+    <button
+      onClick={logoutCallback}
+      className={className}
+      disabled={isLoggingOut}
+    >
+      {isLoggingOut ? (
+        <>
+          <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Déconnexion...
+        </>
+      ) : (
+        "Déconnexion"
+      )}
+    </button>
+  );
 
   return (
     <>
@@ -274,12 +287,12 @@ export default function LayoutClient() {
               <i className="fa-brands fa-tiktok text-white text-sm"></i>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fb923c] transition duration-300 cursor-pointer hover:scale-110">
-              <i className="fa-brands fa-x-twitter text-white text-sm"></i>
+              <i className="fa-brands fa-youtube text-white text-sm"></i>
             </div>
           </div>
-          <button className="bg-[#fb923c] text-white px-4 py-1 rounded-md text-sm font-medium hover:bg-orange-600 transition">
+          <Link to='/contact' className="bg-[#fb923c] text-white px-4 py-1 rounded-md text-sm font-medium hover:bg-orange-600 transition">
             Personnaliser un voyage →
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -347,7 +360,7 @@ export default function LayoutClient() {
                 ))}
 
                 {/* Language Dropdown */}
-                <li
+                {/* <li
                   className="relative"
                   onMouseEnter={handleLangMouseEnter}
                   onMouseLeave={handleLangMouseLeave}
@@ -389,19 +402,16 @@ export default function LayoutClient() {
                       ))}
                     </div>
                   )}
-                </li>
+                </li> */}
               </ul>
             </div>
 
             {/* Auth Buttons - Right */}
             <div className="hidden lg:flex items-center gap-4">
-
-                  <span className="btn-outline">
-                    <DashboardLink />
-                  </span>
-                  <button onClick={logoutCallback} className="btn-outline">
-                    Logout
-                  </button>
+              <span className="btn-outline">
+                <DashboardLink />
+              </span>
+              <LogoutButton className="btn-outline" />
             </div>
 
             {/* Mobile Menu Button */}
@@ -538,26 +548,27 @@ export default function LayoutClient() {
                 Contactez-nous
               </NavLink>
             </li>
-            <li className="mobile-lang-item">
+            {/* <li className="mobile-lang-item">
               <select className="mobile-lang-select">
                 <option value="fr">Français</option>
                 <option value="en">English</option>
                 <option value="ar">العربية</option>
               </select>
-            </li>
+            </li> */}
             <li className="mobile-auth-section">
-                  <span className="mobile-nav-link">
-                    <DashboardLink />
-                  </span>
-                  <button
-                    onClick={() => {
-                      logoutCallback();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="mobile-nav-link"
-                  >
-                    Logout
-                  </button>
+              <span className="mobile-nav-link">
+                <DashboardLink />
+              </span>
+              <button
+                onClick={() => {
+                  logoutCallback();
+                  setMobileMenuOpen(false);
+                }}
+                className="mobile-nav-link"
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "Déconnexion..." : "Déconnexion"}
+              </button>
             </li>
           </ul>
         </nav>
@@ -628,7 +639,7 @@ export default function LayoutClient() {
                 </li>
 
                 {/* Language Dropdown in Sticky */}
-                <li
+                {/* <li
                   className="relative"
                   onMouseEnter={handleStickyLangMouseEnter}
                   onMouseLeave={handleStickyLangMouseLeave}
@@ -670,19 +681,16 @@ export default function LayoutClient() {
                       ))}
                     </div>
                   )}
-                </li>
+                </li> */}
               </ul>
             </div>
 
             {/* Auth Buttons - Right */}
             <div className="hidden lg:flex items-center gap-3">
-                  <span className="btn-outline-sm">
-                    <DashboardLink />
-                  </span>
-
-                  <button onClick={logoutCallback} className="btn-outline-sm">
-                    Logout
-                  </button>
+              <span className="btn-outline-sm">
+                <DashboardLink />
+              </span>
+              <LogoutButton className="btn-outline-sm" />
             </div>
 
             {/* Mobile Menu Button */}

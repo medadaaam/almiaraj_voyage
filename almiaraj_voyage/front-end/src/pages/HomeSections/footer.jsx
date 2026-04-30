@@ -49,12 +49,12 @@ export default function Footer() {
                 <i className="fab fa-tiktok text-sm text-gray-300 group-hover:text-white"></i>
               </a>
               <a
-                href="https://twitter.com"
+                href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-[#1DA1F2] hover:border-[#1DA1F2] transition-all duration-300 group"
+                className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-[#FD1D1D] hover:border-[#1DA1F2] transition-all duration-300 group"
               >
-                <i className="fab fa-x-twitter text-sm text-gray-300 group-hover:text-white"></i>
+                <i className="fab fa-youtube text-sm text-gray-300 group-hover:text-white"></i>
               </a>
             </div>
           </div>
@@ -72,7 +72,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
+                <Link to="/destinations" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
                   <span className="w-0 group-hover:w-2 h-0.5 bg-[#fb923c] transition-all duration-200 mr-0 group-hover:mr-2"></span>
                   Services
                 </Link>
@@ -99,27 +99,27 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3 pl-3">
               <li>
-                <Link to="/services" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
+                <Link to="/services/circuits" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
                   <span className="w-0 group-hover:w-2 h-0.5 bg-[#fb923c] transition-all duration-200 mr-0 group-hover:mr-2"></span>
                   Circuits touristiques
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
+                <Link to="/services/flights" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
                   <span className="w-0 group-hover:w-2 h-0.5 bg-[#fb923c] transition-all duration-200 mr-0 group-hover:mr-2"></span>
                   Vols & billets
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
+                <Link to="/services/hotels" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
                   <span className="w-0 group-hover:w-2 h-0.5 bg-[#fb923c] transition-all duration-200 mr-0 group-hover:mr-2"></span>
                   Hôtels & séjours
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
+                <Link to="/services/hajj-omra" className="text-gray-400 hover:text-[#fb923c] transition-colors duration-200 text-sm inline-flex items-center group">
                   <span className="w-0 group-hover:w-2 h-0.5 bg-[#fb923c] transition-all duration-200 mr-0 group-hover:mr-2"></span>
-                  Voyages sur mesure
+                  Hajj Omra
                 </Link>
               </li>
             </ul>

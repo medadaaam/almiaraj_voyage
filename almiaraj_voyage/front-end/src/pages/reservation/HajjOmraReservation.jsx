@@ -28,13 +28,22 @@ import AuthApi from "@/services/Api/AuthApi";
 
 export default function HajjOmraDetailsRes() {
   const { id } = useParams();
-  const { user, getClientProfile, clientProfile, getHajjOmraDetails,sendContactMessage } =
-    useAuth();
+  const {
+    user,
+    getClientProfile,
+    clientProfile,
+    getHajjOmraDetails,
+    sendContactMessage,
+    checkReservationLimits, // ✅ Ajouté
+    reservationLimits, // ✅ Ajouté
+  } = useAuth();
   const [hajjOmra, setHajjOmra] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [clientLoaded, setClientLoaded] = useState(false);
+  const [limitsChecked, setLimitsChecked] = useState(false);
+  const [limitsWarning, setLimitsWarning] = useState(null);
 
   // Formulaire de contact
   const [formData, setFormData] = useState({
@@ -47,6 +56,24 @@ export default function HajjOmraDetailsRes() {
     nombre_personnes: 2,
     message: "",
   });
+
+  // ✅ Vérifier les limites de réservation au chargement
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (user && !limitsChecked) {
+        await checkReservationLimits();
+        setLimitsChecked(true);
+
+        // Afficher un avertissement si les limites sont atteintes ou proches
+        if (!reservationLimits.can_reserve) {
+          setLimitsWarning(reservationLimits.message || "Vous avez atteint la limite de demandes pour aujourd'hui.");
+        } else if (reservationLimits.remaining_today <= 1) {
+          setLimitsWarning(`⚠️ Attention : Il vous reste ${reservationLimits.remaining_today} demande(s) possible(s) aujourd'hui.`);
+        }
+      }
+    };
+    checkLimits();
+  }, [user, limitsChecked, checkReservationLimits, reservationLimits]);
 
   // Charger les données du Hajj/Omra
   useEffect(() => {
@@ -98,9 +125,29 @@ export default function HajjOmraDetailsRes() {
     });
   };
 
-  // HajjOmraDetails.jsx - handleSubmit modifié
+  // ✅ Vérification des limites avant soumission
+  const canProceedWithRequest = () => {
+    if (!reservationLimits.can_reserve) {
+      alert(reservationLimits.message || "Vous ne pouvez pas faire de nouvelle demande pour le moment");
+      return false;
+    }
+
+    if (reservationLimits.remaining_today <= 0) {
+      alert(`Vous avez atteint la limite de ${reservationLimits.max_per_day} demandes par jour. Veuillez réessayer demain.`);
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ Vérifier les limites avant soumission
+    if (!canProceedWithRequest()) {
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -112,10 +159,12 @@ export default function HajjOmraDetailsRes() {
         message: formData.message,
         nombre_personnes: formData.nombre_personnes,
         service_id: id,
-        type: "hajj_omra", // ✅
+        type: "hajj_omra",
       });
 
       if (response?.success) {
+        // ✅ Rafraîchir les limites après envoi réussi
+        await checkReservationLimits();
         setFormSubmitted(true);
       } else {
         alert(
@@ -124,10 +173,17 @@ export default function HajjOmraDetailsRes() {
       }
     } catch (error) {
       console.error("Error sending request:", error);
-      alert(
-        error.response?.data?.message ||
-          "Une erreur s'est produite. Veuillez réessayer.",
-      );
+
+      // ✅ Gérer l'erreur de limite depuis le backend
+      if (error.response?.status === 429) {
+        alert(error.response?.data?.message || "Limite de demandes atteinte");
+        await checkReservationLimits(); // Rafraîchir les limites
+      } else {
+        alert(
+          error.response?.data?.message ||
+            "Une erreur s'est produite. Veuillez réessayer.",
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -175,6 +231,20 @@ export default function HajjOmraDetailsRes() {
       >
         <ArrowLeft size={20} /> Retour aux offres
       </Link>
+
+      {/* ✅ Avertissement limites */}
+      {limitsWarning && (
+        <div className={`mb-6 p-4 rounded-lg ${
+          limitsWarning.includes("atteint")
+            ? "bg-red-50 border border-red-200 text-red-700"
+            : "bg-yellow-50 border border-yellow-200 text-yellow-700"
+        }`}>
+          <div className="flex items-center gap-2">
+            <AlertCircle size={20} />
+            <span>{limitsWarning}</span>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-emerald-800 to-teal-700 rounded-2xl p-6 text-white mb-8">
@@ -467,7 +537,7 @@ export default function HajjOmraDetailsRes() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !reservationLimits.can_reserve}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-50"
             >
               {submitting ? (

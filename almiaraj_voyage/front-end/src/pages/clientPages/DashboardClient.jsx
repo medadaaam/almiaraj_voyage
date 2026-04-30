@@ -288,7 +288,7 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      
+
 
       {/* Main Content */}
       <div className="dashboard-main">
@@ -431,7 +431,7 @@ export default function DashboardClient() {
                 ) : reservations.length === 0 ? (
                   <div className="dashboard-empty">
                     <p>Aucune réservation pour le moment</p>
-                    <Link to="/services" className="dashboard-empty-btn">
+                    <Link to="/" className="dashboard-empty-btn">
                       Découvrir nos offres
                     </Link>
                   </div>
@@ -626,7 +626,7 @@ export default function DashboardClient() {
                 <div className="dashboard-empty">
                   <Package size={48} className="dashboard-empty-icon" />
                   <p>Aucune réservation pour le moment</p>
-                  <Link to="/services" className="dashboard-empty-btn">
+                  <Link to="/" className="dashboard-empty-btn">
                     Découvrir nos offres
                   </Link>
                 </div>
@@ -756,7 +756,7 @@ export default function DashboardClient() {
                     <span className="dashboard-toggle-slider"></span>
                   </label>
                 </div>
-                <div className="dashboard-setting-item">
+                {/* <div className="dashboard-setting-item">
                   <div className="dashboard-setting-info">
                     <Shield size={18} />
                     <div>
@@ -770,8 +770,8 @@ export default function DashboardClient() {
                   >
                     Modifier
                   </Link>
-                </div>
-                <div className="dashboard-setting-item">
+                </div> */}
+                {/* <div className="dashboard-setting-item">
                   <div className="dashboard-setting-info">
                     <CreditCard size={18} />
                     <div>
@@ -785,7 +785,7 @@ export default function DashboardClient() {
                   >
                     Gérer
                   </Link>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

@@ -232,3 +232,75 @@
     font-size: 0.85rem;
   }
 }
+
+
+/* ================= SCROLL ANIMATIONS ================= */
+
+/* الحالة المخفية للعناصر */
+.faq-section .faq-header {
+  opacity: 0;
+  transform: translateY(-30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-section .faq-item {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.faq-section .faq-footer {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الحالة الظاهرة (عند التمرير) */
+.faq-section.visible .faq-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.faq-section.visible .faq-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.faq-section.visible .faq-footer {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* تأخيرات مختلفة للأسئلة */
+.faq-section.visible .faq-item:nth-child(1) { transition-delay: 0.05s; }
+.faq-section.visible .faq-item:nth-child(2) { transition-delay: 0.1s; }
+.faq-section.visible .faq-item:nth-child(3) { transition-delay: 0.15s; }
+.faq-section.visible .faq-item:nth-child(4) { transition-delay: 0.2s; }
+.faq-section.visible .faq-item:nth-child(5) { transition-delay: 0.25s; }
+.faq-section.visible .faq-item:nth-child(6) { transition-delay: 0.3s; }
+
+/* تأثير للـ footer */
+.faq-section.visible .faq-footer {
+  transition-delay: 0.35s;
+}
+
+/* ✅ تأثير hover للأسئلة */
+.faq-item:hover {
+  transform: translateX(5px);
+  transition: all 0.3s ease;
+}
+
+/* ✅ احترام إعدادات المستخدم */
+@media (prefers-reduced-motion: reduce) {
+  .faq-section .faq-header,
+  .faq-section .faq-item,
+  .faq-section .faq-footer {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .faq-item:hover {
+    transform: none;
+  }
+}

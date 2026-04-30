@@ -1,17 +1,41 @@
 import { MapPin, Star, Wifi, Coffee, Car, Utensils, Waves, Dumbbell, ArrowRight, Clock, Users, Calendar, Eye, CreditCard, Loader2 } from "lucide-react";
 import "./styles/featuredHotels.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 
 export default function FeaturedHotels() {
-    const { hotels, getHotels, loadingHotels } = useAuth();
+    const { hotels, getHotels } = useAuth();
+    const [isVisible, setIsVisible] = useState(false);
+    const sectionRef = useRef(null);
 
     useEffect(() => {
         const fetchHotels = async () => {
             await getHotels(1);
         };
         fetchHotels();
+    }, []);
+
+    // ✅ مراقبة التمرير
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        setIsVisible(true);
+                    } else {
+                        setIsVisible(false);
+                    }
+                });
+            },
+            { threshold: 0.2, triggerOnce: false }
+        );
+
+        if (sectionRef.current) {
+            observer.observe(sectionRef.current);
+        }
+
+        return () => observer.disconnect();
     }, []);
 
     const renderStars = (rating) => {
@@ -54,11 +78,14 @@ export default function FeaturedHotels() {
     const displayedHotels = hotels.slice(0, 5);
 
     if (displayedHotels.length === 0) {
-        return null; // لا شيء يظهر إذا مافيش بيانات
+        return null;
     }
 
     return (
-        <section className="featured-hotels">
+        <section
+            ref={sectionRef}
+            className={`featured-hotels ${isVisible ? "visible" : ""}`}
+        >
             <div className="featured-hotels-container">
                 {/* Header */}
                 <div className="featured-hotels-header">
@@ -73,8 +100,12 @@ export default function FeaturedHotels() {
 
                 {/* Hotels Grid */}
                 <div className="hotels-grid">
-                    {displayedHotels.map((hotel) => (
-                        <div key={hotel.id} className="hotel-card">
+                    {displayedHotels.map((hotel, index) => (
+                        <div
+                            key={hotel.id}
+                            className="hotel-card"
+                            style={{ transitionDelay: `${index * 0.1}s` }}
+                        >
                             {/* Image */}
                             <div className="hotel-image">
                                 <img src={hotel.image} alt={hotel.name} />

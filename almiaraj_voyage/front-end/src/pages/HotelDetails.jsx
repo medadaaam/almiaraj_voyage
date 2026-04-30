@@ -177,7 +177,7 @@ export default function HotelDetailsCl() {
                                 <div className="flex items-center gap-4 mb-4">
                                     {destination?.image && (
                                         <div className="w-20 h-20 rounded-full overflow-hidden">
-                                            <img src={destination.image} alt={destination.nom} className="w-full h-full object-cover" />
+                                            <img src={service.image} alt={destination.nom} className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                     <div>
@@ -293,17 +293,17 @@ export default function HotelDetailsCl() {
 
                                 {/* Buttons */}
                                 <Link
-                                    to={`/reserver/hotel/${hotel.id}`}
+                                    to={`reserver`}
                                     className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 mb-3"
                                 >
                                     Réserver maintenant
                                     <ChevronRight className="w-4 h-4" />
                                 </Link>
 
-                                <button className="w-full border border-orange-500 text-orange-500 hover:bg-orange-50 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
+                                <Link to='/contact' className="w-full border border-orange-500 text-orange-500 hover:bg-orange-50 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
                                     <Phone className="w-4 h-4" />
                                     Contacter l'hôtel
-                                </button>
+                                </Link>
 
                                 <div className="flex items-center justify-center gap-1 mt-4">
                                     {[...Array(5)].map((_, i) => (

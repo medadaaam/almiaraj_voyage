@@ -57,6 +57,9 @@ import AdminReservationDetails from "@/pages/adminDashboard/reservationDetails";
 import AdminDashboard from "@/pages/adminDashboard/dashboard";
 import AdminAvis from "@/pages/adminDashboard/avis";
 import AdminMessages from "@/pages/adminDashboard/messages";
+import ChangePassword from "@/pages/clientPages/ChangePassword";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsConditions from "@/pages/TermsConditions";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -72,6 +75,14 @@ export const route = createBrowserRouter([
   {
     path: "/password-reset/:token",
     element: <ResetPassword />,
+  },
+  {
+    path: "/privacy",
+    element: <PrivacyPolicy />,
+  },
+    {
+    path: "/terms",
+    element: <TermsConditions  />,
   },
   {
     path: "*",
@@ -316,6 +327,10 @@ export const route = createBrowserRouter([
       {
         path: "/client/messages/:id",
         element: <MessageDetails />,
+      },
+            {
+        path: "/change-password",
+        element: <ChangePassword  />,
       },
     ],
   },

@@ -291,7 +291,7 @@ export default function DestinationOffres() {
                                                     Détails
                                                 </a>
                                                 <Link
-                                                    to={`/offres/${service?.id}/reserver`}
+                                                    to={`/${item.type}s/${service?.id}/reserver`}
                                                     className="offre-card-btn-reserve"
                                                 >
                                                     Réserver

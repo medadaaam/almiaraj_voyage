@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AvisController;
+use App\Http\Controllers\Auth\ChangePasswordController;
 use App\Http\Controllers\BilletController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DestinationController;
@@ -48,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-reservations', [ReservationController::class, 'myReservations']);
     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
     Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
+    Route::get('/reservations/check-limits', [ReservationController::class, 'checkLimits']);
 });
 
 Route::post('/contact/message', [MessageController::class, 'store']);
@@ -109,4 +111,8 @@ Route::get('/destinations', [DestinationController::class, 'index']);
 Route::get('/destinations/search', [VoyageController::class, 'searchDestinations']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 
-require __DIR__ . '/auth.php';
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/change-password', [ChangePasswordController::class, 'changePassword']);
+});
+
+require __DIR__.'/auth.php';

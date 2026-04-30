@@ -71,8 +71,8 @@ const formSchema = z
     type_chambre: z.string().min(1, "Veuillez sélectionner un type de chambre"),
     passagers: z.array(z.any()),
     demandesSpeciales: z.string().optional(),
-    terms: z.literal(true, {
-      errorMap: () => ({ message: "Vous devez accepter les conditions" }),
+    terms: z.boolean().refine((val) => val === true, {
+      message: "Vous devez accepter les conditions",
     }),
   })
   .refine((data) => new Date(data.check_out) > new Date(data.check_in), {
@@ -90,6 +90,8 @@ export default function HotelReservation() {
     clientProfile,
     getHotelDetails,
     createHotelReservation,
+    checkReservationLimits, // ✅ Ajouté
+    reservationLimits, // ✅ Ajouté
   } = useAuth();
   const navigate = useNavigate();
 
@@ -102,9 +104,27 @@ export default function HotelReservation() {
   const [loadingHotel, setLoadingHotel] = useState(true);
   const [passagerTypes, setPassagerTypes] = useState({});
   const [typesChambre, setTypesChambre] = useState([]);
+  const [limitsChecked, setLimitsChecked] = useState(false);
+  const [showLimitsWarning, setShowLimitsWarning] = useState(false);
 
   const fetchedHotelRef = useRef(false);
   const fetchedClientRef = useRef(false);
+
+  // ✅ Vérifier les limites de réservation au chargement
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (authenticated && !limitsChecked) {
+        await checkReservationLimits();
+        setLimitsChecked(true);
+
+        // Afficher un avertissement si les limites sont proches
+        if (reservationLimits.remaining_today <= 1 || reservationLimits.remaining_pending <= 1) {
+          setShowLimitsWarning(true);
+        }
+      }
+    };
+    checkLimits();
+  }, [authenticated, limitsChecked, checkReservationLimits, reservationLimits]);
 
   useEffect(() => {
     const fetchHotel = async () => {
@@ -197,6 +217,26 @@ export default function HotelReservation() {
       navigate(LOGIN_ROUTE);
     }
   }, [authenticated, loading, navigate]);
+
+  // ✅ Vérification des limites avant soumission
+  const canProceedWithReservation = () => {
+    if (!reservationLimits.can_reserve) {
+      setError(reservationLimits.message || "Vous ne pouvez pas faire de nouvelle réservation pour le moment");
+      return false;
+    }
+
+    if (reservationLimits.remaining_today <= 0) {
+      setError(`Vous avez atteint la limite de ${reservationLimits.max_per_day} réservations par jour. Veuillez réessayer demain.`);
+      return false;
+    }
+
+    if (reservationLimits.remaining_pending <= 0) {
+      setError(`Vous avez trop de réservations en attente (${reservationLimits.pending_count}/${reservationLimits.max_pending}). Veuillez finaliser ou annuler certaines réservations.`);
+      return false;
+    }
+
+    return true;
+  };
 
   const calculerNuits = () => {
     if (watchCheckIn && watchCheckOut) {
@@ -326,6 +366,20 @@ export default function HotelReservation() {
     setLoading(true);
     setError("");
 
+    // ✅ Vérifier les limites de réservation avant tout
+    if (!canProceedWithReservation()) {
+      setLoading(false);
+      return;
+    }
+
+    // Rafraîchir les limites pour être sûr
+    const freshLimits = await checkReservationLimits();
+    if (!freshLimits?.allowed) {
+      setError(freshLimits?.message || "Vous ne pouvez pas faire cette réservation pour le moment");
+      setLoading(false);
+      return;
+    }
+
     if (!values.check_in || !values.check_out) {
       setError("Veuillez sélectionner les dates d'arrivée et de départ");
       setLoading(false);
@@ -408,7 +462,11 @@ export default function HotelReservation() {
       };
 
       const response = await createHotelReservation(reservationData);
+
       if (response?.success) {
+        // ✅ Rafraîchir les limites après réservation réussie
+        await checkReservationLimits();
+
         navigate("/client/orders", {
           state: {
             message:
@@ -421,11 +479,42 @@ export default function HotelReservation() {
       }
     } catch (err) {
       console.error("Reservation error:", err);
-      setError(err.response?.data?.message || "Une erreur s'est produite");
+      // ✅ Gérer l'erreur de limite depuis le backend
+      if (err.response?.status === 429) {
+        setError(err.response?.data?.message || "Limite de réservations atteinte");
+        await checkReservationLimits(); // Rafraîchir les limites
+      } else {
+        setError(err.response?.data?.message || "Une erreur s'est produite");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Afficher un message d'avertissement si les limites sont atteintes
+  if (!reservationLimits.can_reserve && limitsChecked && authenticated) {
+    return (
+      <div className="hotel-reservation-page">
+        <div className="hotel-reservation-container">
+          <div className="bg-yellow-50 border border-yellow-400 text-yellow-700 px-6 py-6 rounded-lg text-center">
+            <AlertCircle size={48} className="mx-auto mb-4 text-yellow-500" />
+            <h2 className="text-xl font-bold mb-2">Limite de réservations atteinte</h2>
+            <p className="mb-4">{reservationLimits.message || "Vous avez atteint la limite de réservations autorisées."}</p>
+            <div className="bg-white rounded-lg p-4 mb-4 text-left">
+              <p className="font-semibold mb-2">📊 Vos limites actuelles :</p>
+              <ul className="space-y-1 text-sm">
+                <li>📅 Réservations aujourd'hui : {reservationLimits.used_today} / {reservationLimits.max_per_day}</li>
+                <li>⏳ Réservations en attente : {reservationLimits.pending_count} / {reservationLimits.max_pending}</li>
+              </ul>
+            </div>
+            <Link to="/client" className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600">
+              Retour au dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loadingHotel || !clientLoaded) {
     return (
@@ -495,6 +584,19 @@ export default function HotelReservation() {
 
         {/* Form */}
         <div className="hotel-reservation-form-container">
+          {/* ✅ Avertissement limites */}
+          {showLimitsWarning && reservationLimits.can_reserve && (
+            <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+              <div className="flex items-center gap-2 text-yellow-700">
+                <AlertCircle size={18} />
+                <span className="text-sm">
+                  ⚠️ Attention : Il vous reste {reservationLimits.remaining_today} réservation(s) possible(s) aujourd'hui
+                  et {reservationLimits.remaining_pending} réservation(s) en attente possible(s).
+                </span>
+              </div>
+            </div>
+          )}
+
           <h2 className="hotel-reservation-form-title">Réservation d'hôtel</h2>
 
           <Form {...form}>
@@ -674,6 +776,7 @@ export default function HotelReservation() {
                     onClick={ajouterPassager}
                     variant="outline"
                     className="add-passenger-btn"
+                    disabled={!reservationLimits.can_reserve}
                   >
                     <Plus size={14} />
                     Ajouter un passager
@@ -905,7 +1008,11 @@ export default function HotelReservation() {
                 )}
               />
 
-              <Button type="submit" disabled={loading} className="submit-btn">
+              <Button
+                type="submit"
+                disabled={loading || !reservationLimits.can_reserve}
+                className="submit-btn"
+              >
                 {loading ? (
                   <Loader className="animate-spin" />
                 ) : (

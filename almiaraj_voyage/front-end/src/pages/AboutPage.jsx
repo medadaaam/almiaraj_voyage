@@ -7,9 +7,9 @@ import "./aboutPage.css";
 
 export default function AboutPage() {
   const stats = [
-    { icon: <Users className="stat-icon" />, value: "10k+", label: "Clients satisfaits" },
-    { icon: <Globe className="stat-icon" />, value: "50+", label: "Destinations" },
-    { icon: <Award className="stat-icon" />, value: "15+", label: "Années d'expérience" },
+    { icon: <Users className="stat-icon" />, value: "5k+", label: "Clients satisfaits" },
+    { icon: <Globe className="stat-icon" />, value: "30+", label: "Destinations" },
+    { icon: <Award className="stat-icon" />, value: "6+", label: "Années d'expérience" },
     { icon: <Heart className="stat-icon" />, value: "100%", label: "Voyages sur mesure" }
   ];
 

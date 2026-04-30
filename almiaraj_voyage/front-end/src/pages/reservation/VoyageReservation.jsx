@@ -24,12 +24,13 @@ import {
   MapPin,
   Star,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { LOGIN_ROUTE } from "@/router";
 
 // Schéma pour un passager individuel
@@ -63,8 +64,8 @@ const formSchema = z.object({
     .min(6, "CIN doit contenir au moins 6 caractères")
     .max(10, "CIN trop long"),
   passagers: z.array(z.any()),
-  terms: z.literal(true, {
-    errorMap: () => ({ message: "Vous devez accepter les conditions" }),
+  terms: z.boolean().refine((val) => val === true, {
+    message: "Vous devez accepter les conditions",
   }),
 });
 
@@ -78,6 +79,8 @@ export default function VoyageReservation() {
     clientProfile,
     createVoyageReservation,
     getVoyageDetails,
+    checkReservationLimits, // ✅ Ajouté
+    reservationLimits, // ✅ Ajouté
   } = useAuth();
   const navigate = useNavigate();
 
@@ -89,26 +92,59 @@ export default function VoyageReservation() {
   const [voyage, setVoyage] = useState(null);
   const [loadingVoyage, setLoadingVoyage] = useState(true);
   const [passagerTypes, setPassagerTypes] = useState({});
+  const [limitsChecked, setLimitsChecked] = useState(false);
+  const [showLimitsWarning, setShowLimitsWarning] = useState(false);
+
+  const fetchedClientRef = useRef(false);
+
+  // ✅ Vérifier les limites de réservation au chargement
+  useEffect(() => {
+    const checkLimits = async () => {
+      if (authenticated && !limitsChecked) {
+        await checkReservationLimits();
+        setLimitsChecked(true);
+
+        // Afficher un avertissement si les limites sont proches
+        if (reservationLimits.remaining_today <= 1 || reservationLimits.remaining_pending <= 1) {
+          setShowLimitsWarning(true);
+        }
+      }
+    };
+    checkLimits();
+  }, [authenticated, limitsChecked, checkReservationLimits, reservationLimits]);
 
   // Charger le voyage
   useEffect(() => {
     const fetchVoyage = async () => {
       setLoadingVoyage(true);
-      const voyageData = await getVoyageDetails(id);
-      setVoyage(voyageData);
-      setLoadingVoyage(false);
+      try {
+        const voyageData = await getVoyageDetails(id);
+        setVoyage(voyageData);
+      } catch (err) {
+        console.error("Error fetching voyage:", err);
+        setError("Erreur lors du chargement du voyage");
+      } finally {
+        setLoadingVoyage(false);
+      }
     };
     fetchVoyage();
-  }, [id]);
+  }, [id, getVoyageDetails]);
 
   // Charger le profil client
   useEffect(() => {
     const loadClient = async () => {
-      await getClientProfile();
-      setClientLoaded(true);
+      if (fetchedClientRef.current) return;
+      fetchedClientRef.current = true;
+      try {
+        await getClientProfile();
+      } catch (err) {
+        console.error("Error loading client:", err);
+      } finally {
+        setClientLoaded(true);
+      }
     };
     loadClient();
-  }, []);
+  }, [getClientProfile]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -119,7 +155,6 @@ export default function VoyageReservation() {
       telephone: "",
       cin: "",
       passagers: [],
-
       terms: false,
     },
   });
@@ -137,7 +172,7 @@ export default function VoyageReservation() {
       form.setValue("email", clientProfile.client.email || user?.email || "");
       form.setValue("telephone", clientProfile.client.numTelCl || "");
       form.setValue("cin", clientProfile.client.cin || "");
-    } else if (user) {
+    } else if (user && clientLoaded) {
       const nameParts = user.name?.split(" ") || [];
       form.setValue("nom", nameParts[0] || "");
       form.setValue("prenom", nameParts.slice(1).join(" ") || "");
@@ -151,6 +186,26 @@ export default function VoyageReservation() {
       navigate(LOGIN_ROUTE);
     }
   }, [authenticated, loading, navigate]);
+
+  // ✅ Vérification des limites avant soumission
+  const canProceedWithReservation = () => {
+    if (!reservationLimits.can_reserve) {
+      setError(reservationLimits.message || "Vous ne pouvez pas faire de nouvelle réservation pour le moment");
+      return false;
+    }
+
+    if (reservationLimits.remaining_today <= 0) {
+      setError(`Vous avez atteint la limite de ${reservationLimits.max_per_day} réservations par jour. Veuillez réessayer demain.`);
+      return false;
+    }
+
+    if (reservationLimits.remaining_pending <= 0) {
+      setError(`Vous avez trop de réservations en attente (${reservationLimits.pending_count}/${reservationLimits.max_pending}). Veuillez finaliser ou annuler certaines réservations.`);
+      return false;
+    }
+
+    return true;
+  };
 
   const ajouterPassager = () => {
     const newIndex = fields.length;
@@ -268,6 +323,20 @@ export default function VoyageReservation() {
     setLoading(true);
     setError("");
 
+    // ✅ Vérifier les limites de réservation avant tout
+    if (!canProceedWithReservation()) {
+      setLoading(false);
+      return;
+    }
+
+    // Rafraîchir les limites pour être sûr
+    const freshLimits = await checkReservationLimits();
+    if (!freshLimits?.allowed) {
+      setError(freshLimits?.message || "Vous ne pouvez pas faire cette réservation pour le moment");
+      setLoading(false);
+      return;
+    }
+
     // ✅ pas besoin de vérifier allConfirmed si pas de passagers
     if (fields.length > 0) {
       const allConfirmed = fields.every(
@@ -330,6 +399,9 @@ export default function VoyageReservation() {
         await createVoyageReservation(reservationData);
 
       if (reservationResponse?.success) {
+        // ✅ Rafraîchir les limites après réservation réussie
+        await checkReservationLimits();
+
         navigate("/client/orders", {
           state: {
             message:
@@ -342,11 +414,40 @@ export default function VoyageReservation() {
       }
     } catch (err) {
       console.error("Reservation error:", err);
-      setError(err.response?.data?.message || "Une erreur s'est produite");
+      // ✅ Gérer l'erreur de limite depuis le backend
+      if (err.response?.status === 429) {
+        setError(err.response?.data?.message || "Limite de réservations atteinte");
+        await checkReservationLimits(); // Rafraîchir les limites
+      } else {
+        setError(err.response?.data?.message || "Une erreur s'est produite");
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Afficher un message d'avertissement si les limites sont atteintes
+  if (!reservationLimits.can_reserve && limitsChecked && authenticated) {
+    return (
+      <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
+        <div className="bg-yellow-50 border border-yellow-400 text-yellow-700 px-6 py-6 rounded-lg text-center">
+          <AlertCircle size={48} className="mx-auto mb-4 text-yellow-500" />
+          <h2 className="text-xl font-bold mb-2">Limite de réservations atteinte</h2>
+          <p className="mb-4">{reservationLimits.message || "Vous avez atteint la limite de réservations autorisées."}</p>
+          <div className="bg-white rounded-lg p-4 mb-4 text-left">
+            <p className="font-semibold mb-2">📊 Vos limites actuelles :</p>
+            <ul className="space-y-1 text-sm">
+              <li>📅 Réservations aujourd'hui : {reservationLimits.used_today} / {reservationLimits.max_per_day}</li>
+              <li>⏳ Réservations en attente : {reservationLimits.pending_count} / {reservationLimits.max_pending}</li>
+            </ul>
+          </div>
+          <Link to="/client" className="inline-block bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600">
+            Retour au dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loadingVoyage || !clientLoaded) {
     return (
@@ -370,6 +471,19 @@ export default function VoyageReservation() {
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow-lg">
+      {/* ✅ Avertissement limites */}
+      {showLimitsWarning && reservationLimits.can_reserve && (
+        <div className="mb-6 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+          <div className="flex items-center gap-2 text-yellow-700">
+            <AlertCircle size={18} />
+            <span className="text-sm">
+              ⚠️ Attention : Il vous reste {reservationLimits.remaining_today} réservation(s) possible(s) aujourd'hui
+              et {reservationLimits.remaining_pending} réservation(s) en attente possible(s).
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Carte du voyage */}
       <div className="bg-gradient-to-r from-[#2f6f85] to-[#1e4a5f] rounded-2xl p-6 text-white mb-8">
         <div className="flex flex-wrap justify-between items-start gap-4">
@@ -771,7 +885,7 @@ export default function VoyageReservation() {
 
           <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || !reservationLimits.can_reserve}
             className="w-full bg-[#2f6f85] hover:bg-[#25596b] text-white py-3"
           >
             {loading ? (

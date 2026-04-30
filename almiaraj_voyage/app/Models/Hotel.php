@@ -15,14 +15,7 @@ class Hotel extends Model
         'amenities',
     ];
 
-<<<<<<< HEAD
     
-=======
-    // protected $casts = [
-    //     'amenities' => 'array',
-    // ];
-
->>>>>>> 5093934f2500db671ca2a32110c82a5868da5272
     public function service()
     {
         return $this->belongsTo(Service::class, 'id', 'id');

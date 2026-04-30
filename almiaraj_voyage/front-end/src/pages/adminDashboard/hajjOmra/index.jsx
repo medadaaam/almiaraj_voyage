@@ -1,14 +1,23 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Clock, Camera, Trash2, Edit, Eye, Calendar, Bed } from "lucide-react";
+import { Clock, Camera, Trash2, Edit, Eye, Calendar, Bed, Search, Filter, X, MapPin, Globe } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
 export default function AdminHajjOmras() {
     const [items, setItems] = useState([]);
+    const [filteredItems, setFilteredItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
     const [imageErrors, setImageErrors] = useState({});
+    
+    // Search and filter states
+    const [searchTerm, setSearchTerm] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState("");
+    const [selectedFormule, setSelectedFormule] = useState("");
+    const [formules, setFormules] = useState([]);
 
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
@@ -21,6 +30,60 @@ export default function AdminHajjOmras() {
     useEffect(() => {
         fetchItems();
     }, []);
+
+    // Filter and sort items whenever dependencies change
+    useEffect(() => {
+        let result = [...items];
+        
+        // Apply search
+        if (searchTerm) {
+            result = result.filter(item => {
+                const serviceData = item.service || item;
+                const itemData = item.hajj_omra || item;
+                const name = (serviceData.nomServ || "").toLowerCase();
+                const search = searchTerm.toLowerCase();
+                return name.includes(search);
+            });
+        }
+        
+        // Apply type filter
+        if (selectedType) {
+            result = result.filter(item => {
+                const itemData = item.hajj_omra || item;
+                return itemData.type === selectedType;
+            });
+        }
+        
+        // Apply formule filter
+        if (selectedFormule) {
+            result = result.filter(item => {
+                const itemData = item.hajj_omra || item;
+                return itemData.formule === selectedFormule;
+            });
+        }
+        
+        // Apply sorting
+        result.sort((a, b) => {
+            const serviceA = a.service || a;
+            const serviceB = b.service || b;
+            
+            switch(sortBy) {
+                case "price_asc":
+                    return (serviceA.prix || 0) - (serviceB.prix || 0);
+                case "price_desc":
+                    return (serviceB.prix || 0) - (serviceA.prix || 0);
+                case "name_asc":
+                    return (serviceA.nomServ || "").localeCompare(serviceB.nomServ || "");
+                case "name_desc":
+                    return (serviceB.nomServ || "").localeCompare(serviceA.nomServ || "");
+                case "newest":
+                default:
+                    return new Date(serviceB.created_at || 0) - new Date(serviceA.created_at || 0);
+            }
+        });
+        
+        setFilteredItems(result);
+    }, [items, searchTerm, sortBy, selectedType, selectedFormule]);
 
     const fetchItems = async () => {
         try {
@@ -37,6 +100,14 @@ export default function AdminHajjOmras() {
             }
 
             setItems(itemsData);
+            
+            // Extract unique formules for filter
+            const uniqueFormules = [...new Set(itemsData.map(item => {
+                const itemData = item.hajj_omra || item;
+                return itemData.formule;
+            }).filter(Boolean))];
+            setFormules(uniqueFormules);
+            
             setError("");
         } catch (err) {
             console.error('Error:', err);
@@ -66,6 +137,13 @@ export default function AdminHajjOmras() {
 
     const handleImageError = (id) => {
         setImageErrors(prev => ({ ...prev, [id]: true }));
+    };
+
+    const clearFilters = () => {
+        setSearchTerm("");
+        setSortBy("newest");
+        setSelectedType("");
+        setSelectedFormule("");
     };
 
     if (loading) {
@@ -99,12 +177,107 @@ export default function AdminHajjOmras() {
                 </Link>
             </div>
 
-            {items.length === 0 ? (
+            {/* Search and Filter Bar */}
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex-1 min-w-[200px]">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par nom..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="w-48">
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                        >
+                            <option value="newest">Plus récents</option>
+                            <option value="name_asc">Nom (A-Z)</option>
+                            <option value="name_desc">Nom (Z-A)</option>
+                            <option value="price_asc">Prix (croissant)</option>
+                            <option value="price_desc">Prix (décroissant)</option>
+                        </select>
+                    </div>
+
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md transition ${
+                            showFilters ? "bg-[#fb923c] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        <Filter size={18} />
+                        Filtres
+                        {(selectedType || selectedFormule) && (
+                            <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                    </button>
+
+                    {(searchTerm || selectedType || selectedFormule) && (
+                        <button onClick={clearFilters} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
+                            <X size={14} /> Effacer les filtres
+                        </button>
+                    )}
+                </div>
+
+                {showFilters && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                <select
+                                    value={selectedType}
+                                    onChange={(e) => setSelectedType(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                >
+                                    <option value="">Tous les types</option>
+                                    <option value="hajj">Hajj</option>
+                                    <option value="omra">Omra</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Formule</label>
+                                <select
+                                    value={selectedFormule}
+                                    onChange={(e) => setSelectedFormule(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                >
+                                    <option value="">Toutes les formules</option>
+                                    {formules.map(formule => (
+                                        <option key={formule} value={formule}>{formule}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="mt-3 text-sm text-gray-500">
+                    {filteredItems.length} service(s) trouvé(s)
+                </div>
+            </div>
+
+            {filteredItems.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-lg shadow">
                     <p className="text-gray-500">Aucun service trouvé</p>
-                    <Link to="/admin/ajouterHajjOmra" className="text-[#fb923c] hover:underline mt-2 inline-block">
-                        Ajouter votre premier service
-                    </Link>
+                    {(searchTerm || selectedType || selectedFormule) && (
+                        <button onClick={clearFilters} className="text-[#fb923c] hover:underline mt-2 inline-block">
+                            Effacer les filtres
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="overflow-x-auto bg-white rounded-xl shadow">
@@ -122,7 +295,7 @@ export default function AdminHajjOmras() {
                             </tr>
                         </thead>
                         <tbody>
-                            {items.map((item) => {
+                            {filteredItems.map((item) => {
                                 const serviceData = item.service || item;
                                 const itemData = item.hajj_omra || item;
                                 const itemId = item.id || itemData.id;

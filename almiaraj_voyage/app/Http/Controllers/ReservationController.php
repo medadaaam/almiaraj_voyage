@@ -16,6 +16,78 @@ class ReservationController extends Controller
     /**
      * Générer une référence unique
      */
+
+    public function index()
+    {
+        try {
+            $reservations = Reservation::with(['client', 'service'])->orderBy('created_at', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $reservations
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des réservations',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function updateStatus(Request $request, $id)
+    {
+        try {
+            $reservation = Reservation::findOrFail($id);
+            $reservation->status = $request->status;
+            $reservation->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Statut mis à jour avec succès',
+                'data' => $reservation
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour'
+            ], 500);
+        }
+    }
+    public function showAd($id)
+    {
+        try {
+            $reservation = Reservation::with(['client', 'service'])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $reservation
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Réservation non trouvée'
+            ], 404);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $reservation = Reservation::findOrFail($id);
+            $reservation->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Réservation supprimée avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression'
+            ], 500);
+        }
+    }
+
     private function generateReference()
     {
         do {

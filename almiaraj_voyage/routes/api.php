@@ -1,7 +1,8 @@
 <?php
 
+use App\Http\Controllers\AvisController;
 use App\Http\Controllers\BilletController;
-use App\Http\Controllers\ClientController ;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DestinationController;
 use App\Http\Controllers\HajjOmraController;
 use Illuminate\Http\Request;
@@ -16,13 +17,29 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Route::middleware(['auth:sanctum'])->group(function () {
-//     Route::post('/reservations', [ReservationController::class, 'store']);
-//     Route::get('/reservations/{id}', [ReservationController::class, 'show']);
-//     Route::get('/user', function (Request $request) {
-//         return $request->user();
-//     });
-// });
+// Admin routes
+Route::prefix('admin')->group(function () {
+    // Reservations
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::get('/reservations/{id}', [ReservationController::class, 'showAd']);
+    Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
+    Route::put('/reservations/{id}/status', [ReservationController::class, 'updateStatus']);
+
+    // Clients 
+    Route::get('/clients', [ClientController::class, 'adminIndex']);
+    Route::get('/clients/{id}', [ClientController::class, 'adminShow']);
+    Route::delete('/clients/{id}', [ClientController::class, 'adminDestroy']);
+
+    // Avis
+    Route::get('/admin/avis', [AvisController::class, 'adminIndex']);
+    Route::get('/admin/avis/{id}', [AvisController::class, 'adminShow']);
+    Route::delete('/admin/avis/{id}', [AvisController::class, 'adminDestroy']);
+
+    // Messages
+    Route::get('/admin/messages', [MessageController::class, 'adminIndex']);
+    Route::get('/admin/messages/{id}', [MessageController::class, 'adminShow']);
+    Route::delete('/admin/messages/{id}', [MessageController::class, 'adminDestroy']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations/voyage', [ReservationController::class, 'storeVoyage']);
@@ -33,26 +50,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reservations/{id}/cancel', [ReservationController::class, 'cancel']);
 });
 
-
-
 Route::post('/contact/message', [MessageController::class, 'store']);
-
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-messages', [MessageController::class, 'myMessages']);
     Route::get('/client/messages/{id}', [MessageController::class, 'showForClient']);
     Route::post('/client/messages/{id}/reply', [MessageController::class, 'reply']);
-
 });
 
 Route::post('/services', [ServiceController::class, 'store']);
-
-// Route::prefix('client')->group(function () {
-//     Route::get('/voyages', [VoyageController::class, 'indexCl']);
-//     Route::get('/hotels', [HotelController::class, 'indexCl']);
-//     Route::get('/hajj-omras', [HajjOmraController::class, 'indexCl']);
-//     Route::get('/billets', [BilletController::class, 'indexCl']);
-// });
 
 Route::middleware('auth:sanctum')->get('/client/profile', [ClientController::class, 'getProfile']);
 Route::middleware('auth:sanctum')->put('/client/profile', [ClientController::class, 'update']);
@@ -103,4 +109,4 @@ Route::get('/destinations', [DestinationController::class, 'index']);
 Route::get('/destinations/search', [VoyageController::class, 'searchDestinations']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

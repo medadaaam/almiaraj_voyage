@@ -51,7 +51,10 @@ const AuthApi = {
     return await axiosClient.get("/destinations");
   },
 
-
+  // Create hotel
+  createHotelReservation: async (data) => {
+    return await axiosClient.post('/reservations/hotel', data);;
+  },
 
   getDestinationServices: async (id) => {
     return await axiosClient.get(`/destinationsCl/${id}/services`);
@@ -123,9 +126,9 @@ const AuthApi = {
   getMyMessages: async () => {
     return await axiosClient.get("/my-messages");
   },
-getClientMessageDetails(messageId) {
+  getClientMessageDetails(messageId) {
     return axiosClient.get(`/client/messages/${messageId}`);
-},
+  },
 };
 
 export default AuthApi;

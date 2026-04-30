@@ -7,8 +7,8 @@ use App\Models\Service;
 use App\Models\Billet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
-use Illuminate\Container\Attributes\Storage;
 
 class BilletController extends Controller
 {
@@ -21,7 +21,7 @@ class BilletController extends Controller
                 'id' => $b->id,
                 'name' => $b->service->nomServ,
                 'from' => $b->villeDepartBi,
-                'to' => $b->destinationBi,
+                'to' => $b->villeArriveeBi,
                 'departure' => $b->dateDepartBi,
                 'return' => $b->dateRetourBi,
                 'type' => $b->typeBi,
@@ -30,23 +30,20 @@ class BilletController extends Controller
                 'rating' => $b->service->rating,
             ];
         });
-         return response()->json([
+        
+        return response()->json([
             'data' => $data,
             'current_page' => $billets->currentPage(),
             'last_page' => $billets->lastPage(),
             'total' => $billets->total(),
-
         ]);
-        return response()->json($data);
     }
 
-
-
-        public function index()
+    public function index()
     {
         $billets = Billet::with(['service', 'destination'])
             ->orderBy('id', 'desc')
-            ->paginate(5);
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -66,6 +63,7 @@ class BilletController extends Controller
                 'prix' => 'required|numeric|min:0',
                 'typeBi' => 'required|in:aller_simple,aller_retour',
                 'villeDepartBi' => 'required|string|max:100',
+                'villeArriveeBi' => 'required|string|max:100',
                 'destination_id' => 'required|exists:destinations,id',
                 'dateDepartBi' => 'required|date',
             ];
@@ -79,20 +77,14 @@ class BilletController extends Controller
 
             $validated = $request->validate($rules);
 
-            // Handle image
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imagePath = $image->store('billets', 'public');
-            }
+
 
             // Create service
             $service = Service::create([
-                'nomServ' => $request->nomServ,
-                'description' => $request->description,
-                'prix' => $request->prix,
+                'nomServ' => $validated['nomServ'],
+                'description' => $validated['description'],
+                'prix' => $validated['prix'],
                 'type' => 'billet',
-                'image' => $imagePath,
             ]);
 
             // Create billet
@@ -100,6 +92,7 @@ class BilletController extends Controller
                 'id' => $service->id,
                 'typeBi' => $request->typeBi,
                 'villeDepartBi' => $request->villeDepartBi,
+                'villeArriveeBi' => $request->villeArriveeBi,
                 'destination_id' => $request->destination_id,
                 'dateDepartBi' => $request->dateDepartBi,
                 'dateRetourBi' => $request->dateRetourBi ?? null,
@@ -112,6 +105,7 @@ class BilletController extends Controller
                 'message' => 'Billet créé avec succès',
                 'data' => $service->load('billet.destination')
             ], 201);
+            
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -163,6 +157,7 @@ class BilletController extends Controller
                 'prix' => 'required|numeric|min:0',
                 'typeBi' => 'required|in:aller_simple,aller_retour',
                 'villeDepartBi' => 'required|string|max:100',
+                'villeArriveeBi' => 'required|string|max:100',
                 'destination_id' => 'required|exists:destinations,id',
                 'dateDepartBi' => 'required|date',
             ];
@@ -182,20 +177,12 @@ class BilletController extends Controller
                 'prix' => $request->prix,
             ]);
 
-            // Handle image update
-            if ($request->hasFile('image')) {
-                if ($service->image && Storage::disk('public')->exists($service->image)) {
-                    Storage::disk('public')->delete($service->image);
-                }
-                $image = $request->file('image');
-                $service->image = $image->store('billets', 'public');
-                $service->save();
-            }
 
             // Update billet
             $billet->update([
                 'typeBi' => $request->typeBi,
                 'villeDepartBi' => $request->villeDepartBi,
+                'villeArriveeBi' => $request->villeArrivee,
                 'destination_id' => $request->destination_id,
                 'dateDepartBi' => $request->dateDepartBi,
                 'dateRetourBi' => $request->dateRetourBi ?? null,
@@ -227,10 +214,6 @@ class BilletController extends Controller
             $billet = Billet::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            if ($service->image && Storage::disk('public')->exists($service->image)) {
-                Storage::disk('public')->delete($service->image);
-            }
-
             $billet->delete();
 
             DB::commit();
@@ -251,10 +234,9 @@ class BilletController extends Controller
         }
     }
 
-    public function showCl($id) {
+    public function showCl($id) 
+    {
         $billet = Billet::with('service')->findOrFail($id);
         return response()->json($billet);
-
     }
-
 }

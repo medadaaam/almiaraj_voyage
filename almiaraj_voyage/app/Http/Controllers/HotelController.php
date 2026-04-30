@@ -51,66 +51,68 @@ class HotelController extends Controller
         ]);
     }
 
-    public function store(Request $request)
-    {
-        try {
-            DB::beginTransaction();
 
-            // Simple validation like voyage (no image validation here)
-            $validated = $request->validate([
-                'nomServ' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'prix' => 'required|numeric|min:0',
-                'rating' => 'nullable|numeric|min:0|max:5',
-                'destination_id' => 'required|exists:destinations,id',
-                'amenities' => 'nullable|json',
-                // No image validation here - just like voyage
-            ]);
+   public function store(Request $request)
+{
+    try {
+        DB::beginTransaction();
 
-            // Handle image - exactly like voyage
-            $imagePath = null;
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imagePath = $image->store('hotels', 'public');
-            }
+        // Simple validation like voyage (no image validation here)
+        $validated = $request->validate([
+            'nomServ' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'prix' => 'required|numeric|min:0',
+            'rating' => 'nullable|numeric|min:0|max:5',
+            'destination_id' => 'required|exists:destinations,id',
+            'amenities' => 'nullable|json',
+            // No image validation here - just like voyage
+        ]);
 
-            // Create service (same as voyage)
-            $service = Service::create([
-                'nomServ' => $request->nomServ,
-                'description' => $request->description,
-                'prix' => $request->prix,
-                'type' => 'hotel',
-                'image' => $imagePath,
-                'rating' => $request->rating ?? 0,
-            ]);
-
-            // Decode amenities
-            $amenities = json_decode($request->amenities, true);
-
-            // Create hotel
-            $hotel = Hotel::create([
-                'id' => $service->id,
-                'destination_id' => $request->destination_id,
-                'amenities' => $amenities,
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Hôtel créé avec succès',
-                'data' => $service->load('hotel.destination')
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de la création de l\'hôtel',
-                'error' => $e->getMessage()
-            ], 500);
+        // Handle image - exactly like voyage
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imagePath = $image->store('hotels', 'public');
         }
+
+        // Create service (same as voyage)
+        $service = Service::create([
+            'nomServ' => $request->nomServ,
+            'description' => $request->description,
+            'prix' => $request->prix,
+            'type' => 'hotel',
+            'image' => $imagePath,
+            'rating' => $request->rating ?? 0,
+        ]);
+
+        // DON'T decode amenities - keep it as JSON string for database
+        // Just use the amenities as is from the request
+        $amenitiesString = $request->amenities; // This is already a JSON string
+
+        // Create hotel
+        $hotel = Hotel::create([
+            'id' => $service->id,
+            'destination_id' => $request->destination_id,
+            'amenities' => $amenitiesString, 
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Hôtel créé avec succès',
+            'data' => $service->load('hotel.destination')
+        ], 201);
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la création de l\'hôtel',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     public function showCl($id)
     {
@@ -223,13 +225,11 @@ class HotelController extends Controller
                 $service->save();
             }
 
-            // Decode amenities
-            $amenities = json_decode($request->amenities, true);
 
             // Update hotel
             $hotel->update([
                 'destination_id' => $request->destination_id,
-                'amenities' => $amenities,
+                'amenities' => $request->amenities,
             ]);
 
             DB::commit();
@@ -258,7 +258,7 @@ class HotelController extends Controller
             $hotel = Hotel::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            // Delete image if exists (same as voyage)
+            // Delete image if exists 
             if ($service->image && Storage::disk('public')->exists($service->image)) {
                 Storage::disk('public')->delete($service->image);
             }

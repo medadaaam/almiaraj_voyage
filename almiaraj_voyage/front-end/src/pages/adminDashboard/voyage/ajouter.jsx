@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { axiosClient } from "@/api/axios";
-import { Search, MapPin, Globe, X, Calendar, Clock, Upload, Trash2, Plus } from "lucide-react";
+import { Search, MapPin, Globe, X, Calendar, Clock, Upload, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -27,11 +27,10 @@ export default function AjouterVoyage() {
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   
-  // City selection states
+  // Destination selection states
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-  const [selectedCities, setSelectedCities] = useState([]); // Array of selected city objects
-  const [currentDestination, setCurrentDestination] = useState(null);
+  const [selectedDestination, setSelectedDestination] = useState(null);
   
   // Duration calculation
   const [calculatedDuree, setCalculatedDuree] = useState("");
@@ -55,80 +54,37 @@ export default function AjouterVoyage() {
     }
   }, [form.dateDepartV, form.dateRetourV]);
 
-  // Get all cities from all destinations
-  const getAllCities = () => {
-    const cities = [];
+  // Get all destinations (each destination is a city)
+  const getAllDestinations = () => {
     if (Array.isArray(destinations)) {
-      destinations.forEach(dest => {
-        if (Array.isArray(dest.villes)) {
-          dest.villes.forEach(ville => {
-            cities.push({
-              id: `${dest.id}_${ville}`,
-              cityName: ville,
-              country: dest.pays,
-              continent: dest.continente,
-              destinationId: dest.id,
-              destination: dest
-            });
-          });
-        }
-      });
+      return destinations;
     }
-    return cities;
+    return [];
   };
 
-  // Filter cities based on search term (excluding already selected ones)
-  const filteredCities = getAllCities().filter(city => 
-    city.cityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    city.country.toLowerCase().includes(searchTerm.toLowerCase())
-  ).filter(city => 
-    !selectedCities.some(selected => 
-      selected.cityName === city.cityName && selected.destinationId === city.destinationId
-    )
+  // Filter destinations based on search term
+  const filteredDestinations = getAllDestinations().filter(dest => 
+    dest.ville?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    dest.pays?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Add city to selection
-  const addCity = (city) => {
-    const newSelectedCities = [...selectedCities, city];
-    setSelectedCities(newSelectedCities);
-    
-    // Auto-set destination_id from the first city (all cities should be from same country)
-    if (!currentDestination && city.destinationId) {
-      setCurrentDestination(city.destination);
-      setForm({
-        ...form,
-        destination_id: city.destinationId
-      });
-    }
-    
-    setSearchTerm("");
+  // Add destination to selection
+  const selectDestination = (dest) => {
+    setSelectedDestination(dest);
+    setForm({ 
+      ...form, 
+      destination_id: dest.id 
+    });
+    setSearchTerm(`${dest.ville}, ${dest.pays}`);
     setShowDropdown(false);
   };
 
-  // Remove city from selection
-  const removeCity = (cityToRemove) => {
-    const newSelectedCities = selectedCities.filter(
-      city => !(city.cityName === cityToRemove.cityName && city.destinationId === cityToRemove.destinationId)
-    );
-    setSelectedCities(newSelectedCities);
-    
-    // If no cities left, clear destination
-    if (newSelectedCities.length === 0) {
-      setCurrentDestination(null);
-      setForm({
-        ...form,
-        destination_id: ""
-      });
-    }
-  };
-
-  // Clear all cities
-  const clearAllCities = () => {
-    setSelectedCities([]);
-    setCurrentDestination(null);
-    setForm({
-      ...form,
-      destination_id: ""
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedDestination(null);
+    setForm({ 
+      ...form, 
+      destination_id: "" 
     });
     setSearchTerm("");
   };
@@ -184,8 +140,8 @@ export default function AjouterVoyage() {
       return;
     }
 
-    if (selectedCities.length === 0) {
-      setError("Veuillez sélectionner au moins une ville");
+    if (!form.destination_id) {
+      setError("Veuillez sélectionner une destination");
       setIsSubmitting(false);
       return;
     }
@@ -214,11 +170,6 @@ export default function AjouterVoyage() {
       formData.append('description', form.description || '');
       formData.append('prix', form.prix);
       formData.append('destination_id', form.destination_id);
-      
-      // Send selected cities as JSON array
-      const citiesArray = selectedCities.map(city => city.cityName);
-      formData.append('selected_cities', JSON.stringify(citiesArray));
-      
       formData.append('dateDepartV', form.dateDepartV);
       formData.append('dateRetourV', form.dateRetourV);
       formData.append('programme', form.programme);
@@ -248,8 +199,7 @@ export default function AjouterVoyage() {
           programme: "",
           image: null,
         });
-        setSelectedCities([]);
-        setCurrentDestination(null);
+        setSelectedDestination(null);
         setImagePreview(null);
         setSearchTerm("");
         setCalculatedDuree("");
@@ -291,7 +241,7 @@ export default function AjouterVoyage() {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                placeholder="Ex: Circuit Impérial du Maroc"
+                placeholder="Ex: Aventure à Marrakech"
               />
             </div>
 
@@ -313,47 +263,13 @@ export default function AjouterVoyage() {
             </div>
           </div>
 
-          {/* Multiple Cities Selection */}
+          {/* Single Destination Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Villes à visiter * (Vous pouvez en sélectionner plusieurs)
+              Destination *
             </label>
 
-            {/* Selected Cities Tags */}
-            {selectedCities.length > 0 && (
-              <div className="mb-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                <div className="text-sm font-medium text-gray-700 mb-2">Villes sélectionnées ({selectedCities.length}):</div>
-                <div className="flex flex-wrap gap-2">
-                  {selectedCities.map((city, index) => (
-                    <span
-                      key={`${city.destinationId}_${city.cityName}_${index}`}
-                      className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                    >
-                      <MapPin size={14} />
-                      {city.cityName}, {city.country}
-                      <button
-                        type="button"
-                        onClick={() => removeCity(city)}
-                        className="ml-1 text-green-700 hover:text-red-700"
-                      >
-                        <X size={14} />
-                      </button>
-                    </span>
-                  ))}
-                  {selectedCities.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={clearAllCities}
-                      className="text-red-500 hover:text-red-700 text-sm underline ml-2"
-                    >
-                      Tout effacer
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Search Input for Adding Cities */}
+            {/* Search Input */}
             <div className="relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
@@ -362,55 +278,67 @@ export default function AjouterVoyage() {
                   value={searchTerm}
                   onChange={handleSearch}
                   onFocus={() => setShowDropdown(true)}
-                  placeholder="Rechercher une ville à ajouter (ex: Casablanca, Marrakech, Fès...)"
+                  placeholder="Rechercher une destination (ville ou pays)..."
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
                 />
                 {searchTerm && (
                   <button
                     type="button"
-                    onClick={() => setSearchTerm("")}
+                    onClick={clearSelection}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                   >
                     <X size={16} />
                   </button>
                 )}
               </div>
-              
+
               {/* Dropdown Results */}
-              {showDropdown && searchTerm && filteredCities.length > 0 && (
+              {showDropdown && searchTerm && filteredDestinations.length > 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {filteredCities.map((city) => (
+                  {filteredDestinations.map((dest) => (
                     <button
-                      key={city.id}
+                      key={dest.id}
                       type="button"
-                      onClick={() => addCity(city)}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center justify-between"
+                      onClick={() => selectDestination(dest)}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center gap-2"
                     >
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} className="text-[#fb923c]" />
-                        <div>
-                          <div className="font-medium">{city.cityName}</div>
-                          <div className="text-xs text-gray-500">
-                            {city.country} • {city.continent}
-                          </div>
+                      <MapPin size={16} className="text-[#fb923c]" />
+                      <div>
+                        <div className="font-medium">{dest.ville}</div>
+                        <div className="text-xs text-gray-500">
+                          {dest.pays} • {dest.continente}
                         </div>
                       </div>
-                      <Plus size={16} className="text-green-500" />
                     </button>
                   ))}
                 </div>
               )}
 
-              {showDropdown && searchTerm && filteredCities.length === 0 && (
+              {showDropdown && searchTerm && filteredDestinations.length === 0 && (
                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg p-4 text-center text-gray-500">
-                  Aucune ville trouvée pour "{searchTerm}"
+                  Aucune destination trouvée pour "{searchTerm}"
                 </div>
               )}
             </div>
 
-            <div className="mt-2 text-xs text-blue-600">
-              💡 Astuce: Ajoutez les villes dans l'ordre de visite
-            </div>
+            {/* Selected Destination Display */}
+            {selectedDestination && (
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Globe size={16} className="text-green-600" />
+                  <span className="text-sm text-green-700">
+                    <strong>Destination sélectionnée:</strong> {selectedDestination.ville}, {selectedDestination.pays}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Dates */}
@@ -489,7 +417,7 @@ export default function AjouterVoyage() {
               onChange={handleChange}
               rows="6"
               required
-              placeholder="Jour 1: Arrivée à Casablanca...&#10;Jour 2: Visite de Rabat...&#10;Jour 3: Excursion à Fès...&#10;Jour 4: ..."
+              placeholder="Jour 1: Arrivée...&#10;Jour 2: Visite...&#10;Jour 3: Excursion...&#10;Jour 4: ..."
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c] font-mono text-sm"
             />
           </div>
@@ -544,7 +472,7 @@ export default function AjouterVoyage() {
               {isSubmitting ? "Ajout en cours..." : "Ajouter le voyage"}
             </button>
             <Link 
-              to="/admin" 
+              to="/admin/voyages" 
               className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
             >
               Annuler

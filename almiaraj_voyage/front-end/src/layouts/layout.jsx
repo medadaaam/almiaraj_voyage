@@ -318,7 +318,7 @@ export default function Layout() {
             <div className="hidden lg:flex items-center justify-center flex-1">
               <ul className="flex items-center gap-8">
                 <li>
-                  <NavLink to="/" className="nav-link">
+                  <NavLink to="/" className="nav-link-client">
                     Accueil
                   </NavLink>
                 </li>
@@ -329,7 +329,7 @@ export default function Layout() {
                   onMouseEnter={handleServicesMouseEnter}
                   onMouseLeave={handleServicesMouseLeave}
                 >
-                  <button className="nav-link flex items-center gap-1">
+                  <button className="nav-link-client flex items-center gap-1">
                     Nos services
                     <svg
                       className={`w-4 h-4 transition-transform duration-300 ${servicesOpen ? "rotate-180" : ""}`}
@@ -353,7 +353,7 @@ export default function Layout() {
 
                 {navLinks.slice(1).map((link) => (
                   <li key={link.path}>
-                    <NavLink to={link.path} className="nav-link">
+                    <NavLink to={link.path} className="nav-link-client">
                       {link.name}
                     </NavLink>
                   </li>
@@ -365,7 +365,7 @@ export default function Layout() {
                   onMouseEnter={handleLangMouseEnter}
                   onMouseLeave={handleLangMouseLeave}
                 >
-                  <button className="nav-link flex items-center gap-2">
+                  <button className="nav-link-client flex items-center gap-2">
                     <img
                       src="https://flagcdn.com/w20/fr.png"
                       alt="Français"
@@ -490,7 +490,7 @@ export default function Layout() {
             <li>
               <NavLink
                 to="/"
-                className="mobile-nav-link"
+                className="mobile-nav-link-client"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Accueil
@@ -498,7 +498,7 @@ export default function Layout() {
             </li>
             <li className="mobile-dropdown">
               <details>
-                <summary className="mobile-nav-link ">
+                <summary className="mobile-nav-link-client ">
                   Nos services{" "}
                   <svg
                     className={`w-4 h-4  transition-transform duration-300 ${servicesOpen ? "rotate-180" : ""}`}
@@ -537,7 +537,7 @@ export default function Layout() {
             <li>
               <NavLink
                 to="/destinations"
-                className="mobile-nav-link"
+                className="mobile-nav-link-client"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Destinations
@@ -546,7 +546,7 @@ export default function Layout() {
             <li>
               <NavLink
                 to="/about"
-                className="mobile-nav-link"
+                className="mobile-nav-link-client"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 À propos
@@ -555,7 +555,7 @@ export default function Layout() {
             <li>
               <NavLink
                 to="/contact"
-                className="mobile-nav-link"
+                className="mobile-nav-link-client"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Contactez-nous
@@ -573,14 +573,14 @@ export default function Layout() {
                 <>
                   <NavLink
                     to="/register"
-                    className="mobile-nav-link"
+                    className="mobile-nav-link-client"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     S'inscrire
                   </NavLink>
                   <NavLink
                     to="/login"
-                    className="mobile-nav-link btn-mobile-primary"
+                    className="mobile-nav-link-client btn-mobile-primary"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Se connecter
@@ -588,7 +588,7 @@ export default function Layout() {
                 </>
               ) : (
                 <>
-                  <span className="mobile-nav-link">
+                  <span className="mobile-nav-link-client">
                     <DashboardLink />
                   </span>
                   <button
@@ -596,7 +596,7 @@ export default function Layout() {
                       logoutCallback();
                       setMobileMenuOpen(false);
                     }}
-                    className="mobile-nav-link"
+                    className="mobile-nav-link-client"
                     disabled={isLoggingOut}
                   >
                     {isLoggingOut ? "Déconnexion..." : "Déconnexion"}
@@ -623,7 +623,7 @@ export default function Layout() {
             <div className="hidden lg:flex items-center justify-center flex-1">
               <ul className="flex items-center gap-6">
                 <li>
-                  <NavLink to="/" className="nav-link text-sm">
+                  <NavLink to="/" className="nav-link-client text-sm">
                     Accueil
                   </NavLink>
                 </li>
@@ -634,7 +634,7 @@ export default function Layout() {
                   onMouseEnter={handleStickyServicesMouseEnter}
                   onMouseLeave={handleStickyServicesMouseLeave}
                 >
-                  <button className="nav-link text-sm flex items-center gap-1">
+                  <button className="nav-link-client text-sm flex items-center gap-1">
                     Nos services
                     <svg
                       className={`w-3 h-3 transition-transform duration-300 ${stickyServicesOpen ? "rotate-180" : ""}`}
@@ -657,17 +657,17 @@ export default function Layout() {
                 </li>
 
                 <li>
-                  <NavLink to="/destinations" className="nav-link text-sm">
+                  <NavLink to="/destinations" className="nav-link-client text-sm">
                     Destinations
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/about" className="nav-link text-sm">
+                  <NavLink to="/about" className="nav-link-client text-sm">
                     À propos
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/contact" className="nav-link text-sm">
+                  <NavLink to="/contact" className="nav-link-client text-sm">
                     Contactez-nous
                   </NavLink>
                 </li>
@@ -678,7 +678,7 @@ export default function Layout() {
                   onMouseEnter={handleStickyLangMouseEnter}
                   onMouseLeave={handleStickyLangMouseLeave}
                 >
-                  <button className="nav-link text-sm flex items-center gap-1">
+                  <button className="nav-link-client text-sm flex items-center gap-1">
                     <img
                       src="https://flagcdn.com/w20/fr.png"
                       alt="Français"

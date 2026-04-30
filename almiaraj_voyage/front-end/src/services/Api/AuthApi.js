@@ -64,6 +64,14 @@ const AuthApi = {
   getDestination: async (page = 1) => {
     return await axiosClient.get(`/destinationsCl?page=${page}`);
   },
+  getAllDestination: async () => {
+    return await axiosClient.get("/destinations");
+  },
+
+  // Create hotel
+  createHotelReservation: async (data) => {
+    return await axiosClient.post('/reservations/hotel', data);;
+  },
 
   getDestinationServices: async (id) => {
     return await axiosClient.get(`/destinationsCl/${id}/services`);
@@ -138,9 +146,9 @@ const AuthApi = {
   getMyMessages: async () => {
     return await axiosClient.get("/my-messages");
   },
+  getClientMessageDetails(messageId) {
+    return axiosClient.get(`/client/messages/${messageId}`);
 
-  getClientMessageDetails: async (messageId) => {
-    return await axiosClient.get(`/client/messages/${messageId}`);
   },
   checkReservationLimits: async () => {
     try {

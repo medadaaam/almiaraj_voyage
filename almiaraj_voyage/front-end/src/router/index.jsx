@@ -51,6 +51,12 @@ import BilletReservation from "@/pages/reservation/BilletReservation";
 import HajjOmraDetailsRes from "@/pages/reservation/HajjOmraReservation";
 import ReservationDetails from "@/pages/reservation/ReservationDetails";
 import MessageDetails from "@/pages/clientPages/MessageDetails";
+import AdminReservations from "@/pages/adminDashboard/reservations";
+import AdminClients from "@/pages/adminDashboard/clients";
+import AdminReservationDetails from "@/pages/adminDashboard/reservationDetails";
+import AdminDashboard from "@/pages/adminDashboard/dashboard";
+import AdminAvis from "@/pages/adminDashboard/avis";
+import AdminMessages from "@/pages/adminDashboard/messages";
 import ChangePassword from "@/pages/clientPages/ChangePassword";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsConditions from "@/pages/TermsConditions";
@@ -181,16 +187,33 @@ export const route = createBrowserRouter([
     children: [
       {
         path: "/admin",
-        element: <h1>Dashboard Admin</h1>,
+        element: <AdminLayout/>,
       },
       {
         path: "/admin/users",
-        element: <Contact />,
+        element: <AdminClients />,
       },
       {
         path: "/admin/reservations",
-        element: <h1>Gestion réservations</h1>,
+        element: <AdminReservations />,
       },
+      {
+        path: "/admin/reservations/:id",
+        element: <AdminReservationDetails />
+      },
+      {
+        path: "/admin/dashboard",
+        element: <AdminDashboard />
+      },
+      {
+        path: "/admin/avis",
+        element: <AdminAvis />
+      },
+      {
+        path: "/admin/messages",
+        element: <AdminMessages />
+      },
+
       {
         path: "/admin/voyages",
         element: <AdminVoyages />,
@@ -289,9 +312,9 @@ export const route = createBrowserRouter([
         path: "/billets/:id/reserver",
         element: <BilletReservation />,
       },
-            {
+      {
         path: "/client/reservations/:id",
-        element: <ReservationDetails  />,
+        element: <ReservationDetails />,
       },
       {
         path: "/hajj-omra/:id/reserver",
@@ -303,7 +326,7 @@ export const route = createBrowserRouter([
       },
       {
         path: "/client/messages/:id",
-        element: <MessageDetails  />,
+        element: <MessageDetails />,
       },
             {
         path: "/change-password",

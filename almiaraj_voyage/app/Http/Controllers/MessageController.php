@@ -15,6 +15,119 @@ class MessageController extends Controller
     /**
      * Envoyer un message (contact formulaire)
      */
+
+    // Admin: Get all messages
+    public function adminIndex()
+    {
+        try {
+            $messages = Message::with('client')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $messages
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des messages'
+            ], 500);
+        }
+    }
+
+    // Admin: Get single message
+    public function adminShow($id)
+    {
+        try {
+            $message = Message::with('client')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Message non trouvé'
+            ], 404);
+        }
+    }
+
+    // Admin: Delete message
+    public function adminDestroy($id)
+    {
+        try {
+            $message = Message::findOrFail($id);
+            $message->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Message supprimé avec succès'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la suppression'
+            ], 500);
+        }
+    }
+
+    // Admin: Update message status
+    public function adminUpdateStatus(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'statusM' => 'required|in:non_lu,lu,repondu'
+            ]);
+
+            $message = Message::findOrFail($id);
+            $message->statusM = $validated['statusM'];
+            $message->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Statut du message mis à jour',
+                'data' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la mise à jour'
+            ], 500);
+        }
+    }
+
+    // Admin: Reply to message
+    public function adminReply(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'reply' => 'required|string'
+            ]);
+
+            $message = Message::findOrFail($id);
+
+            // You can implement email sending here
+            // Mail::to($message->emailM)->send(...);
+
+            $message->reply = $validated['reply'];
+            $message->statusM = 'repondu';
+            $message->replied_at = now();
+            $message->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Réponse envoyée avec succès',
+                'data' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'envoi de la réponse'
+            ], 500);
+        }
+    }
     public function store(Request $request)
     {
         Log::info('Message reçu', ['data' => $request->all()]);

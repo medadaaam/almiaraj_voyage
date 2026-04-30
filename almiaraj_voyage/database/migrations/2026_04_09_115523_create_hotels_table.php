@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('hotels', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
             $table->unsignedBigInteger('destination_id')->nullable();
-            $table->json('amenities')->nullable();
+            $table->text('amenities')->nullable();
             $table->foreign('id')->references('id')->on('services')->cascadeOnDelete();
             $table->foreign('destination_id')->references('id')->on('destinations')->onDelete('set null');
             $table->timestamps();

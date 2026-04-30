@@ -70,7 +70,6 @@ class VoyageController extends Controller
                 'description' => 'nullable|string',
                 'prix' => 'required|numeric|min:0',
                 'destination_id' => 'required|exists:destinations,id',
-                'selected_cities' => 'nullable|json',
                 'dateDepartV' => 'required|date',
                 'dateRetourV' => 'required|date|after_or_equal:dateDepartV',
                 'programme' => 'required|string',
@@ -92,14 +91,10 @@ class VoyageController extends Controller
                 'image' => $imagePath,
             ]);
 
-            // Decode selected cities
-            $selectedCities = json_decode($request->selected_cities, true);
-
             // Create voyage
             $voyage = Voyage::create([
                 'id' => $service->id,
                 'destination_id' => $request->destination_id,
-                'selected_cities' => $selectedCities, // Store as array
                 'dateDepartV' => $request->dateDepartV,
                 'dateRetourV' => $request->dateRetourV,
                 'programme' => $request->programme,

@@ -12,14 +12,10 @@ class Hotel extends Model
     protected $fillable = [
         'id',
         'destination_id',
-        'selected_city',
         'amenities',
     ];
 
-    // protected $casts = [
-    //     'amenities' => 'array',
-    // ];
-
+    
     public function service()
     {
         return $this->belongsTo(Service::class, 'id', 'id');

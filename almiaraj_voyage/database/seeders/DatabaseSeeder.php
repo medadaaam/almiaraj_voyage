@@ -15,19 +15,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'adam',
-            'email' => 'adam@gmail.com',
-            'password' => '123456789',
-            'role' => 'admin'
-        ]);
-        User::factory()->create([
-            'name' => 'adam',
-            'email' => 'adam1@gmail.com',
-            'password' => '123456789',
-            'role' => 'user'
+        $this->call([
+            AdminSeeder::class,
+            UserSeeder::class,     
+            ClientSeeder::class,    
+            ServiceSeeder::class,  
+            ReservationSeeder::class, 
         ]);
     }
 }

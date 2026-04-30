@@ -9,18 +9,14 @@ class Voyage extends Model
     public $incrementing = false;
     protected $keyType = 'int';
     protected $fillable = [
-        'id',
-        'destination_id',
-        'selected_cities',
-        'dateDepartV',
-        'dateRetourV',
-        'programme',
+        'id', 
+        'destination_id', 
+        'dateDepartV', 
+        'dateRetourV', 
+        'programme', 
         'duree'
     ];
-
-    // protected $casts = [
-    //     'selected_cities' => 'array',
-    // ];
+    
 
     public function service()
     {

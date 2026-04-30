@@ -13,7 +13,6 @@ import {
   LogOut,
   ChevronRight,
   Bell,
-  Search,
   Moon,
   Sun,
   User,
@@ -33,8 +32,6 @@ export default function AdminLayout() {
   const location = useLocation();
   const { logout, user } = useAuth();
 
-
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -53,6 +50,8 @@ export default function AdminLayout() {
     if (path === '/admin/hotels') return 'Hôtels';
     if (path === '/admin/hajj-omras') return 'Hajj & Omra';
     if (path === '/admin/billets') return 'Billets';
+    if (path === '/admin/avis') return 'Avis';
+    if (path === '/admin/messages') return 'Messages';
     return 'Administration';
   };
 
@@ -65,65 +64,67 @@ export default function AdminLayout() {
     { path: "/admin/hotels", icon: <Hotel size={20} />, label: "Hôtels" },
     { path: "/admin/hajj-omras", icon: <ChartNoAxesCombined size={20} />, label: "Hajj & Omra" },
     { path: "/admin/billets", icon: <Ticket size={20} />, label: "Billets" },
+    { path: "/admin/avis", icon: <Star size={20} />, label: "Avis" },
+    { path: "/admin/messages", icon: <MessageCircle size={20} />, label: "Messages" },
   ];
 
   return (
     <div className={`admin-layout ${sidebarOpen ? 'sidebar-expanded' : 'sidebar-collapsed'} ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div className="mobile-overlay" onClick={toggleMobileMenu}></div>
+        <div className="admin-mobile-overlay" onClick={toggleMobileMenu}></div>
       )}
 
       {/* Sidebar */}
       <aside className={`admin-sidebar ${!sidebarOpen ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo-container">
-            <img src="/images/logo.png" alt="Almiaraj" className="logo-img" />
-            {sidebarOpen && <span className="logo-text">Almiaraj</span>}
+        <div className="admin-sidebar-header">
+          <div className="admin-logo-container">
+            <img src="/images/logo.png" alt="Almiaraj" className="admin-logo-img" />
+            {sidebarOpen && <span className="admin-logo-text">Almiaraj</span>}
           </div>
           {sidebarOpen && (
-            <button className="sidebar-toggle" onClick={toggleSidebar}>
+            <button className="admin-sidebar-toggle" onClick={toggleSidebar}>
               <ChevronRight size={20} />
             </button>
           )}
           {!sidebarOpen && (
-            <button className="sidebar-toggle collapsed" onClick={toggleSidebar}>
+            <button className="admin-sidebar-toggle collapsed" onClick={toggleSidebar}>
               <Menu size={20} />
             </button>
           )}
         </div>
 
-        <div className="sidebar-user">
-          <div className="user-avatar">
+        <div className="admin-sidebar-user">
+          <div className="admin-user-avatar">
             {user?.name?.charAt(0) || 'A'}
           </div>
           {sidebarOpen && (
-            <div className="user-info">
-              <p className="user-name">{user?.name || 'Administrateur'}</p>
-              <p className="user-role">Administrateur</p>
+            <div className="admin-user-info">
+              <p className="admin-user-name">{user?.name || 'Administrateur'}</p>
+              <p className="admin-user-role">Administrateur</p>
             </div>
           )}
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="admin-sidebar-nav">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => `nav-link-admin ${isActive ? 'active' : ''}`}
+              className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="nav-icon">{item.icon}</span>
-              {sidebarOpen && <span className="nav-label">{item.label}</span>}
+              <span className="admin-nav-icon">{item.icon}</span>
+              {sidebarOpen && <span className="admin-nav-label">{item.label}</span>}
               {sidebarOpen && item.badge && (
-                <span className="nav-badge">{item.badge}</span>
+                <span className="admin-nav-badge">{item.badge}</span>
               )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="sidebar-footer">
-          <button className="footer-btn" onClick={logout}>
+        <div className="admin-sidebar-footer">
+          <button className="admin-footer-btn" onClick={logout}>
             <LogOut size={20} />
             {sidebarOpen && <span>Déconnexion</span>}
           </button>
@@ -134,38 +135,24 @@ export default function AdminLayout() {
       <div className="admin-main">
         {/* Topbar */}
         <header className="admin-topbar">
-          <div className="topbar-left">
-            <button className="mobile-menu-btn" onClick={toggleMobileMenu}>
+          <div className="admin-topbar-left">
+            <button className="admin-mobile-menu-btn" onClick={toggleMobileMenu}>
               <Menu size={24} />
             </button>
-            <h1 className="page-title">{getPageTitle()}</h1>
+            <h1 className="admin-page-title">{getPageTitle()}</h1>
           </div>
 
-          {/* <li>
-            <NavLink to="/admin/avis">
-              <Star size={20} />
-              <span>Avis</span>
-            </NavLink>
-          </li> */}
-          <li>
-            <NavLink to="/admin/messages">
-              <MessageCircle size={20} />
-              <span>Messages</span>
-            </NavLink>
-          </li>
-
-          <div className="topbar-right">
-
-            <div className="notifications">
-              <button className="notif-btn">
+          <div className="admin-topbar-right">
+            <div className="admin-notifications">
+              <button className="admin-notif-btn">
                 <Bell size={20} />
-                {notifications > 0 && <span className="notif-badge">{notifications}</span>}
+                {notifications > 0 && <span className="admin-notif-badge">{notifications}</span>}
               </button>
             </div>
 
-            <div className="user-dropdown">
-              <button className="user-btn">
-                <div className="user-avatar-small">
+            <div className="admin-user-dropdown">
+              <button className="admin-user-btn">
+                <div className="admin-user-avatar-small">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
               </button>

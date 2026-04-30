@@ -8,13 +8,34 @@ import { CalendarIcon, UsersIcon, MapPinIcon, SearchIcon, XIcon, StarIcon } from
 import "./styles/search.css";
 import { useAuth } from "@/context/AuthContext"
 import { Link } from "react-router-dom"
+import { axiosClient } from "@/api/axios"
 
 export default function Search() {
     const { hotels, getHotels } = useAuth();
+    const [destinations, setDestinations] = React.useState([]);
 
     React.useEffect(() => {
         getHotels();
+        fetchDestinations();
     }, [])
+
+    // Fetch destinations from API
+    const fetchDestinations = async () => {
+        try {
+            const response = await axiosClient.get('/destinations');
+            let destinationsData = [];
+            if (response.data && response.data.data) {
+                destinationsData = response.data.data;
+            } else if (Array.isArray(response.data)) {
+                destinationsData = response.data;
+            } else if (response.data && response.data.destinations) {
+                destinationsData = response.data.destinations;
+            }
+            setDestinations(destinationsData);
+        } catch (error) {
+            console.error("Error fetching destinations:", error);
+        }
+    };
 
     const [date, setDate] = React.useState({
         from: null,
@@ -35,27 +56,34 @@ export default function Search() {
     const inputRef = React.useRef(null)
     const dropdownRef = React.useRef(null)
 
-    // ✅ استخراج الاقتراحات من location فقط مع الحفاظ على التنسي
-    const getLocationSuggestions = () => {
+    // Get destination suggestions from API (cities with country)
+    const getDestinationSuggestions = () => {
         const suggestionsMap = new Map();
-
-        hotels.forEach(hotel => {
-            if (hotel.location && !suggestionsMap.has(hotel.location)) {
-                suggestionsMap.set(hotel.location, hotel.location);
+        
+        destinations.forEach(dest => {
+            const city = dest.ville;
+            const country = dest.pays;
+            if (city && !suggestionsMap.has(city)) {
+                suggestionsMap.set(city, {
+                    city: city,
+                    country: country,
+                    display: `${city}, ${country}`
+                });
             }
         });
-
-        return Array.from(suggestionsMap.values()).sort();
+        
+        return Array.from(suggestionsMap.values());
     };
 
-    const locationSuggestions = getLocationSuggestions();
+    const destinationSuggestions = getDestinationSuggestions();
 
-    // ✅ تصفية الاقتراحات حسب ما يكتبه المستخدم
-    const filteredSuggestions = locationSuggestions.filter(suggestion =>
-        suggestion.toLowerCase().includes(location.toLowerCase())
+    // Filter suggestions based on user input
+    const filteredSuggestions = destinationSuggestions.filter(suggestion =>
+        suggestion.city.toLowerCase().includes(location.toLowerCase()) ||
+        suggestion.country.toLowerCase().includes(location.toLowerCase())
     );
 
-    // ✅ إغلاق القائمة عند النقر خارجها
+    // Close dropdown when clicking outside
     React.useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
@@ -67,7 +95,7 @@ export default function Search() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // ✅ فتح القائمة عند التركيز على الحقل
+    // Open dropdown on focus
     const handleInputFocus = () => {
         setShowRecent(true);
         if (filteredSuggestions.length > 0) {
@@ -75,9 +103,9 @@ export default function Search() {
         }
     };
 
-    // ✅ اختيار اقتراح
+    // Select a suggestion
     const handleSelectSuggestion = (suggestion) => {
-        setLocation(suggestion);
+        setLocation(suggestion.display);
         setShowCustomDropdown(false);
         setShowRecent(false);
     };
@@ -128,8 +156,10 @@ export default function Search() {
             let results = [...hotels];
             if (location) {
                 const searchTerm = location.toLowerCase().trim();
+                // Extract city name from "City, Country" format
+                const searchCity = searchTerm.split(',')[0].trim();
                 results = hotels.filter(hotel =>
-                    hotel.location?.toLowerCase().includes(searchTerm) ||
+                    hotel.location?.toLowerCase().includes(searchCity) ||
                     hotel.name?.toLowerCase().includes(searchTerm)
                 );
             }
@@ -212,7 +242,7 @@ export default function Search() {
                                 )}
                             </div>
 
-                            {/* Custom Dropdown pour les suggestions */}
+                            {/* Custom Dropdown for destination suggestions */}
                             {showCustomDropdown && filteredSuggestions.length > 0 && (
                                 <div className="custom-dropdown" ref={dropdownRef}>
                                     {filteredSuggestions.map((suggestion, index) => (
@@ -223,8 +253,8 @@ export default function Search() {
                                         >
                                             <MapPinIcon className="dropdown-icon" />
                                             <div className="dropdown-content">
-                                                <span className="dropdown-title">{suggestion}</span>
-                                                <span className="dropdown-subtitle">Destination populaire</span>
+                                                <span className="dropdown-title">{suggestion.city}</span>
+                                                <span className="dropdown-subtitle">{suggestion.country}</span>
                                             </div>
                                         </div>
                                     ))}

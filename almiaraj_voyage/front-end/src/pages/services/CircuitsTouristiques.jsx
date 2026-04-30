@@ -349,7 +349,7 @@ export default function CircuitsTouristiques() {
                 return (
                   <div key={trip.id} className="circuits-card">
                     <div className="circuits-card-image">
-                      <img src={trip.image} alt={trip.destination} />
+                      <img src={`http://127.0.0.1:8000/storage/${trip.image}`}  alt={trip.destination} />
                       <div className="circuits-card-overlay"></div>
 
                       {trip.enVedette === 1 && (

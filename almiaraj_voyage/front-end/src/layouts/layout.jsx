@@ -278,16 +278,16 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fb923c] transition duration-500 cursor-pointer hover:scale-110">
-              <i className="fa-brands fa-whatsapp text-white text-sm"></i>
+             <a href="https://wa.me/21270136542" target="_blank"> <i className="fa-brands fa-whatsapp text-white text-sm"></i></a>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fb923c] transition duration-500 cursor-pointer hover:scale-110">
-              <i className="fa-brands fa-instagram text-white text-sm"></i>
+             <a href="https://www.instagram.com/almiarajvoyagesfesofficielle/" target="_blank"> <i className="fa-brands fa-instagram text-white text-sm"></i></a>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fb923c] transition duration-300 cursor-pointer hover:scale-110">
-              <i className="fa-brands fa-tiktok text-white text-sm"></i>
+              <a href="https://www.tiktok.com/" target="_blank"><i className="fa-brands fa-tiktok text-white text-sm"></i></a>
             </div>
             <div className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-[#fb923c] transition duration-300 cursor-pointer hover:scale-110">
-              <i className="fa-brands fa-youtube text-white text-sm"></i>
+              <a href="https://www.youtube.com/@ALMIARAJVOYAGES" target="_blank"><i className="fa-brands fa-youtube text-white text-sm"></i></a>
             </div>
           </div>
           <Link to='/contact' className="bg-[#fb923c] text-white px-4 py-1 rounded-md text-sm font-medium hover:bg-orange-600 transition">

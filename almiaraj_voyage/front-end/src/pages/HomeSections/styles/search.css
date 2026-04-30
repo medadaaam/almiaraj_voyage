@@ -916,3 +916,14 @@
 .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
   background-color: #fef3c7 !important;
 }
+
+
+.rdp-day {
+  border-radius: 10px;
+}
+
+.rdp-day_range_start,
+.rdp-day_range_end {
+  background: #fb923c !important;
+  color: white;
+}

@@ -25,7 +25,7 @@ export default function Footer() {
             {/* Social Media */}
             <div className="flex gap-3">
               <a
-                href="https://wa.me/212535657979"
+                href="https://wa.me/21270136542"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-[#25D366] hover:border-[#25D366] transition-all duration-300 group"
@@ -33,7 +33,7 @@ export default function Footer() {
                 <i className="fab fa-whatsapp text-sm text-gray-300 group-hover:text-white"></i>
               </a>
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/almiarajvoyagesfesofficielle/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-gradient-to-r hover:bg-pink hover:bg-[#FD1D1D] hover:border-transparent transition-all duration-300 group"
@@ -49,7 +49,7 @@ export default function Footer() {
                 <i className="fab fa-tiktok text-sm text-gray-300 group-hover:text-white"></i>
               </a>
               <a
-                href="https://youtube.com"
+                href="https://www.youtube.com/@ALMIARAJVOYAGES"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-[#FD1D1D] hover:border-[#1DA1F2] transition-all duration-300 group"

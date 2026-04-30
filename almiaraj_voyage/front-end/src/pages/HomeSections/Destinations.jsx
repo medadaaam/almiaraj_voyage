@@ -24,7 +24,7 @@ export default function Destinations() {
 
 
   if (displayedDestinations.length === 0) {
-    return null; 
+    return null;
   }
 
   return (
@@ -54,7 +54,7 @@ export default function Destinations() {
               >
                 {/* Image */}
                 <div className="destination-image">
-                  <img src={dest.image} alt={dest.pays} />
+                  <img src={`http://127.0.0.1:8000/storage/${dest.image}`}  alt={dest.pays} />
                   <div className="destination-overlay"></div>
 
                   {/* Featured Badge */}

@@ -10,7 +10,7 @@ export default function AdminDestinations() {
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
     const [imageErrors, setImageErrors] = useState({});
-    
+
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
@@ -34,7 +34,7 @@ export default function AdminDestinations() {
     // Filter and sort destinations
     useEffect(() => {
         let result = [...destinations];
-        
+
         // Apply search
         if (searchTerm) {
             result = result.filter(dest => {
@@ -45,17 +45,17 @@ export default function AdminDestinations() {
                 return pays.includes(search) || ville.includes(search) || continente.includes(search);
             });
         }
-        
+
         // Apply continent filter
         if (selectedContinent) {
             result = result.filter(dest => dest.continente === selectedContinent);
         }
-        
+
         // Apply featured filter
         if (featuredOnly) {
             result = result.filter(dest => dest.en_vedette === 1);
         }
-        
+
         // Apply sorting
         result.sort((a, b) => {
             switch(sortBy) {
@@ -72,7 +72,7 @@ export default function AdminDestinations() {
                     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
             }
         });
-        
+
         setFilteredDestinations(result);
     }, [destinations, searchTerm, sortBy, selectedContinent, featuredOnly]);
 
@@ -80,9 +80,9 @@ export default function AdminDestinations() {
         try {
             setLoading(true);
             const response = await axiosClient.get('/destinations');
-            
+
             console.log('Response:', response.data);
-            
+
             let destinationsData = [];
             if (response.data && response.data.data) {
                 destinationsData = response.data.data;
@@ -91,13 +91,13 @@ export default function AdminDestinations() {
             } else {
                 destinationsData = [];
             }
-            
+
             setDestinations(destinationsData);
-            
+
             // Extract unique continents for filter
             const uniqueContinents = [...new Set(destinationsData.map(dest => dest.continente).filter(Boolean))];
             setContinents(uniqueContinents);
-            
+
             setError("");
         } catch (err) {
             console.error('Error:', err);
@@ -160,7 +160,7 @@ export default function AdminDestinations() {
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold text-gray-800">Gestion des Destinations</h1>
                 <Link
-                    to="/admin/destinations/ajouter"
+                    to="/admin/ajouterDestination"
                     className="bg-[#fb923c] text-white px-4 py-2 rounded-md hover:bg-[#ea580c] transition flex items-center gap-2"
                 >
                     + Ajouter une destination

@@ -35,6 +35,7 @@ export default function Search() {
     const inputRef = React.useRef(null)
     const dropdownRef = React.useRef(null)
 
+    // ✅ استخراج الاقتراحات من location فقط مع الحفاظ على التنسي
     const getLocationSuggestions = () => {
         const suggestionsMap = new Map();
 
@@ -49,10 +50,12 @@ export default function Search() {
 
     const locationSuggestions = getLocationSuggestions();
 
+    // ✅ تصفية الاقتراحات حسب ما يكتبه المستخدم
     const filteredSuggestions = locationSuggestions.filter(suggestion =>
         suggestion.toLowerCase().includes(location.toLowerCase())
     );
 
+    // ✅ إغلاق القائمة عند النقر خارجها
     React.useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
@@ -64,6 +67,7 @@ export default function Search() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // ✅ فتح القائمة عند التركيز على الحقل
     const handleInputFocus = () => {
         setShowRecent(true);
         if (filteredSuggestions.length > 0) {
@@ -71,6 +75,7 @@ export default function Search() {
         }
     };
 
+    // ✅ اختيار اقتراح
     const handleSelectSuggestion = (suggestion) => {
         setLocation(suggestion);
         setShowCustomDropdown(false);

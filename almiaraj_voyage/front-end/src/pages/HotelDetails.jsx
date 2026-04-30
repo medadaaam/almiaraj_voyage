@@ -177,7 +177,7 @@ export default function HotelDetailsCl() {
                                 <div className="flex items-center gap-4 mb-4">
                                     {destination?.image && (
                                         <div className="w-20 h-20 rounded-full overflow-hidden">
-                                            <img src={service.image} alt={destination.nom} className="w-full h-full object-cover" />
+                                            <img src={`http://127.0.0.1:8000/storage/${service.image}`}  alt={destination.nom} className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                     <div>

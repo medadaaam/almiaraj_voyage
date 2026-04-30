@@ -96,7 +96,7 @@ class DestinationController extends Controller
             $imagePath = null;
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
-                $imagePath = $image->store('destinations', 'public');
+                $imagePath = $image->store('images', 'public');
             }
 
             $destination = Destination::create([
@@ -170,9 +170,9 @@ class DestinationController extends Controller
                 if ($destination->image && Storage::disk('public')->exists($destination->image)) {
                     Storage::disk('public')->delete($destination->image);
                 }
-                
+
                 $image = $request->file('image');
-                $imagePath = $image->store('destinations', 'public');
+                $imagePath = $image->store('images', 'public');
                 $destination->image = $imagePath;
             }
 
@@ -286,7 +286,7 @@ class DestinationController extends Controller
     {
         try {
             $query = $request->get('q', '');
-            
+
             $destinations = Destination::where('pays', 'like', "%{$query}%")
                 ->orWhere('ville', 'like', "%{$query}%")
                 ->orWhere('continente', 'like', "%{$query}%")

@@ -108,7 +108,7 @@ export default function FeaturedHotels() {
                         >
                             {/* Image */}
                             <div className="hotel-image">
-                                <img src={hotel.image} alt={hotel.name} />
+                                <img src={`http://127.0.0.1:8000/storage/${hotel.image}`}  alt={hotel.name} />
                                 <div className="hotel-overlay"></div>
 
                                 {/* Featured Badge */}

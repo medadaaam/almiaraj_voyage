@@ -58,7 +58,7 @@ export default function FeaturedTrips() {
             <div key={trip.id} className="trip-card">
               {/* Image */}
               <div className="trip-image">
-                <img src={trip.image} alt={trip.destination} />
+                <img src={`http://127.0.0.1:8000/storage/${trip.image}`}  alt={trip.destination} />
                 <div className="trip-overlay"></div>
 
                 {/* Featured Badge */}
@@ -111,10 +111,10 @@ export default function FeaturedTrips() {
                     <Clock className="w-4 h-4" />
                     <span>{trip.duree || trip.duration || "7 jours"}</span>
                   </div>
-                  <div className="trip-detail">
+                  {/* <div className="trip-detail">
                     <Users className="w-4 h-4" />
                     <span>{trip.groupSize || "2 personnes"}</span>
-                  </div>
+                  </div> */}
                   <div className="trip-detail">
                     <Calendar className="w-4 h-4" />
                     <span>Disponible</span>

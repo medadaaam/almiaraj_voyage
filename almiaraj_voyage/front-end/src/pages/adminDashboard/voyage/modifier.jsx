@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
-import { Search, MapPin, X, Calendar, Clock, Upload, Trash2, Plus } from "lucide-react";
+import { Search, MapPin, X, Calendar, Clock, Upload, Trash2, Globe } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ModifierVoyage() {
@@ -9,10 +9,24 @@ export default function ModifierVoyage() {
     const navigate = useNavigate();
     const { getDestination, destinations } = useAuth();
     
+    // Ref for click outside detection
+    const dropdownRef = useRef(null);
+    
     useEffect(() => {
         getDestination();
         fetchVoyageDetails();
     }, [id]);
+    
+    // Click outside handler for dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
     
     const [form, setForm] = useState({
         nomServ: "",
@@ -31,16 +45,15 @@ export default function ModifierVoyage() {
     const [currentImage, setCurrentImage] = useState(null);
     const [error, setError] = useState("");
     
-    // City selection states
+    // Destination selection states (single city)
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
-    const [selectedCities, setSelectedCities] = useState([]);
+    const [selectedDestination, setSelectedDestination] = useState(null);
     
     // Duration calculation
     const [calculatedDuree, setCalculatedDuree] = useState("");
     const today = new Date().toISOString().split('T')[0];
 
-    // Same image function as index.jsx
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
@@ -48,7 +61,6 @@ export default function ModifierVoyage() {
         return `${baseUrl}/storage/${imagePath}`;
     };
 
-    // Fetch voyage details
     const fetchVoyageDetails = async () => {
         try {
             setIsLoading(true);
@@ -58,7 +70,6 @@ export default function ModifierVoyage() {
             let serviceData = voyageData.service || voyageData;
             let voyageDetails = voyageData.voyage || voyageData;
             
-            // Set form data
             setForm({
                 nomServ: serviceData.nomServ || "",
                 description: serviceData.description || "",
@@ -70,18 +81,21 @@ export default function ModifierVoyage() {
                 image: null,
             });
             
-            // Set current image
             if (serviceData.image) {
                 setCurrentImage(serviceData.image);
             }
             
-            // Set selected cities
-            if (voyageDetails.selected_cities && Array.isArray(voyageDetails.selected_cities)) {
-                const cities = voyageDetails.selected_cities.map(city => ({
-                    cityName: city,
-                    destinationId: voyageDetails.destination_id
-                }));
-                setSelectedCities(cities);
+            // Set selected destination
+            if (voyageDetails.destination) {
+                setSelectedDestination(voyageDetails.destination);
+                setSearchTerm(`${voyageDetails.destination.ville}, ${voyageDetails.destination.pays}`);
+            } else if (voyageDetails.destination_id) {
+                // Find destination from list
+                const dest = getAllDestinations().find(d => d.id === voyageDetails.destination_id);
+                if (dest) {
+                    setSelectedDestination(dest);
+                    setSearchTerm(`${dest.ville}, ${dest.pays}`);
+                }
             }
             
         } catch (err) {
@@ -107,52 +121,31 @@ export default function ModifierVoyage() {
         }
     }, [form.dateDepartV, form.dateRetourV]);
 
-    // Get all cities
-    const getAllCities = () => {
-        const cities = [];
+    // Get all destinations (each destination has a 'ville' property)
+    const getAllDestinations = () => {
         if (Array.isArray(destinations)) {
-            destinations.forEach(dest => {
-                if (Array.isArray(dest.villes)) {
-                    dest.villes.forEach(ville => {
-                        cities.push({
-                            id: `${dest.id}_${ville}`,
-                            cityName: ville,
-                            country: dest.pays,
-                            destinationId: dest.id,
-                        });
-                    });
-                }
-            });
+            return destinations;
         }
-        return cities;
+        return [];
     };
 
-    // Filter cities
-    const filteredCities = getAllCities().filter(city => 
-        city.cityName.toLowerCase().includes(searchTerm.toLowerCase())
-    ).filter(city => 
-        !selectedCities.some(selected => selected.cityName === city.cityName)
+    // Filter destinations based on search term
+    const filteredDestinations = getAllDestinations().filter(dest => 
+        dest.ville?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        dest.pays?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const addCity = (city) => {
-        const newSelectedCities = [...selectedCities, city];
-        setSelectedCities(newSelectedCities);
-        
-        if (!form.destination_id) {
-            setForm({ ...form, destination_id: city.destinationId });
-        }
-        
-        setSearchTerm("");
+    const selectDestination = (dest) => {
+        setSelectedDestination(dest);
+        setForm({ ...form, destination_id: dest.id });
+        setSearchTerm(`${dest.ville}, ${dest.pays}`);
         setShowDropdown(false);
     };
 
-    const removeCity = (cityToRemove) => {
-        const newSelectedCities = selectedCities.filter(city => city.cityName !== cityToRemove.cityName);
-        setSelectedCities(newSelectedCities);
-        
-        if (newSelectedCities.length === 0) {
-            setForm({ ...form, destination_id: "" });
-        }
+    const clearSelection = () => {
+        setSelectedDestination(null);
+        setForm({ ...form, destination_id: "" });
+        setSearchTerm("");
     };
 
     const handleChange = (e) => {
@@ -197,8 +190,26 @@ export default function ModifierVoyage() {
             return;
         }
 
-        if (selectedCities.length === 0) {
-            setError("Veuillez sélectionner au moins une ville");
+        if (!form.destination_id) {
+            setError("Veuillez sélectionner une destination");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.dateDepartV) {
+            setError("Veuillez sélectionner une date de départ");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.dateRetourV) {
+            setError("Veuillez sélectionner une date de retour");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.programme.trim()) {
+            setError("Veuillez entrer le programme du voyage");
             setIsSubmitting(false);
             return;
         }
@@ -210,9 +221,6 @@ export default function ModifierVoyage() {
             formData.append('prix', form.prix);
             formData.append('destination_id', form.destination_id);
             formData.append('_method', 'PUT');
-            
-            const citiesArray = selectedCities.map(city => city.cityName);
-            formData.append('selected_cities', JSON.stringify(citiesArray));
             
             formData.append('dateDepartV', form.dateDepartV);
             formData.append('dateRetourV', form.dateRetourV);
@@ -232,6 +240,7 @@ export default function ModifierVoyage() {
             }
             
         } catch (error) {
+            console.error('Error:', error);
             setError(error.response?.data?.message || "Erreur lors de la modification");
         } finally {
             setIsSubmitting(false);
@@ -274,6 +283,7 @@ export default function ModifierVoyage() {
                                 onChange={handleChange}
                                 required
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                placeholder="Ex: Aventure à Marrakech"
                             />
                         </div>
 
@@ -290,63 +300,82 @@ export default function ModifierVoyage() {
                                 min="0"
                                 step="1"
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                placeholder="0"
                             />
                         </div>
                     </div>
 
-                    {/* Cities Selection */}
+                    {/* Destination/City Selection - Single */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Villes à visiter *
+                            Destination *
                         </label>
-
-                        {/* Selected cities tags */}
-                        {selectedCities.length > 0 && (
-                            <div className="mb-3 p-3 bg-gray-50 rounded-md">
-                                <div className="flex flex-wrap gap-2">
-                                    {selectedCities.map((city, index) => (
-                                        <span key={index} className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                                            <MapPin size={14} />
-                                            {city.cityName}
-                                            <button type="button" onClick={() => removeCity(city)} className="ml-1 hover:text-red-700">
-                                                <X size={14} />
-                                            </button>
-                                        </span>
-                                    ))}
-                                </div>
+                        <div ref={dropdownRef} className="relative">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value);
+                                        setShowDropdown(true);
+                                    }}
+                                    onFocus={() => setShowDropdown(true)}
+                                    placeholder="Rechercher une destination (ville ou pays)..."
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={clearSelection}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
                             </div>
-                        )}
 
-                        {/* Search input */}
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => {
-                                    setSearchTerm(e.target.value);
-                                    setShowDropdown(true);
-                                }}
-                                onFocus={() => setShowDropdown(true)}
-                                placeholder="Rechercher une ville..."
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                            />
-                            
-                            {showDropdown && searchTerm && filteredCities.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                    {filteredCities.map((city) => (
+                            {/* Dropdown Results */}
+                            {showDropdown && searchTerm && filteredDestinations.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                    {filteredDestinations.map((dest) => (
                                         <button
-                                            key={city.id}
+                                            key={dest.id}
                                             type="button"
-                                            onClick={() => addCity(city)}
-                                            className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center justify-between"
+                                            onClick={() => selectDestination(dest)}
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center gap-2"
                                         >
-                                            <span>{city.cityName} ({city.country})</span>
-                                            <Plus size={16} className="text-green-500" />
+                                            <MapPin size={16} className="text-[#fb923c]" />
+                                            <div>
+                                                <div className="font-medium">{dest.ville}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    {dest.pays} • {dest.continente}
+                                                </div>
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
                             )}
                         </div>
+
+                        {/* Selected Destination Display */}
+                        {selectedDestination && (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <Globe size={16} className="text-green-600" />
+                                    <span className="text-sm text-green-700">
+                                        <strong>Destination:</strong> {selectedDestination.ville}, {selectedDestination.pays}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={clearSelection}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Dates */}
@@ -355,29 +384,36 @@ export default function ModifierVoyage() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Date de départ *
                             </label>
-                            <input
-                                type="date"
-                                name="dateDepartV"
-                                value={form.dateDepartV}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            />
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="date"
+                                    name="dateDepartV"
+                                    value={form.dateDepartV}
+                                    onChange={handleChange}
+                                    required
+                                    min={today}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                />
+                            </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Date de retour *
                             </label>
-                            <input
-                                type="date"
-                                name="dateRetourV"
-                                value={form.dateRetourV}
-                                onChange={handleChange}
-                                required
-                                min={form.dateDepartV || today}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                            />
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="date"
+                                    name="dateRetourV"
+                                    value={form.dateRetourV}
+                                    onChange={handleChange}
+                                    required
+                                    min={form.dateDepartV || today}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -385,7 +421,7 @@ export default function ModifierVoyage() {
                     {calculatedDuree && (
                         <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                             <Clock size={18} className="inline mr-2 text-blue-600" />
-                            <span className="text-sm">Durée: <strong>{calculatedDuree}</strong></span>
+                            <span className="text-sm text-blue-700">Durée: <strong>{calculatedDuree}</strong></span>
                         </div>
                     )}
 
@@ -399,7 +435,8 @@ export default function ModifierVoyage() {
                             value={form.description}
                             onChange={handleChange}
                             rows="3"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                            placeholder="Une brève description du voyage..."
                         />
                     </div>
 
@@ -414,11 +451,12 @@ export default function ModifierVoyage() {
                             onChange={handleChange}
                             rows="6"
                             required
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c] font-mono text-sm"
+                            placeholder="Jour 1: Arrivée...&#10;Jour 2: Visite...&#10;Jour 3: Excursion...&#10;Jour 4: ..."
                         />
                     </div>
 
-                    {/* Image - SIMPLE like index.jsx */}
+                    {/* Image Upload */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Image
@@ -447,16 +485,18 @@ export default function ModifierVoyage() {
                             )}
                         </div>
                         
-                        {/* Image preview - SIMPLE */}
                         {(imagePreview || currentImage) && (
                             <div className="mt-3">
                                 <img 
                                     src={imagePreview || getImageUrl(currentImage)} 
                                     alt="Preview" 
-                                    className="w-32 h-32 object-cover rounded-md border"
+                                    className="w-40 h-40 object-cover rounded-md border" 
                                 />
                             </div>
                         )}
+                        <p className="text-xs text-gray-500 mt-1">
+                            Laissez vide pour conserver l'image actuelle
+                        </p>
                     </div>
                     
                     {/* Buttons */}
@@ -469,7 +509,7 @@ export default function ModifierVoyage() {
                             {isSubmitting ? "Modification..." : "Mettre à jour"}
                         </button>
                         <Link 
-                            to="/admin" 
+                            to="/admin/voyages" 
                             className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
                         >
                             Annuler

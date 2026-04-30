@@ -52,22 +52,25 @@ class ClientController extends Controller
      * Admin: Get all clients
      */
     public function adminIndex()
-    {
-        try {
-            $clients = Client::orderBy('created_at', 'desc')->get();
-
-            return response()->json([
-                'success' => true,
-                'data' => $clients
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors du chargement des clients',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+{
+    try {
+        // Get only clients where user role is 'client'
+        $clients = Client::whereHas('user', function($query) {
+            $query->where('role', 'user');
+        })->orderBy('created_at', 'desc')->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $clients
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du chargement des clients',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Admin: Get single client with reservations, avis, and messages

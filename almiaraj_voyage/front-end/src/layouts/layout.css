@@ -124,7 +124,6 @@ footer {
   margin-top: 40px;
 }
 
-/* ================= TOP BAR ================= */
 
 /* ================= SOCIAL ICONS ================= */
 .social-icon {
@@ -662,4 +661,64 @@ main {
 
 .mobile-dropdown details[open] summary {
   color: #fb923c;
+}
+
+
+/* ================= FIX POUR SEARCH DANS LAYOUT ================= */
+
+/* التأكد من أن الـ Search لا يؤثر على الـ Layout */
+.search-wrapper,
+.search-container,
+.search-form,
+.search-field,
+.search-field-wrapper,
+.results-wrapper,
+.results-container,
+.results-grid {
+  font-family: inherit;
+}
+
+/* Fix pour les boutons dans search */
+.search-submit,
+.guests-done-btn,
+.no-results-btn,
+.results-reset {
+  font-family: inherit;
+}
+
+/* التأكد من أن الـ popovers تظهر فوق كل شيء */
+.search-calendar-popover,
+.search-guests-popover,
+.custom-dropdown {
+  z-index: 9999 !important;
+}
+
+/* Fix responsive pour search dans le layout */
+@media (max-width: 768px) {
+  .search-wrapper {
+    margin-top: 0 !important;
+  }
+
+  .search-container {
+    margin: 0 16px !important;
+  }
+}
+
+/* Fix pour le calendrier */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #fb923c;
+  --rdp-background-color: #fff7ed;
+  margin: 0;
+}
+
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  background-color: #fb923c !important;
+  color: white !important;
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  background-color: #fef3c7 !important;
 }

@@ -181,7 +181,7 @@ export default function DestinationsPage() {
                 {filteredDestinations.map((dest) => (
                   <div key={dest.id} className="dest-card">
                     <div className="dest-card-image">
-                      <img src={dest.image} alt={dest.nom} />
+                      <img src={`http://127.0.0.1:8000/storage/${dest.image}`}  alt={dest.nom} />
                       <div className="dest-card-overlay"></div>
                       {dest.en_vedette === 1 && (
                         <span className="dest-card-featured">

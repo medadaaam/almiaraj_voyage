@@ -13,7 +13,6 @@ export default function VerifyEmailCallback() {
     const message = searchParams.get('message');
 
     if (verified === '1') {
-      // إعادة جلب المستخدم بعد التحقق
       getUser();
       alert('✅ Votre email a été vérifié avec succès !');
       navigate('/');

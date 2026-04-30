@@ -150,7 +150,7 @@ export default function VoyageDetailsCl() {
                                 <h2 className="text-2xl font-bold mb-4">📍 Destination</h2>
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-20 h-20 rounded-full overflow-hidden">
-                                        <img src={service.image} alt={destination?.nom} className="w-full h-full object-cover" />
+                                        <img src={`http://127.0.0.1:8000/storage/${service.image}`}  alt={destination?.nom} className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-semibold">{destination?.nom}</h3>

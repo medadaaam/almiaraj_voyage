@@ -7,11 +7,11 @@ import { useAuth } from "@/context/AuthContext";
 export default function AjouterHotel() {
   const { getDestination, destinations } = useAuth();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     getDestination();
   }, []);
-  
+
   const [form, setForm] = useState({
     nomServ: "",
     description: "",
@@ -24,12 +24,12 @@ export default function AjouterHotel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
-  
+
   // Destination selection states (same as AjouterVoyage)
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState(null);
-  
+
   // Common amenities list with icons
   const amenitiesList = [
     { name: "Wifi gratuit", icon: <Wifi size={18} />, category: "Internet" },
@@ -70,7 +70,7 @@ export default function AjouterHotel() {
   };
 
   // Filter destinations based on search term
-  const filteredDestinations = getAllDestinations().filter(dest => 
+  const filteredDestinations = getAllDestinations().filter(dest =>
     dest.ville?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     dest.pays?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -78,8 +78,8 @@ export default function AjouterHotel() {
   // Select destination (city)
   const selectDestination = (dest) => {
     setSelectedDestination(dest);
-    setForm({ 
-      ...form, 
+    setForm({
+      ...form,
       destination_id: dest.id,
     });
     setSearchTerm(`${dest.ville}, ${dest.pays}`);
@@ -89,8 +89,8 @@ export default function AjouterHotel() {
   // Clear selection
   const clearSelection = () => {
     setSelectedDestination(null);
-    setForm({ 
-      ...form, 
+    setForm({
+      ...form,
       destination_id: "",
     });
     setSearchTerm("");
@@ -184,32 +184,27 @@ const handleSubmit = async (e) => {
     formData.append('prix', form.prix);
     formData.append('rating', form.rating);
     formData.append('destination_id', form.destination_id);
-    
+
     // Convert amenities array to JSON string - make sure it's properly formatted
     const amenitiesArray = selectedAmenities.map(amenity => amenity.name);
     const amenitiesJSON = JSON.stringify(amenitiesArray);
-    console.log('Sending amenities as JSON:', amenitiesJSON);
     formData.append('amenities', amenitiesJSON);
-    
+
     if (form.image) {
       formData.append('image', form.image);
     }
 
-    // Debug: Log all form data
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ':', pair[1]);
-    }
 
     const response = await axiosClient.post('/hotels', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    
+
     if (response.data.success) {
       alert('Hôtel ajouté avec succès!');
       navigate('/admin/hotels');
-      
+
       setForm({
         nomServ: "",
         description: "",
@@ -222,11 +217,11 @@ const handleSubmit = async (e) => {
       setSelectedDestination(null);
       setImagePreview(null);
       setSearchTerm("");
-      
+
       const fileInput = document.getElementById('image-input');
       if (fileInput) fileInput.value = '';
     }
-    
+
   } catch (error) {
     console.error('Error:', error.response?.data);
     setError(error.response?.data?.message || "Erreur lors de l'ajout");
@@ -433,7 +428,7 @@ const handleSubmit = async (e) => {
                 </div>
               ))}
             </div>
-            
+
             <p className="text-xs text-gray-500 mt-2">
               💡 Cochez tous les équipements et services disponibles dans cet hôtel
             </p>
@@ -482,7 +477,7 @@ const handleSubmit = async (e) => {
                 </button>
               )}
             </div>
-            
+
             {imagePreview && (
               <div className="mt-3">
                 <img src={imagePreview} alt="Preview" className="w-40 h-40 object-cover rounded-md border" />
@@ -492,17 +487,17 @@ const handleSubmit = async (e) => {
               Formats supportés: JPG, PNG, GIF (max 2MB)
             </p>
           </div>
-          
+
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" 
+              className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Ajout en cours..." : "Ajouter l'hôtel"}
             </button>
-            <Link 
-              to="/admin/hotels" 
+            <Link
+              to="/admin/hotels"
               className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
             >
               Annuler

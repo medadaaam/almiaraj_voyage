@@ -16,7 +16,6 @@ class MessageController extends Controller
      * Envoyer un message (contact formulaire)
      */
 
-    // Admin: Get all messages
     public function adminIndex()
     {
         try {
@@ -36,7 +35,6 @@ class MessageController extends Controller
         }
     }
 
-    // Admin: Get single message
     public function adminShow($id)
     {
         try {
@@ -54,7 +52,6 @@ class MessageController extends Controller
         }
     }
 
-    // Admin: Delete message
     public function adminDestroy($id)
     {
         try {
@@ -73,7 +70,6 @@ class MessageController extends Controller
         }
     }
 
-    // Admin: Update message status
     public function adminUpdateStatus(Request $request, $id)
     {
         try {
@@ -98,7 +94,6 @@ class MessageController extends Controller
         }
     }
 
-    // Admin: Reply to message
     public function adminReply(Request $request, $id)
     {
         try {
@@ -107,10 +102,6 @@ class MessageController extends Controller
             ]);
 
             $message = Message::findOrFail($id);
-
-            // You can implement email sending here
-            // Mail::to($message->emailM)->send(...);
-
             $message->reply = $validated['reply'];
             $message->statusM = 'repondu';
             $message->replied_at = now();
@@ -154,7 +145,6 @@ class MessageController extends Controller
         $user = $request->user();
         $clientId = null;
 
-        // ✅ Si l'utilisateur est connecté, récupérer son client_id
         if ($user) {
             $client = Client::where('id', $user->id)->first();
             if ($client) {
@@ -163,7 +153,6 @@ class MessageController extends Controller
         }
 
         try {
-            // ✅ Construire le nom complet
             $prenom = $validated['prenom'] ?? '';
             $nomComplet = $prenom
                 ? $prenom . ' ' . $validated['nom']

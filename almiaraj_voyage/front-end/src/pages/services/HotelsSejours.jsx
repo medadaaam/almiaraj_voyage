@@ -267,7 +267,7 @@ export default function HotelsSejours() {
               {filteredHotels.map((hotel) => (
                 <div key={hotel.id} className="hotels-card">
                   <div className="hotels-card-image">
-                    <img src={hotel.image} alt={hotel.name} />
+                    <img src={`http://127.0.0.1:8000/storage/${hotel.image}`}  alt={hotel.name} />
                     <div className="hotels-card-overlay"></div>
 
                     {hotel.enVedette === 1 && (

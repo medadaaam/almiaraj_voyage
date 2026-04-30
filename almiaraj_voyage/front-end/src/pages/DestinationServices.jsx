@@ -197,7 +197,7 @@ export default function DestinationOffres() {
                                     <div key={item.id} className="offre-card">
                                         <div className="offre-card-image">
                                             <img
-                                                src={service?.image || "/images/placeholder.jpg"}
+                                                src={`http://127.0.0.1:8000/storage/${service?.image}`}
                                                 alt={service?.nomServ}
                                                 onError={(e) => { e.target.src = '/images/placeholder.jpg' }}
                                             />

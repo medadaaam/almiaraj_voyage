@@ -1,13 +1,11 @@
 import { MapPin, Star, Compass, Globe, ArrowRight } from "lucide-react";
 import "./styles/destinations.css";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Destinations() {
   const { getDestination, destinations = [], loadingDestinations } = useAuth();
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -16,45 +14,21 @@ export default function Destinations() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setIsVisible(true);
-          } else {
-            setIsVisible(false);
-          }
-        });
-      },
-      { threshold: 0.2, triggerOnce: false },
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  // ✅ إزالة التكرار
   const uniqueDestinations = destinations.filter(
     (dest, index, self) =>
       index === self.findIndex((d) => d.pays === dest.pays),
   );
 
-  // ✅ عرض الـ 6 الأوائل فقط
   const displayedDestinations = uniqueDestinations.slice(0, 6);
 
+
+
   if (displayedDestinations.length === 0) {
-    return null; // لا شيء يظهر إذا مافيش بيانات
+    return null;
   }
 
   return (
-    <section
-      ref={sectionRef}
-      className={`destinations-section ${isVisible ? "visible" : ""}`}
-    >
+    <section className="destinations-section">
       <div className="destinations-container">
         {/* Header */}
         <div className="destinations-header">
@@ -80,7 +54,7 @@ export default function Destinations() {
               >
                 {/* Image */}
                 <div className="destination-image">
-                  <img src={dest.image} alt={dest.pays} />
+                  <img src={`http://127.0.0.1:8000/storage/${dest.image}`}  alt={dest.pays} />
                   <div className="destination-overlay"></div>
 
                   {/* Featured Badge */}

@@ -165,11 +165,9 @@ class ClientController extends Controller
             ], 401);
         }
 
-        // ✅ البحث بـ id (لأن الـ id مشترك بين users و clients)
         $client = Client::where('id', $user->id)->first();
 
         if (!$client) {
-            // ✅ إنشاء عميل إذا غير موجود
             $client = Client::create([
                 'id' => $user->id,
                 'nomCl' => $request->nomCl ?? '',
@@ -182,7 +180,6 @@ class ClientController extends Controller
                 'dateInscription' => now(),
             ]);
         } else {
-            // ✅ تحديث العميل الموجود
             $client->update([
                 'nomCl' => $request->nomCl ?? $client->nomCl,
                 'prenomCl' => $request->prenomCl ?? $client->prenomCl,

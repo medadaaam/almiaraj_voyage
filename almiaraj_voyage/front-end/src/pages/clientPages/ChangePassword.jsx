@@ -53,11 +53,6 @@ export default function ChangePassword() {
     setLoading(true);
     setError("");
     setSuccess("");
-    console.log("Données envoyées:", {
-        current_password: formData.current_password,
-        password: formData.password,
-        password_confirmation: formData.password_confirmation
-    });
 
     // Validation
     if (!formData.current_password) {

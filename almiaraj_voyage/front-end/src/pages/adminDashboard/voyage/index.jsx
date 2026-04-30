@@ -11,7 +11,7 @@ export default function AdminVoyages() {
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
     const [imageErrors, setImageErrors] = useState({});
-    
+
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
@@ -39,7 +39,7 @@ export default function AdminVoyages() {
     // Filter and sort voyages whenever dependencies change
     useEffect(() => {
         let result = [...voyages];
-        
+
         // Apply search
         if (searchTerm) {
             result = result.filter(voyage => {
@@ -49,11 +49,11 @@ export default function AdminVoyages() {
                 const country = getCountry(voyageData).toLowerCase();
                 const city = getCity(voyageData).toLowerCase();
                 const search = searchTerm.toLowerCase();
-                
+
                 return title.includes(search) || country.includes(search) || city.includes(search);
             });
         }
-        
+
         // Apply country filter
         if (selectedCountry) {
             result = result.filter(voyage => {
@@ -61,7 +61,7 @@ export default function AdminVoyages() {
                 return getCountry(voyageData) === selectedCountry;
             });
         }
-        
+
         // Apply city filter
         if (selectedCity) {
             result = result.filter(voyage => {
@@ -69,7 +69,7 @@ export default function AdminVoyages() {
                 return getCity(voyageData) === selectedCity;
             });
         }
-        
+
         // Apply type filter
         if (filterType === "available") {
             result = result.filter(voyage => {
@@ -86,14 +86,14 @@ export default function AdminVoyages() {
                 return departDate < today;
             });
         }
-        
+
         // Apply sorting
         result.sort((a, b) => {
             const serviceA = a.service || a;
             const serviceB = b.service || b;
             const voyageA = a.voyage || a;
             const voyageB = b.voyage || b;
-            
+
             switch(sortBy) {
                 case "price_asc":
                     return (serviceA.prix || 0) - (serviceB.prix || 0);
@@ -118,7 +118,7 @@ export default function AdminVoyages() {
                     return new Date(voyageB.dateDepartV) - new Date(voyageA.dateDepartV);
             }
         });
-        
+
         setFilteredVoyages(result);
     }, [voyages, searchTerm, sortBy, filterType, selectedCountry, selectedCity]);
 
@@ -126,8 +126,6 @@ export default function AdminVoyages() {
         try {
             setLoading(true);
             const response = await axiosClient.get('/voyages');
-            console.log('Full response:', response);
-            console.log('Voyages data:', response.data);
 
             let voyagesData = [];
             if (response.data && response.data.data) {
@@ -140,22 +138,21 @@ export default function AdminVoyages() {
                 voyagesData = [];
             }
 
-            console.log('Processed voyages:', voyagesData);
             setVoyages(voyagesData);
-            
+
             // Extract unique countries and cities for filter
             const uniqueCountries = [...new Set(voyagesData.map(voyage => {
                 const voyageData = voyage.voyage || voyage;
                 return getCountry(voyageData);
             }))].filter(country => country !== "N/A");
             setCountries(uniqueCountries);
-            
+
             const uniqueCities = [...new Set(voyagesData.map(voyage => {
                 const voyageData = voyage.voyage || voyage;
                 return getCity(voyageData);
             }))].filter(city => city !== "N/A");
             setCities(uniqueCities);
-            
+
             setError("");
         } catch (err) {
             console.error('Error fetching voyages:', err);

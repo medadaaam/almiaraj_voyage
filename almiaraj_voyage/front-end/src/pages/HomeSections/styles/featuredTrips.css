@@ -1,4 +1,4 @@
-/* ================= FEATURED TRIPS SECTION ================= */
+ /* ================= FEATURED TRIPS SECTION ================= */
 .featured-trips {
   position: relative;
   width: 100%;
@@ -485,65 +485,4 @@
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
-}
-
-/* ================= SCROLL ANIMATIONS ================= */
-
-/* الحالة المخفية للعناصر */
-.featured-trips .featured-trips-header {
-  opacity: 0;
-  transform: translateY(-30px);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.featured-trips .trip-card {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.featured-trips .featured-footer {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* الحالة الظاهرة (عند التمرير) */
-.featured-trips.visible .featured-trips-header {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.featured-trips.visible .trip-card {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.featured-trips.visible .featured-footer {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* تأخيرات مختلفة للبطاقات */
-.featured-trips.visible .trip-card:nth-child(1) { transition-delay: 0.1s; }
-.featured-trips.visible .trip-card:nth-child(2) { transition-delay: 0.2s; }
-.featured-trips.visible .trip-card:nth-child(3) { transition-delay: 0.3s; }
-.featured-trips.visible .trip-card:nth-child(4) { transition-delay: 0.4s; }
-.featured-trips.visible .trip-card:nth-child(5) { transition-delay: 0.5s; }
-.featured-trips.visible .trip-card:nth-child(6) { transition-delay: 0.6s; }
-
-/* تأثير للـ footer */
-.featured-trips.visible .featured-footer {
-  transition-delay: 0.5s;
-}
-
-/* ✅ احترام إعدادات المستخدم */
-@media (prefers-reduced-motion: reduce) {
-  .featured-trips .featured-trips-header,
-  .featured-trips .trip-card,
-  .featured-trips .featured-footer {
-    transition: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
 }

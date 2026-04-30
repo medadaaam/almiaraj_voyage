@@ -6,7 +6,7 @@ import { Calendar, Plane, MapPin, Loader } from "lucide-react";
 export default function ModifierBillet() {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const [form, setForm] = useState({
         nomServ: "",
         description: "",
@@ -22,7 +22,7 @@ export default function ModifierBillet() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
-    
+
     const today = new Date().toISOString().split('T')[0];
 
     useEffect(() => {
@@ -33,13 +33,12 @@ export default function ModifierBillet() {
         try {
             setIsLoading(true);
             const response = await axiosClient.get(`/billets/${id}`);
-            
-            console.log('API Response:', response.data);
-            
+
+
             let itemData = response.data.data || response.data;
             const serviceData = itemData.service || itemData;
             const billetData = itemData.billet || itemData;
-            
+
             setForm({
                 nomServ: serviceData.nomServ || "",
                 description: serviceData.description || "",
@@ -51,7 +50,7 @@ export default function ModifierBillet() {
                 dateDepartBi: billetData.dateDepartBi || "",
                 dateRetourBi: billetData.dateRetourBi || "",
             });
-            
+
         } catch (err) {
             console.error('Error:', err);
             setError("Erreur lors du chargement du billet");
@@ -69,8 +68,6 @@ export default function ModifierBillet() {
         e.preventDefault();
         setIsSubmitting(true);
         setError("");
-
-        console.log('Submitting form:', form);
 
         // Validation
         if (!form.nomServ.trim()) {
@@ -123,25 +120,18 @@ export default function ModifierBillet() {
                 formData.append('dateRetourBi', form.dateRetourBi);
             }
             formData.append('_method', 'PUT');
-
-            // Log all form data
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-
             const response = await axiosClient.post(`/billets/${id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            
-            console.log('Response:', response.data);
-            
+
+
             if (response.data.success) {
                 alert('Billet modifié avec succès!');
                 navigate('/admin/billets');
             } else {
                 setError(response.data.message || "Erreur lors de la modification");
             }
-            
+
         } catch (error) {
             console.error('Full error object:', error);
             console.error('Error response:', error.response);
@@ -314,17 +304,17 @@ export default function ModifierBillet() {
                             placeholder="Détails du billet, services inclus..."
                         />
                     </div>
-                    
+
                     <div className="flex gap-4 pt-4">
                         <button
                             type="submit"
-                            className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" 
+                            className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? "Modification..." : "Mettre à jour"}
                         </button>
-                        <Link 
-                            to="/admin/billets" 
+                        <Link
+                            to="/admin/billets"
                             className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
                         >
                             Annuler

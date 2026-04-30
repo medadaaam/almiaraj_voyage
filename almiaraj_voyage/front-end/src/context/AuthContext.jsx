@@ -62,7 +62,6 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
 
-    // State pour les limites de réservation
     const [reservationLimits, setReservationLimits] = useState({
         max_per_day: 4,
         used_today: 0,
@@ -74,7 +73,6 @@ export function AuthProvider({ children }) {
         message: null
     });
 
-    // Meta data for pagination
     const [hotelsMeta, setHotelsMeta] = useState({
         current_page: 1,
         last_page: 1,
@@ -91,7 +89,6 @@ export function AuthProvider({ children }) {
         total: 0,
     });
 
-    // Fonction pour compter les réservations du jour
     const countTodayReservations = (reservations) => {
         const today = new Date().toDateString();
         return reservations.filter(res => {
@@ -101,12 +98,10 @@ export function AuthProvider({ children }) {
         }).length;
     };
 
-    // Fonction pour compter les réservations en attente
     const countPendingReservations = (reservations) => {
         return reservations.filter(res => res.status === 'pending').length;
     };
 
-    // Vérifier les limites de réservation
     const checkReservationLimits = async () => {
         if (!authenticated) {
             const defaultLimits = {
@@ -169,7 +164,6 @@ export function AuthProvider({ children }) {
         }
     };
 
-    // Fonction générique pour créer une réservation avec vérification
     const createReservationWithLimitCheck = async (type, data, apiFunction) => {
         const limits = await checkReservationLimits();
         if (!limits?.allowed) {
@@ -205,14 +199,12 @@ export function AuthProvider({ children }) {
         fetchUser();
     }, []);
 
-    // Charger les limites quand l'utilisateur est authentifié
     useEffect(() => {
         if (authenticated && user) {
             checkReservationLimits();
         }
     }, [authenticated, user]);
 
-    // جلب البيانات الأساسية فقط أولاً
     useEffect(() => {
         const fetchAllData = async () => {
             if (loading) return;

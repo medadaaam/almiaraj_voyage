@@ -73,17 +73,14 @@ class HajjOmraController extends Controller
                 'dateDepartHO' => 'required|date',
                 'dateRetourHO' => 'required|date|after_or_equal:dateDepartHO',
                 'typeChambre' => 'required|string|max:50',
-                // NO 'image' validation here - just like voyage
             ]);
 
-            // Handle image - exactly like voyage
             $imagePath = null;
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $imagePath = $image->store('hajj_omras', 'public');
             }
 
-            // Create service
             $service = Service::create([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
@@ -92,7 +89,6 @@ class HajjOmraController extends Controller
                 'image' => $imagePath,
             ]);
 
-            // Create hajj_omra
             $hajjOmra = HajjOmra::create([
                 'id' => $service->id,
                 'type' => $request->type,
@@ -172,16 +168,13 @@ class HajjOmraController extends Controller
                 'typeChambre' => 'required|string|max:50',
             ]);
 
-            // Update service
             $service->update([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
                 'prix' => $request->prix,
             ]);
 
-            // Handle image update - exactly like voyage
             if ($request->hasFile('image')) {
-                // Delete old image if exists
                 if ($service->image && Storage::disk('public')->exists($service->image)) {
                     Storage::disk('public')->delete($service->image);
                 }
@@ -190,7 +183,6 @@ class HajjOmraController extends Controller
                 $service->save();
             }
 
-            // Update hajj_omra
             $hajjOmra->update([
                 'type' => $request->type,
                 'formule' => $request->formule,
@@ -225,12 +217,10 @@ class HajjOmraController extends Controller
             $hajjOmra = HajjOmra::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            // Delete image if exists
             if ($service->image && Storage::disk('public')->exists($service->image)) {
                 Storage::disk('public')->delete($service->image);
             }
 
-            // Delete hajj_omra
             $hajjOmra->delete();
 
             DB::commit();

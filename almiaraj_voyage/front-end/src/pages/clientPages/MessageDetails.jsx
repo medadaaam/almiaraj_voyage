@@ -44,9 +44,7 @@ export default function MessageDetails() {
     setLoading(true);
     setError(null);
     try {
-      console.log("🔍 Fetching message ID:", id);
       const response = await getMessageDetails(id);
-      console.log("📦 Response:", response);
 
       if (response?.success && response?.message) {
         setMessage(response.message);

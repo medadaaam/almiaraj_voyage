@@ -30,8 +30,6 @@ export default function ClientProfile() {
     }, []);
 
     useEffect(() => {
-        console.log("ClientProfile data:", clientProfile);
-
         if (clientProfile && clientProfile.client) {
             setFormData({
                 nomCl: clientProfile.client.nomCl || '',

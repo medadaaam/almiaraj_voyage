@@ -65,10 +65,8 @@ class HotelController extends Controller
             'rating' => 'nullable|numeric|min:0|max:5',
             'destination_id' => 'required|exists:destinations,id',
             'amenities' => 'nullable|json',
-            // No image validation here - just like voyage
         ]);
 
-        // Handle image - exactly like voyage
         $imagePath = null;
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -85,15 +83,14 @@ class HotelController extends Controller
             'rating' => $request->rating ?? 0,
         ]);
 
-        // DON'T decode amenities - keep it as JSON string for database
-        // Just use the amenities as is from the request
-        $amenitiesString = $request->amenities; // This is already a JSON string
+
+        $amenitiesString = $request->amenities;
 
         // Create hotel
         $hotel = Hotel::create([
             'id' => $service->id,
             'destination_id' => $request->destination_id,
-            'amenities' => $amenitiesString, 
+            'amenities' => $amenitiesString,
         ]);
 
         DB::commit();
@@ -195,7 +192,6 @@ class HotelController extends Controller
             $hotel = Hotel::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            // Simple validation like voyage
             $validated = $request->validate([
                 'nomServ' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -205,7 +201,6 @@ class HotelController extends Controller
                 'amenities' => 'nullable|json',
             ]);
 
-            // Update service
             $service->update([
                 'nomServ' => $request->nomServ,
                 'description' => $request->description,
@@ -213,9 +208,7 @@ class HotelController extends Controller
                 'rating' => $request->rating ?? 0,
             ]);
 
-            // Handle image update - exactly like voyage
             if ($request->hasFile('image')) {
-                // Delete old image if exists
                 if ($service->image && Storage::disk('public')->exists($service->image)) {
                     Storage::disk('public')->delete($service->image);
                 }
@@ -226,7 +219,6 @@ class HotelController extends Controller
             }
 
 
-            // Update hotel
             $hotel->update([
                 'destination_id' => $request->destination_id,
                 'amenities' => $request->amenities,
@@ -258,12 +250,10 @@ class HotelController extends Controller
             $hotel = Hotel::findOrFail($id);
             $service = Service::findOrFail($id);
 
-            // Delete image if exists 
             if ($service->image && Storage::disk('public')->exists($service->image)) {
                 Storage::disk('public')->delete($service->image);
             }
 
-            // Delete hotel
             $hotel->delete();
 
             DB::commit();

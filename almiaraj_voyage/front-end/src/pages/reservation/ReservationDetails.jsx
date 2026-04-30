@@ -6,7 +6,6 @@ import {
   Calendar,
   Users,
   CreditCard,
-  MapPin,
   Clock,
   CheckCircle,
   XCircle,
@@ -29,36 +28,45 @@ import "./reservationDetails.css";
 
 export default function ReservationDetails() {
   const { id } = useParams();
-  const { getReservationDetails, cancelReservation } = useAuth();
+  const { getReservationDetails, cancelReservation, clientProfile, getClientProfile } = useAuth();
   const navigate = useNavigate();
   const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
 
+  // ✅ Charger le profil client une seule fois au montage
   useEffect(() => {
+    // Charger le profil client si pas déjà chargé
+    if (!clientProfile?.client) {
+      getClientProfile();
+    }
+  }, []);
+
+  // ✅ Charger les détails de la réservation
+  useEffect(() => {
+    const fetchReservationDetails = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getReservationDetails(id);
+        console.log("Reservation details response:", response);
+        if (response?.success) {
+          setReservation(response.reservation);
+          console.log("Passagers:", response.reservation?.passagers);
+        } else {
+          setError(response?.message || "Réservation non trouvée");
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        setError("Une erreur s'est produite");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchReservationDetails();
   }, [id]);
-
-  const fetchReservationDetails = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await getReservationDetails(id);
-      console.log("Reservation details response:", response);
-      if (response?.success) {
-        setReservation(response.reservation);
-        console.log("Passagers:", response.reservation?.passagers);
-      } else {
-        setError(response?.message || "Réservation non trouvée");
-      }
-    } catch (err) {
-      console.error("Error:", err);
-      setError("Une erreur s'est produite");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCancel = async () => {
     if (!confirm("Êtes-vous sûr de vouloir annuler cette réservation ?")) return;
@@ -66,10 +74,15 @@ export default function ReservationDetails() {
     try {
       const response = await cancelReservation(id);
       if (response?.success) {
-        await fetchReservationDetails();
+        // Recharger les détails après annulation
+        const updatedResponse = await getReservationDetails(id);
+        if (updatedResponse?.success) {
+          setReservation(updatedResponse.reservation);
+        }
       }
     } catch (err) {
       console.error("Error cancelling:", err);
+      setError("Erreur lors de l'annulation");
     } finally {
       setCancelling(false);
     }
@@ -160,15 +173,13 @@ export default function ReservationDetails() {
 
   const statusConfig = getStatusConfig(reservation.status);
   const service = reservation.service;
-
-  // Récupérer les passagers depuis différentes sources possibles
   const passagers = reservation.passagers || reservation.passager || reservation.passenger || [];
 
-  // Client principal (réservant)
-  const clientPrincipal = reservation.client_principal || reservation.client || {};
+  // ✅ Récupérer le client principal (depuis clientProfile ou depuis la réservation)
+  const clientPrincipal = clientProfile?.client || reservation.client_principal;
 
-  console.log("Passagers data:", passagers);
   console.log("Client principal:", clientPrincipal);
+  console.log("Passagers:", passagers);
 
   return (
     <div className="res-details-page">
@@ -242,7 +253,7 @@ export default function ReservationDetails() {
           </div>
         </div>
 
-        {/* Client Principal Card */}
+        {/* Client Principal Card - Utilise clientPrincipal */}
         <div className="res-card client-card">
           <div className="res-card-header">
             <User size={20} />
@@ -261,11 +272,11 @@ export default function ReservationDetails() {
                   </p>
                   <div className="client-contact">
                     <Mail size={14} />
-                    <span>{clientPrincipal.email || clientPrincipal.emailCl}</span>
+                    <span>{clientPrincipal.email}</span>
                   </div>
                   <div className="client-contact">
                     <PhoneIcon size={14} />
-                    <span>{clientPrincipal.numTelCl || clientPrincipal.telephone}</span>
+                    <span>{clientPrincipal.numTelCl || clientPrincipal.telephone || "Non renseigné"}</span>
                   </div>
                   {clientPrincipal.cin && (
                     <div className="client-contact">
@@ -284,6 +295,7 @@ export default function ReservationDetails() {
           </div>
         </div>
 
+        {/* Le reste du code reste identique */}
         {/* Passagers Card */}
         <div className="res-card passagers-card">
           <div className="res-card-header">
@@ -299,11 +311,13 @@ export default function ReservationDetails() {
                 {passagers.map((passager, index) => (
                   <div key={index} className="passager-item">
                     <div className="passager-avatar">
-                      {passager.prenom?.charAt(0) || passager.prenomCl?.charAt(0) || "P"}
-                      {passager.nom?.charAt(0) || passager.nomCl?.charAt(0) || "A"}
+                      {passager.prenom?.charAt(0) || passager.prenomPas?.charAt(0) || "P"}
+                      {passager.nom?.charAt(0) || passager.nomPas?.charAt(0) || "A"}
                     </div>
                     <div className="passager-details">
-                      <p className="passager-name">{passager.prenomPas || passager.prenom} {passager.nomPas || passager.nom}</p>
+                      <p className="passager-name">
+                        {passager.prenomPas || passager.prenom} {passager.nomPas || passager.nom}
+                      </p>
                       <div className="passager-meta">
                         {passager.type_passager && (
                           <span className="passager-type">

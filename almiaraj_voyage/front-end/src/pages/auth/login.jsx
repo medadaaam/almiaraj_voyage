@@ -57,7 +57,7 @@ export default function Login() {
           form.setError("root", { message: error.response.data.message || "Données incorrectes" });
         }
       } else {
-        form.setError("root", { message: error.response?.data?.message || "Une erreur inattendue s'est produite." });
+        form.setError("root", { message: error.response?.data?.message || "Email ou mot de passe incorrect." });
       }
     }
   };

@@ -51,6 +51,9 @@ import BilletReservation from "@/pages/reservation/BilletReservation";
 import HajjOmraDetailsRes from "@/pages/reservation/HajjOmraReservation";
 import ReservationDetails from "@/pages/reservation/ReservationDetails";
 import MessageDetails from "@/pages/clientPages/MessageDetails";
+import ChangePassword from "@/pages/clientPages/ChangePassword";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsConditions from "@/pages/TermsConditions";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -66,6 +69,14 @@ export const route = createBrowserRouter([
   {
     path: "/password-reset/:token",
     element: <ResetPassword />,
+  },
+  {
+    path: "/privacy",
+    element: <PrivacyPolicy />,
+  },
+    {
+    path: "/terms",
+    element: <TermsConditions  />,
   },
   {
     path: "*",
@@ -293,6 +304,10 @@ export const route = createBrowserRouter([
       {
         path: "/client/messages/:id",
         element: <MessageDetails  />,
+      },
+            {
+        path: "/change-password",
+        element: <ChangePassword  />,
       },
     ],
   },

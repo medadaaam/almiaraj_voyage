@@ -26,13 +26,14 @@ const stateContext = createContext({
   setAuthenticated: () => {},
   login: (email, password) => {},
   register: (data) => {},
+  changePassword: (data) => {},
   createVoyageReservation: (data) => {},
   createBilletReservation: (data) => {},
   createHotelReservation: (data) => {},
   getMyReservations: () => {},
   getReservationDetails: (id) => {},
   cancelReservation: (id) => {},
-  getMessageDetails: (messageId) =>{},
+  getMessageDetails: (messageId) => {},
   getDestinationServices: (id) => {},
   getHotelDetails: (id) => {},
   getBilletsDetails: (id) => {},
@@ -40,6 +41,8 @@ const stateContext = createContext({
   getHajjOmraDetails: (id) => {},
   sendContactMessage: (data) => {},
   getMyMessages: () => {},
+  checkReservationLimits: () => {},
+  reservationLimits: {},
   loading: true,
   initialLoading: true,
 });
@@ -55,6 +58,18 @@ export function AuthProvider({ children }) {
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
+
+  // ✅ State pour les limites de réservation
+  const [reservationLimits, setReservationLimits] = useState({
+    max_per_day: 4,
+    used_today: 0,
+    remaining_today: 4,
+    max_pending: 3,
+    pending_count: 0,
+    remaining_pending: 3,
+    can_reserve: true,
+    message: null
+  });
 
   // ✅ Meta data for pagination
   const [hotelsMeta, setHotelsMeta] = useState({
@@ -93,6 +108,13 @@ export function AuthProvider({ children }) {
     fetchUser();
   }, []);
 
+  // ✅ Charger les limites quand l'utilisateur est authentifié
+  useEffect(() => {
+    if (authenticated && user) {
+      checkReservationLimits();
+    }
+  }, [authenticated, user]);
+
   // ✅ جلب البيانات الأساسية فقط أولاً
   useEffect(() => {
     const fetchAllData = async () => {
@@ -104,6 +126,119 @@ export function AuthProvider({ children }) {
     fetchAllData();
   }, [loading]);
 
+  // ✅ Fonction pour compter les réservations du jour (Frontend)
+  const countTodayReservations = (reservations) => {
+    const today = new Date().toDateString();
+    return reservations.filter(res => {
+      if (!res.created_at) return false;
+      const resDate = new Date(res.created_at).toDateString();
+      return resDate === today;
+    }).length;
+  };
+
+  // ✅ Fonction pour compter les réservations en attente (Frontend)
+  const countPendingReservations = (reservations) => {
+    return reservations.filter(res => res.status === 'pending').length;
+  };
+
+  // ✅ Vérifier les limites de réservation (Frontend Only)
+  const checkReservationLimits = async () => {
+    if (!authenticated) {
+      const defaultLimits = {
+        max_per_day: 4,
+        used_today: 0,
+        remaining_today: 4,
+        max_pending: 3,
+        pending_count: 0,
+        remaining_pending: 3,
+        can_reserve: true,
+        message: null
+      };
+      setReservationLimits(defaultLimits);
+      return { allowed: true, ...defaultLimits };
+    }
+
+    try {
+      // جلب أحدث الحجوزات
+      const reservationsData = await getMyReservations();
+      const userReservations = reservationsData?.reservations || [];
+
+      // حساب الحجوزات اليوم
+      const todayCount = countTodayReservations(userReservations);
+      // حساب الحجوزات المعلقة
+      const pendingCount = countPendingReservations(userReservations);
+
+      const maxPerDay = 4;
+      const maxPending = 3;
+
+      const canReserve = (todayCount < maxPerDay) && (pendingCount < maxPending);
+
+      let message = null;
+      if (todayCount >= maxPerDay) {
+        message = `Vous avez atteint la limite de ${maxPerDay} réservations par jour. Veuillez réessayer demain.`;
+      } else if (pendingCount >= maxPending) {
+        message = `Vous avez trop de réservations en attente (${pendingCount}/${maxPending}). Veuillez finaliser ou annuler certaines réservations.`;
+      }
+
+      const newLimits = {
+        max_per_day: maxPerDay,
+        used_today: todayCount,
+        remaining_today: maxPerDay - todayCount,
+        max_pending: maxPending,
+        pending_count: pendingCount,
+        remaining_pending: maxPending - pendingCount,
+        can_reserve: canReserve,
+        message: message
+      };
+
+      setReservationLimits(newLimits);
+
+      return {
+        allowed: canReserve,
+        used_today: todayCount,
+        pending_count: pendingCount,
+        max_per_day: maxPerDay,
+        max_pending: maxPending,
+        message: message
+      };
+    } catch (error) {
+      console.error("Check limits error:", error);
+      // في حالة الخطأ، نسمح بالحجز
+      return {
+        allowed: true,
+        max_per_day: 4,
+        used_today: 0,
+        remaining_today: 4,
+        max_pending: 3,
+        pending_count: 0,
+        remaining_pending: 3,
+        message: null
+      };
+    }
+  };
+
+  // ✅ Fonction générique pour créer une réservation avec vérification
+  const createReservationWithLimitCheck = async (type, data, apiFunction) => {
+    // Vérifier les limites avant de continuer
+    const limits = await checkReservationLimits();
+
+    if (!limits?.allowed) {
+      throw new Error(limits?.message || "Vous ne pouvez pas faire cette réservation pour le moment");
+    }
+
+    try {
+      const response = await apiFunction(data);
+
+      // Rafraîchir les limites après création réussie
+      await checkReservationLimits();
+
+      return response;
+    } catch (error) {
+      console.error(`Error creating ${type} reservation:`, error);
+      throw error;
+    }
+  };
+
   const login = async (email, password) => {
     try {
       await AuthApi.getCsrfToken();
@@ -112,6 +247,8 @@ export function AuthProvider({ children }) {
         const userResponse = await AuthApi.getUser();
         setUser(userResponse.data);
         setAuthenticated(true);
+        // ✅ Charger les limites après connexion
+        await checkReservationLimits();
       }
       return response;
     } catch (error) {
@@ -132,6 +269,8 @@ export function AuthProvider({ children }) {
         const userResponse = await AuthApi.getUser();
         setUser(userResponse.data);
         setAuthenticated(true);
+        // ✅ Charger les limites après inscription
+        await checkReservationLimits();
       }
       return response;
     } catch (error) {
@@ -346,39 +485,43 @@ export function AuthProvider({ children }) {
       setHotels([]);
       setBillets([]);
       setHajjOmras([]);
+      // ✅ Réinitialiser les limites
+      setReservationLimits({
+        max_per_day: 4,
+        used_today: 0,
+        remaining_today: 4,
+        max_pending: 3,
+        pending_count: 0,
+        remaining_pending: 3,
+        can_reserve: true,
+        message: null
+      });
     }
   };
 
+  // ✅ Create reservation avec vérification des limites
   const createVoyageReservation = async (data) => {
-    try {
-      const response = await AuthApi.createVoyageReservation(data);
-      return response.data;
-    } catch (error) {
-      console.error("Error creating reservation:", error);
-      throw error;
-    }
+    return await createReservationWithLimitCheck(
+      'voyage',
+      data,
+      (d) => AuthApi.createVoyageReservation(d).then(res => res.data)
+    );
   };
 
   const createHotelReservation = async (data) => {
-    try {
-      const response = await AuthApi.createHotelReservation(data);
-      console.log("Hotel reservation response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error creating hotel reservation:", error);
-      throw error;
-    }
+    return await createReservationWithLimitCheck(
+      'hotel',
+      data,
+      (d) => AuthApi.createHotelReservation(d).then(res => res.data)
+    );
   };
 
   const createBilletReservation = async (data) => {
-    try {
-      const response = await AuthApi.createBilletReservation(data);
-      console.log("Billet reservation response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error creating billet reservation:", error);
-      throw error;
-    }
+    return await createReservationWithLimitCheck(
+      'billet',
+      data,
+      (d) => AuthApi.createBilletReservation(d).then(res => res.data)
+    );
   };
 
   const getMyReservations = async () => {
@@ -387,7 +530,7 @@ export function AuthProvider({ children }) {
       return response.data;
     } catch (error) {
       console.error("Error fetching reservations:", error);
-      return null;
+      return { success: true, reservations: [] };
     }
   };
 
@@ -404,6 +547,8 @@ export function AuthProvider({ children }) {
   const cancelReservation = async (id) => {
     try {
       const response = await AuthApi.cancelReservation(id);
+      // ✅ Rafraîchir les limites après annulation
+      await checkReservationLimits();
       return response.data;
     } catch (error) {
       console.error("Error cancelling reservation:", error);
@@ -411,15 +556,15 @@ export function AuthProvider({ children }) {
     }
   };
 
-const sendContactMessage = async (data) => {
+  const sendContactMessage = async (data) => {
     try {
-        const response = await AuthApi.sendContactMessage(data);
-        return response.data;
+      const response = await AuthApi.sendContactMessage(data);
+      return response.data;
     } catch (error) {
-        console.error("Error sending message:", error);
-        throw error;
+      console.error("Error sending message:", error);
+      throw error;
     }
-};
+  };
 
   const getMyMessages = async () => {
     try {
@@ -431,18 +576,31 @@ const sendContactMessage = async (data) => {
     }
   };
 
-const getMessageDetails = async (messageId) => {
+  const getMessageDetails = async (messageId) => {
     try {
-        const response = await AuthApi.getClientMessageDetails(messageId);
-        return response.data;
+      const response = await AuthApi.getClientMessageDetails(messageId);
+      return response.data;
     } catch (error) {
-        console.error("Error fetching message details:", error);
-        return {
-            success: false,
-            message: error.response?.data?.message || "Message non trouvé"
-        };
+      console.error("Error fetching message details:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Message non trouvé",
+      };
     }
-};
+  };
+
+  const changePassword = async (data) => {
+    try {
+      const response = await AuthApi.changePassword(data);
+      if (response?.data?.success) {
+        return response.data;
+      }
+      throw new Error(response?.data?.message || "Erreur lors du changement");
+    } catch (error) {
+      console.error("Change password error:", error);
+      throw error;
+    }
+  };
 
   return (
     <stateContext.Provider
@@ -486,6 +644,10 @@ const getMessageDetails = async (messageId) => {
         sendContactMessage,
         getMyMessages,
         getMessageDetails,
+        changePassword,
+        // ✅ Nouvelles valeurs exportées
+        checkReservationLimits,
+        reservationLimits,
       }}
     >
       {children}

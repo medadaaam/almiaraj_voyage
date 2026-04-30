@@ -1,8 +1,37 @@
+import { useEffect, useRef, useState } from "react";
 import "./styles/cta.css";
 
 export default function CTA() {
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
+
+  // ✅ مراقبة التمرير
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.3, triggerOnce: false }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="cta-section">
+    <section
+      ref={sectionRef}
+      className={`cta-section ${isVisible ? "visible" : ""}`}
+    >
       <div className="cta-overlay"></div>
 
       <div className="cta-container">

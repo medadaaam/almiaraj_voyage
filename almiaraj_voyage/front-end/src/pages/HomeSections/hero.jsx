@@ -82,7 +82,7 @@ export default function Hero() {
                 <a href="services/circuits" className="hero-btn-primary">
                   Explorer les voyages
                 </a>
-                <a href="/customize-tour" className="hero-btn-secondary">
+                <a href="/contact" className="hero-btn-secondary">
                   Personnaliser le circuit
                 </a>
               </div>

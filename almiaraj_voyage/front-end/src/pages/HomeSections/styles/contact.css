@@ -369,3 +369,73 @@
     font-size: 0.65rem;
   }
 }
+
+/* ================= SCROLL ANIMATIONS ================= */
+
+/* الحالة المخفية للعناصر */
+.contact-section .contact-header {
+  opacity: 0;
+  transform: translateY(-30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contact-section .contact-form-wrapper {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contact-section .contact-info-card {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.contact-section .contact-map {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الحالة الظاهرة (عند التمرير) */
+.contact-section.visible .contact-header {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.contact-section.visible .contact-form-wrapper {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.contact-section.visible .contact-info-card {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.contact-section.visible .contact-map {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* تأخيرات مختلفة للبطاقات */
+.contact-section.visible .contact-info-card:nth-child(1) { transition-delay: 0.1s; }
+.contact-section.visible .contact-info-card:nth-child(2) { transition-delay: 0.2s; }
+.contact-section.visible .contact-info-card:nth-child(3) { transition-delay: 0.3s; }
+
+/* تأخير للخريطة */
+.contact-section.visible .contact-map {
+  transition-delay: 0.4s;
+}
+
+/* ✅ احترام إعدادات المستخدم */
+@media (prefers-reduced-motion: reduce) {
+  .contact-section .contact-header,
+  .contact-section .contact-form-wrapper,
+  .contact-section .contact-info-card,
+  .contact-section .contact-map {
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

@@ -97,7 +97,7 @@ export default function VoyageDetailsCl() {
     return (
         <div className="voyage-details-page">
             {/* Hero Section */}
-            <section className="relative h-[60vh] bg-cover bg-center" style={{ backgroundImage: `url(${destination?.image || service?.image || '/placeholder.jpg'})` }}>
+            <section className="relative h-[60vh] bg-cover bg-center" style={{ backgroundImage: `url(${service?.image})` }}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
                 <div className="absolute top-6 left-6 right-6 z-10">
                     <button onClick={() => window.history.back()}  className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors">
@@ -150,7 +150,7 @@ export default function VoyageDetailsCl() {
                                 <h2 className="text-2xl font-bold mb-4">📍 Destination</h2>
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-20 h-20 rounded-full overflow-hidden">
-                                        <img src={destination?.image} alt={destination?.nom} className="w-full h-full object-cover" />
+                                        <img src={service.image} alt={destination?.nom} className="w-full h-full object-cover" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-semibold">{destination?.nom}</h3>
@@ -285,17 +285,17 @@ export default function VoyageDetailsCl() {
 
                                 {/* Buttons */}
                                 <Link
-                                    to={`/reserver/voyage/${voyage.id}`}
+                                    to={`reserver`}
                                     className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 mb-3"
                                 >
                                     Réserver maintenant
                                     <ChevronRight className="w-4 h-4" />
                                 </Link>
 
-                                <button className="w-full border border-orange-500 text-orange-500 hover:bg-orange-50 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
+                                <Link to='/contact' className="w-full border border-orange-500 text-orange-500 hover:bg-orange-50 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2">
                                     <Phone className="w-4 h-4" />
                                     Poser une question
-                                </button>
+                                </Link>
 
                                 <p className="text-xs text-gray-400 text-center mt-4">
                                     Paiement sécurisé • Annulation gratuite sous 30 jours

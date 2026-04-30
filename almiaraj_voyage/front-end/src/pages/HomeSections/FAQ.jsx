@@ -1,9 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import "./styles/faq.css";
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
+
+  // ✅ مراقبة التمرير
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          } else {
+            setIsVisible(false);
+          }
+        });
+      },
+      { threshold: 0.2, triggerOnce: false }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   const faqs = [
     {
@@ -37,7 +61,10 @@ export default function FAQ() {
   };
 
   return (
-    <section className="faq-section">
+    <section
+      ref={sectionRef}
+      className={`faq-section ${isVisible ? "visible" : ""}`}
+    >
       <div className="faq-container">
 
         {/* Header */}
@@ -57,6 +84,7 @@ export default function FAQ() {
             <div
               key={index}
               className={`faq-item ${openIndex === index ? "active" : ""}`}
+              style={{ transitionDelay: `${index * 0.05}s` }}
             >
               <button
                 className="faq-question"
@@ -76,7 +104,7 @@ export default function FAQ() {
         <div className="faq-footer">
           <p>
             Vous n'avez pas trouvé votre réponse ?
-            <a href="#contact"> Contactez-nous directement</a>
+            <a href="/contact"> Contactez-nous directement</a>
           </p>
         </div>
 

@@ -22,7 +22,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(21, 18, 18, 0.75);
   z-index: 1;
 }
 
@@ -152,5 +152,110 @@
     padding: 10px 24px;
     font-size: 0.8rem;
     width: 100%;
+  }
+}
+
+/* ================= SCROLL ANIMATIONS ================= */
+
+/* الحالة المخفية للعناصر */
+.cta-section .cta-wrapper {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-section .cta-content {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-section .cta-title {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-section .cta-description {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-section .cta-button {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الحالة الظاهرة (عند التمرير) */
+.cta-section.visible .cta-wrapper {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.cta-section.visible .cta-content {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cta-section.visible .cta-title {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cta-section.visible .cta-description {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cta-section.visible .cta-button {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* تأخيرات مختلفة */
+.cta-section.visible .cta-title {
+  transition-delay: 0.1s;
+}
+
+.cta-section.visible .cta-description {
+  transition-delay: 0.2s;
+}
+
+.cta-section.visible .cta-button {
+  transition-delay: 0.35s;
+}
+
+/* ✅ تأثير إضافي: نبض للبطاقة عند التمرير */
+.cta-section.visible .cta-wrapper {
+  animation: subtlePulse 1s ease-out;
+}
+
+@keyframes subtlePulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ✅ احترام إعدادات المستخدم */
+@media (prefers-reduced-motion: reduce) {
+  .cta-section .cta-wrapper,
+  .cta-section .cta-content,
+  .cta-section .cta-title,
+  .cta-section .cta-description,
+  .cta-section .cta-button {
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

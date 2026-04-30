@@ -27,6 +27,16 @@ export default function ModifierHajjOmra() {
     const [calculatedDuree, setCalculatedDuree] = useState("");
     const today = new Date().toISOString().split('T')[0];
 
+    // Formule options
+    const formuleOptions = [
+        { value: "standard", label: "Standard" },
+        { value: "economique", label: "Économique" },
+        { value: "premium", label: "Premium" },
+        { value: "luxe", label: "Luxe" },
+        { value: "vip", label: "VIP" },
+        { value: "deluxe", label: "Deluxe" }
+    ];
+
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
         if (imagePath.startsWith('http')) return imagePath;
@@ -120,6 +130,18 @@ export default function ModifierHajjOmra() {
             return;
         }
 
+        if (!form.formule) {
+            setError("Veuillez sélectionner une formule");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.typeChambre) {
+            setError("Veuillez sélectionner un type de chambre");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
             const formData = new FormData();
             formData.append('nomServ', form.nomServ);
@@ -146,6 +168,7 @@ export default function ModifierHajjOmra() {
             }
             
         } catch (error) {
+            console.error('Error:', error);
             setError(error.response?.data?.message || "Erreur lors de la modification");
         } finally {
             setIsSubmitting(false);
@@ -178,50 +201,104 @@ export default function ModifierHajjOmra() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Nom du service *</label>
-                            <input type="text" name="nomServ" value={form.nomServ} onChange={handleChange} required className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]" />
+                            <input 
+                                type="text" 
+                                name="nomServ" 
+                                value={form.nomServ} 
+                                onChange={handleChange} 
+                                required 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Prix (DH) *</label>
-                            <input type="number" name="prix" value={form.prix} onChange={handleChange} required min="0" className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]" />
+                            <input 
+                                type="number" 
+                                name="prix" 
+                                value={form.prix} 
+                                onChange={handleChange} 
+                                required 
+                                min="0" 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
-                            <select name="type" value={form.type} onChange={handleChange} className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]">
+                            <select 
+                                name="type" 
+                                value={form.type} 
+                                onChange={handleChange} 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                            >
                                 <option value="omra">Omra</option>
                                 <option value="hajj">Hajj</option>
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Formule *</label>
-                            <input type="text" name="formule" value={form.formule} onChange={handleChange} required className="w-full px-3 py-2 border rounded-md" />
+                            <select 
+                                name="formule" 
+                                value={form.formule} 
+                                onChange={handleChange} 
+                                required 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                            >
+                                <option value="">Sélectionner une formule</option>
+                                {formuleOptions.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Date de départ *</label>
-                            <input type="date" name="dateDepartHO" value={form.dateDepartHO} onChange={handleChange} required className="w-full px-3 py-2 border rounded-md" />
+                            <input 
+                                type="date" 
+                                name="dateDepartHO" 
+                                value={form.dateDepartHO} 
+                                onChange={handleChange} 
+                                required 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Date de retour *</label>
-                            <input type="date" name="dateRetourHO" value={form.dateRetourHO} onChange={handleChange} required min={form.dateDepartHO} className="w-full px-3 py-2 border rounded-md" />
+                            <input 
+                                type="date" 
+                                name="dateRetourHO" 
+                                value={form.dateRetourHO} 
+                                onChange={handleChange} 
+                                required 
+                                min={form.dateDepartHO || today} 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                     </div>
 
                     {calculatedDuree && (
-                        <div className="p-3 bg-blue-50 border rounded-md">
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                             <Clock size={18} className="inline mr-2 text-blue-600" />
-                            <span>Durée: <strong>{calculatedDuree}</strong></span>
+                            <span className="text-blue-700">Durée: <strong>{calculatedDuree}</strong></span>
                         </div>
                     )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Type de chambre *</label>
-                        <select name="typeChambre" value={form.typeChambre} onChange={handleChange} required className="w-full px-3 py-2 border rounded-md">
-                            <option value="">Sélectionner</option>
+                        <select 
+                            name="typeChambre" 
+                            value={form.typeChambre} 
+                            onChange={handleChange} 
+                            required 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                        >
+                            <option value="">Sélectionner un type de chambre</option>
                             <option value="Simple">Simple (1 personne)</option>
                             <option value="Double">Double (2 personnes)</option>
                             <option value="Triple">Triple (3 personnes)</option>
@@ -231,28 +308,69 @@ export default function ModifierHajjOmra() {
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" value={form.description} onChange={handleChange} rows="3" className="w-full px-3 py-2 border rounded-md" />
+                        <textarea 
+                            name="description" 
+                            value={form.description} 
+                            onChange={handleChange} 
+                            rows="3" 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                            placeholder="Description détaillée du service..."
+                        />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                         <div className="flex items-center gap-4">
                             <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md flex items-center gap-2">
-                                <Upload size={18} /><span>Changer l'image</span>
-                                <input id="image-input" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                                <Upload size={18} />
+                                <span>Changer l'image</span>
+                                <input
+                                    id="image-input" 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleImageChange} 
+                                    className="hidden" 
+                                />
                             </label>
-                            {(imagePreview || currentImage) && <button type="button" onClick={removeImage} className="text-red-500"><Trash2 size={18} /> Supprimer</button>}
+                            {(imagePreview || currentImage) && (
+                                <button 
+                                    type="button" 
+                                    onClick={removeImage} 
+                                    className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                                >
+                                    <Trash2 size={18} />
+                                    Supprimer
+                                </button>
+                            )}
                         </div>
                         {(imagePreview || currentImage) && (
-                            <div className="mt-3"><img src={imagePreview || getImageUrl(currentImage)} alt="Preview" className="w-32 h-32 object-cover rounded-md border" /></div>
+                            <div className="mt-3">
+                                <img 
+                                    src={imagePreview || getImageUrl(currentImage)} 
+                                    alt="Preview" 
+                                    className="w-32 h-32 object-cover rounded-md border" 
+                                />
+                            </div>
                         )}
+                        <p className="text-xs text-gray-500 mt-1">
+                            Laissez vide pour conserver l'image actuelle
+                        </p>
                     </div>
                     
                     <div className="flex gap-4 pt-4">
-                        <button type="submit" className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" disabled={isSubmitting}>
+                        <button 
+                            type="submit" 
+                            className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" 
+                            disabled={isSubmitting}
+                        >
                             {isSubmitting ? "Modification..." : "Mettre à jour"}
                         </button>
-                        <Link to="/admin/hajj-omras" className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition">Annuler</Link>
+                        <Link 
+                            to="/admin/hajj-omras" 
+                            className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
+                        >
+                            Annuler
+                        </Link>
                     </div>
                 </form>
             </div>

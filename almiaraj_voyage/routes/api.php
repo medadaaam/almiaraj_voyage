@@ -111,8 +111,18 @@ Route::get('/destinations', [DestinationController::class, 'index']);
 Route::get('/destinations/search', [VoyageController::class, 'searchDestinations']);
 Route::post('/voyages', [VoyageController::class, 'store']);
 
+Route::prefix('destinations')->group(function () {
+    Route::get('/', [DestinationController::class, 'index']);
+    Route::get('/{id}', [DestinationController::class, 'show']);
+    Route::post('/', [DestinationController::class, 'store']);
+    Route::put('/{id}', [DestinationController::class, 'update']);
+    Route::delete('/{id}', [DestinationController::class, 'destroy']);
+    Route::patch('/{id}/toggle-featured', [DestinationController::class, 'toggleFeatured']);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [ChangePasswordController::class, 'changePassword']);
 });
 
-require __DIR__.'/auth.php';
+
+require __DIR__ . '/auth.php';

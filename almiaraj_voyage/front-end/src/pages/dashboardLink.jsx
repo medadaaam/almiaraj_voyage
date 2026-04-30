@@ -8,7 +8,7 @@ export default function DashboardLink() {
 
   return (
     <NavLink
-      to={user?.role === "admin" ? "/admin" : "/client"}
+      to={user?.role === "admin" ? "/admin/dashboard" : "/client"}
     >
         {
             user.role === "admin" ? <span>Dashboard</span>:<span>Mon compte</span>

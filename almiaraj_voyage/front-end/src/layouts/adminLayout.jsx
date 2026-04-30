@@ -21,6 +21,7 @@ import {
   HelpCircle,
   Star,
   MessageCircle,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import "./adminLayout.css";
@@ -47,6 +48,7 @@ export default function AdminLayout() {
     if (path === '/admin/dashboard') return 'Dashboard';
     if (path === '/admin/users') return 'Utilisateurs';
     if (path === '/admin/reservations') return 'Réservations';
+    if (path === '/admin/destinations') return 'Destinations';
     if (path === '/admin/voyages') return 'Voyages';
     if (path === '/admin/hotels') return 'Hôtels';
     if (path === '/admin/hajj-omras') return 'Hajj & Omra';
@@ -58,6 +60,7 @@ export default function AdminLayout() {
     { path: "/admin/dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
     { path: "/admin/reservations", icon: <Calendar size={20} />, label: "Réservations", badge: notifications },
     { path: "/admin/users", icon: <Users size={20} />, label: "Clients" },
+    { path: "/admin/destinations", icon: <Globe size={20} />, label: "Destinations" },
     { path: "/admin/voyages", icon: <Plane size={20} />, label: "Voyages" },
     { path: "/admin/hotels", icon: <Hotel size={20} />, label: "Hôtels" },
     { path: "/admin/hajj-omras", icon: <ChartNoAxesCombined size={20} />, label: "Hajj & Omra" },

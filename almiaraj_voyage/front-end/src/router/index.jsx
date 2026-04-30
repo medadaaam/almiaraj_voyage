@@ -60,6 +60,11 @@ import AdminMessages from "@/pages/adminDashboard/messages";
 import ChangePassword from "@/pages/clientPages/ChangePassword";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsConditions from "@/pages/TermsConditions";
+import AdminDestinations from "@/pages/adminDashboard/destination";
+import AjouterDestination from "@/pages/adminDashboard/destination/ajouter";
+import ModifierDestination from "@/pages/adminDashboard/destination/modifier";
+import DestinationDetails from "@/pages/adminDashboard/destination/details";
+import AdminClientDetails from "@/pages/adminDashboard/clientDetails";
 
 export const LOGIN_ROUTE = "/login";
 
@@ -286,6 +291,28 @@ export const route = createBrowserRouter([
       {
         path: "/admin/showBillet/:id",
         element: <BilletDetails />,
+      },
+
+
+      {
+        path: "/admin/destinations",
+        element: <AdminDestinations />,
+      },
+      {
+        path: "/admin/ajouterDestination",
+        element: <AjouterDestination />,
+      },
+      {
+        path: "/admin/editDestination/:id",
+        element: <ModifierDestination />,
+      },
+      {
+        path: "/admin/showDestination/:id",
+        element: <DestinationDetails />,
+      },
+      {
+        path: "/admin/users/:id",
+        element: <AdminClientDetails />,
       },
     ],
   },

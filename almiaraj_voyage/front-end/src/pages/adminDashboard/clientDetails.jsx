@@ -26,7 +26,6 @@ import {
   Star as StarIcon
 } from "lucide-react";
 import { axiosClient } from "@/api/axios";
-import "./adminClientDetails.css";
 
 export default function AdminClientDetails() {
   const { id } = useParams();
@@ -279,27 +278,6 @@ export default function AdminClientDetails() {
             <div className="info-row">
               <span className="info-label">Passport</span>
               <span className="info-value">{client.passport || "Non renseigné"}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="info-card">
-          <h3 className="info-title">
-            <Home size={18} />
-            Adresse
-          </h3>
-          <div className="info-content">
-            <div className="info-row">
-              <span className="info-label">Adresse</span>
-              <span className="info-value">{client.adresse || "Non renseignée"}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Ville</span>
-              <span className="info-value">{client.ville || "Non renseignée"}</span>
-            </div>
-            <div className="info-row">
-              <span className="info-label">Code postal</span>
-              <span className="info-value">{client.codePostal || "Non renseigné"}</span>
             </div>
           </div>
         </div>

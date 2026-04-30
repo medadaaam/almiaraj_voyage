@@ -1,13 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { axiosClient } from "@/api/axios";
-import { Search, MapPin, X, Upload, Trash2, Plus, Star, Globe } from "lucide-react";
+import { Search, MapPin, Globe, X, Upload, Trash2, Star, Wifi, Coffee, Car, Dumbbell, Utensils, Sparkles, Wind, PawPrint, Clock as ClockIcon, Sun, Users } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ModifierHotel() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { getDestination, destinations } = useAuth();
+    
+    // Refs for click outside detection
+    const destinationRef = useRef(null);
+    const amenitiesRef = useRef(null);
     
     useEffect(() => {
         getDestination();
@@ -29,10 +33,52 @@ export default function ModifierHotel() {
     const [currentImage, setCurrentImage] = useState(null);
     const [error, setError] = useState("");
     
+    // Destination selection states
     const [searchTerm, setSearchTerm] = useState("");
     const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedDestination, setSelectedDestination] = useState(null);
+    
+    // Common amenities list with icons (same as AjouterHotel)
+    const amenitiesList = [
+        { name: "Wifi gratuit", icon: <Wifi size={18} />, category: "Internet" },
+        { name: "Petit-déjeuner", icon: <Coffee size={18} />, category: "Repas" },
+        { name: "Parking gratuit", icon: <Car size={18} />, category: "Transport" },
+        { name: "Piscine", icon: <Sun size={18} />, category: "Loisirs" },
+        { name: "Climatisation", icon: <Wind size={18} />, category: "Confort" },
+        { name: "Salle de sport", icon: <Dumbbell size={18} />, category: "Loisirs" },
+        { name: "Spa", icon: <Sparkles size={18} />, category: "Bien-être" },
+        { name: "Restaurant", icon: <Utensils size={18} />, category: "Repas" },
+        { name: "Service d'étage", icon: <Coffee size={18} />, category: "Service" },
+        { name: "Réception 24/7", icon: <ClockIcon size={18} />, category: "Service" },
+        { name: "Animaux acceptés", icon: <PawPrint size={18} />, category: "Service" },
+        { name: "Familles", icon: <Users size={18} />, category: "Service" },
+        { name: "Chambres non-fumeurs", icon: <Wind size={18} />, category: "Confort" },
+        { name: "Terrasse", icon: <Sun size={18} />, category: "Loisirs" },
+        { name: "Jardin", icon: <Sun size={18} />, category: "Loisirs" },
+        { name: "Transfert aéroport", icon: <Car size={18} />, category: "Transport" }
+    ];
+
+    // Group amenities by category
+    const amenitiesByCategory = amenitiesList.reduce((acc, amenity) => {
+        if (!acc[amenity.category]) {
+            acc[amenity.category] = [];
+        }
+        acc[amenity.category].push(amenity);
+        return acc;
+    }, {});
+
     const [selectedAmenities, setSelectedAmenities] = useState([]);
-    const [currentDestination, setCurrentDestination] = useState(null);
+
+    // Click outside handler for destination dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (destinationRef.current && !destinationRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     const getImageUrl = (imagePath) => {
         if (!imagePath) return null;
@@ -41,20 +87,18 @@ export default function ModifierHotel() {
         return `${baseUrl}/storage/${imagePath}`;
     };
 
-    const commonAmenities = [
-        "Wifi gratuit", "Piscine", "Parking gratuit", "Climatisation",
-        "Petit-déjeuner", "Salle de sport", "Spa", "Restaurant",
-        "Service d'étage", "Réception 24/7", "Animaux acceptés", "Familles"
-    ];
-
-    const getAllAmenities = () => {
-        return commonAmenities.map(amenity => ({ amenityName: amenity }));
+    // Get all destinations
+    const getAllDestinations = () => {
+        if (Array.isArray(destinations)) {
+            return destinations;
+        }
+        return [];
     };
 
-    const filteredAmenities = getAllAmenities().filter(amenity => 
-        amenity.amenityName.toLowerCase().includes(searchTerm.toLowerCase())
-    ).filter(amenity => 
-        !selectedAmenities.some(selected => selected.amenityName === amenity.amenityName)
+    // Filter destinations based on search term
+    const filteredDestinations = getAllDestinations().filter(dest => 
+        dest.ville?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        dest.pays?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const fetchHotelDetails = async () => {
@@ -79,14 +123,38 @@ export default function ModifierHotel() {
                 setCurrentImage(serviceData.image);
             }
             
-            if (hotelDetails.amenities && Array.isArray(hotelDetails.amenities)) {
-                const amenities = hotelDetails.amenities.map(amenity => ({ amenityName: amenity }));
-                setSelectedAmenities(amenities);
+            // Parse amenities
+            let amenities = [];
+            if (hotelDetails.amenities) {
+                if (typeof hotelDetails.amenities === 'string') {
+                    try {
+                        amenities = JSON.parse(hotelDetails.amenities);
+                    } catch (e) {
+                        amenities = hotelDetails.amenities.split(',');
+                    }
+                } else if (Array.isArray(hotelDetails.amenities)) {
+                    amenities = hotelDetails.amenities;
+                }
+                
+                // Match with full amenity objects
+                const matchedAmenities = amenitiesList.filter(amenity => 
+                    amenities.includes(amenity.name)
+                );
+                setSelectedAmenities(matchedAmenities);
             }
             
+            // Set destination
             if (hotelDetails.destination) {
-                setCurrentDestination(hotelDetails.destination);
-                setSearchTerm(hotelDetails.destination.pays);
+                setSelectedDestination(hotelDetails.destination);
+                setSearchTerm(`${hotelDetails.destination.ville}`);
+                setForm(prev => ({ ...prev, destination_id: hotelDetails.destination.id }));
+            } else if (hotelDetails.destination_id) {
+                // Fetch destination from list
+                const dest = getAllDestinations().find(d => d.id === hotelDetails.destination_id);
+                if (dest) {
+                    setSelectedDestination(dest);
+                    setSearchTerm(`${dest.ville}, ${dest.pays}`);
+                }
             }
             
         } catch (err) {
@@ -97,14 +165,39 @@ export default function ModifierHotel() {
         }
     };
 
-    const addAmenity = (amenity) => {
-        setSelectedAmenities([...selectedAmenities, amenity]);
-        setSearchTerm("");
+    // Select destination
+    const selectDestination = (dest) => {
+        setSelectedDestination(dest);
+        setForm({ ...form, destination_id: dest.id });
+        setSearchTerm(`${dest.ville}, ${dest.pays}`);
         setShowDropdown(false);
     };
 
-    const removeAmenity = (amenityToRemove) => {
-        setSelectedAmenities(selectedAmenities.filter(amenity => amenity.amenityName !== amenityToRemove.amenityName));
+    // Clear selection
+    const clearSelection = () => {
+        setSelectedDestination(null);
+        setForm({ ...form, destination_id: "" });
+        setSearchTerm("");
+    };
+
+    // Handle search
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        setShowDropdown(true);
+    };
+
+    // Toggle amenity selection (checkbox style)
+    const toggleAmenity = (amenity) => {
+        if (selectedAmenities.some(a => a.name === amenity.name)) {
+            setSelectedAmenities(selectedAmenities.filter(a => a.name !== amenity.name));
+        } else {
+            setSelectedAmenities([...selectedAmenities, amenity]);
+        }
+    };
+
+    // Clear all amenities
+    const clearAllAmenities = () => {
+        setSelectedAmenities([]);
     };
 
     const handleChange = (e) => {
@@ -142,7 +235,19 @@ export default function ModifierHotel() {
         setError("");
 
         if (!form.nomServ.trim()) {
-            setError("Veuillez entrer le nom");
+            setError("Veuillez entrer le nom de l'hôtel");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.prix || parseFloat(form.prix) <= 0) {
+            setError("Veuillez entrer un prix valide");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (!form.destination_id) {
+            setError("Veuillez sélectionner une destination");
             setIsSubmitting(false);
             return;
         }
@@ -162,7 +267,7 @@ export default function ModifierHotel() {
             formData.append('destination_id', form.destination_id);
             formData.append('_method', 'PUT');
             
-            const amenitiesArray = selectedAmenities.map(amenity => amenity.amenityName);
+            const amenitiesArray = selectedAmenities.map(amenity => amenity.name);
             formData.append('amenities', JSON.stringify(amenitiesArray));
             
             if (form.image) {
@@ -179,6 +284,7 @@ export default function ModifierHotel() {
             }
             
         } catch (error) {
+            console.error('Error:', error);
             setError(error.response?.data?.message || "Erreur lors de la modification");
         } finally {
             setIsSubmitting(false);
@@ -211,14 +317,30 @@ export default function ModifierHotel() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Nom de l'hôtel *</label>
-                            <input type="text" name="nomServ" value={form.nomServ} onChange={handleChange} required className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]" />
+                            <input 
+                                type="text" 
+                                name="nomServ" 
+                                value={form.nomServ} 
+                                onChange={handleChange} 
+                                required 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Prix par nuit (DH) *</label>
-                            <input type="number" name="prix" value={form.prix} onChange={handleChange} required min="0" className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]" />
+                            <input 
+                                type="number" 
+                                name="prix" 
+                                value={form.prix} 
+                                onChange={handleChange} 
+                                required 
+                                min="0" 
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            />
                         </div>
                     </div>
 
+                    {/* Rating */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Note / Rating</label>
                         <div className="flex items-center gap-2">
@@ -231,76 +353,200 @@ export default function ModifierHotel() {
                         </div>
                     </div>
 
+                    {/* Destination/City Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Destination *</label>
-                        <div className="relative">
-                            <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }} placeholder="Rechercher..." className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-[#fb923c]" />
-                            {showDropdown && searchTerm && (
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ville de l'hôtel *</label>
+                        <div ref={destinationRef} className="relative">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={handleSearch}
+                                    onFocus={() => setShowDropdown(true)}
+                                    placeholder="Rechercher une ville (ex: Casablanca, Marrakech, Paris...)"
+                                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        onClick={clearSelection}
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Dropdown Results */}
+                            {showDropdown && searchTerm && filteredDestinations.length > 0 && (
                                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                    {destinations?.filter(dest => dest.pays.toLowerCase().includes(searchTerm.toLowerCase())).map((dest) => (
-                                        <button key={dest.id} type="button" onClick={() => { setCurrentDestination(dest); setForm({ ...form, destination_id: dest.id }); setSearchTerm(dest.pays); setShowDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b">
-                                            {dest.pays}
+                                    {filteredDestinations.map((dest) => (
+                                        <button
+                                            key={dest.id}
+                                            type="button"
+                                            onClick={() => selectDestination(dest)}
+                                            className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex items-center gap-2"
+                                        >
+                                            <MapPin size={16} className="text-[#fb923c]" />
+                                            <div>
+                                                <div className="font-medium">{dest.ville}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    {dest.pays} • {dest.continente}
+                                                </div>
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
                             )}
-                        </div>
-                        {currentDestination && <div className="mt-2 p-2 bg-green-50 border rounded-md">✓ {currentDestination.pays}</div>}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Équipements & Services *</label>
-                        {selectedAmenities.length > 0 && (
-                            <div className="mb-3 p-3 bg-gray-50 rounded-md">
-                                <div className="flex flex-wrap gap-2">
-                                    {selectedAmenities.map((amenity, index) => (
-                                        <span key={index} className="inline-flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                                            {amenity.amenityName}
-                                            <button type="button" onClick={() => removeAmenity(amenity)} className="ml-1 hover:text-red-700"><X size={14} /></button>
-                                        </span>
-                                    ))}
+                            {showDropdown && searchTerm && filteredDestinations.length === 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg p-4 text-center text-gray-500">
+                                    Aucune ville trouvée pour "{searchTerm}"
                                 </div>
+                            )}
+                        </div>
+
+                        {/* Selected Destination Display */}
+                        {selectedDestination && (
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <Globe size={16} className="text-green-600" />
+                                    <span className="text-sm text-green-700">
+                                        <strong>Ville sélectionnée:</strong> {selectedDestination.ville}, {selectedDestination.pays}
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={clearSelection}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <X size={16} />
+                                </button>
                             </div>
                         )}
-                        <div className="relative">
-                            <input type="text" value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setShowDropdown(true); }} placeholder="Ajouter un équipement..." className="w-full px-3 py-2 border rounded-md" />
-                            {showDropdown && searchTerm && filteredAmenities.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                    {filteredAmenities.map((amenity) => (
-                                        <button key={amenity.amenityName} type="button" onClick={() => addAmenity(amenity)} className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b flex justify-between">
-                                            <span>{amenity.amenityName}</span>
-                                            <Plus size={16} className="text-green-500" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
 
+                    {/* Amenities Selection - Checkboxes */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Équipements & Services * (Sélectionnez plusieurs)
+                        </label>
+
+                        {selectedAmenities.length > 0 && (
+                            <div className="mb-3 p-2 bg-blue-50 rounded-md flex justify-between items-center">
+                                <span className="text-sm text-blue-700">
+                                    {selectedAmenities.length} équipement(s) sélectionné(s)
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={clearAllAmenities}
+                                    className="text-red-500 text-sm hover:text-red-700"
+                                >
+                                    Tout effacer
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="border border-gray-200 rounded-md p-4 max-h-96 overflow-y-auto">
+                            {Object.entries(amenitiesByCategory).map(([category, amenities]) => (
+                                <div key={category} className="mb-4">
+                                    <h3 className="font-semibold text-gray-700 mb-2 border-b pb-1">{category}</h3>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {amenities.map((amenity) => (
+                                            <label
+                                                key={amenity.name}
+                                                className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedAmenities.some(a => a.name === amenity.name)}
+                                                    onChange={() => toggleAmenity(amenity)}
+                                                    className="w-4 h-4 text-[#fb923c] focus:ring-[#fb923c]"
+                                                />
+                                                <span className="flex items-center gap-2 text-sm">
+                                                    {amenity.icon}
+                                                    {amenity.name}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <p className="text-xs text-gray-500 mt-2">
+                            💡 Cochez tous les équipements et services disponibles dans cet hôtel
+                        </p>
+                    </div>
+
+                    {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                        <textarea name="description" value={form.description} onChange={handleChange} rows="3" className="w-full px-3 py-2 border rounded-md" />
+                        <textarea 
+                            name="description" 
+                            value={form.description} 
+                            onChange={handleChange} 
+                            rows="3" 
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]" 
+                            placeholder="Décrivez l'hôtel, ses atouts, sa localisation..."
+                        />
                     </div>
 
+                    {/* Image Upload */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                         <div className="flex items-center gap-4">
                             <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md flex items-center gap-2">
-                                <Upload size={18} /><span>Choisir une image</span>
-                                <input id="image-input" type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                                <Upload size={18} />
+                                <span>Choisir une image</span>
+                                <input 
+                                    id="image-input" 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleImageChange} 
+                                    className="hidden" 
+                                />
                             </label>
-                            {(imagePreview || currentImage) && <button type="button" onClick={removeImage} className="text-red-500"><Trash2 size={18} /> Supprimer</button>}
+                            {(imagePreview || currentImage) && (
+                                <button 
+                                    type="button" 
+                                    onClick={removeImage} 
+                                    className="text-red-500 hover:text-red-700 flex items-center gap-1"
+                                >
+                                    <Trash2 size={18} />
+                                    Supprimer
+                                </button>
+                            )}
                         </div>
                         {(imagePreview || currentImage) && (
-                            <div className="mt-3"><img src={imagePreview || getImageUrl(currentImage)} alt="Preview" className="w-32 h-32 object-cover rounded-md border" /></div>
+                            <div className="mt-3">
+                                <img 
+                                    src={imagePreview || getImageUrl(currentImage)} 
+                                    alt="Preview" 
+                                    className="w-40 h-40 object-cover rounded-md border" 
+                                />
+                            </div>
                         )}
+                        <p className="text-xs text-gray-500 mt-1">
+                            Laissez vide pour conserver l'image actuelle
+                        </p>
                     </div>
                     
                     <div className="flex gap-4 pt-4">
-                        <button type="submit" className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" disabled={isSubmitting}>
+                        <button 
+                            type="submit" 
+                            className="bg-[#fb923c] text-white px-6 py-2 rounded-md hover:bg-[#ea580c] transition disabled:opacity-50" 
+                            disabled={isSubmitting}
+                        >
                             {isSubmitting ? "Modification..." : "Mettre à jour"}
                         </button>
-                        <Link to="/admin/hotels" className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition">Annuler</Link>
+                        <Link 
+                            to="/admin/hotels" 
+                            className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition text-center"
+                        >
+                            Annuler
+                        </Link>
                     </div>
                 </form>
             </div>

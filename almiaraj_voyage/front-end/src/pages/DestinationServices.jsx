@@ -98,7 +98,7 @@ export default function DestinationOffres() {
     return (
         <div className="offres-page">
             {/* Hero Section */}
-            <div className="offres-hero" style={{ backgroundImage: `url(${destination.image})` }}>
+            <div className="offres-hero" style={{ backgroundImage: `url('http://127.0.0.1:8000/storage/${destination.image}')` }}>
                 <div className="offres-hero-overlay"></div>
                 <div className="offres-hero-content">
                     <Link to="/destinations" className="offres-hero-back">

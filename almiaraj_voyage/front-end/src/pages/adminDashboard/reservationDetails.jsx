@@ -26,7 +26,9 @@ import {
   Trash2,
   MessageCircle,
   DollarSign,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  Building
 } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
@@ -148,7 +150,8 @@ export default function AdminReservationDetails() {
   const getServiceIcon = (type) => {
     if (type?.includes("voyage")) return <Plane size={24} />;
     if (type?.includes("hotel")) return <Hotel size={24} />;
-    return <Ticket size={24} />;
+    if (type?.includes("billet")) return <Ticket size={24} />;
+    return <Building size={24} />;
   };
 
   const getServiceTypeLabel = (type) => {
@@ -211,10 +214,16 @@ export default function AdminReservationDetails() {
     <div className="admin-res-details-page">
       {/* Header */}
       <div className="admin-res-details-header">
-        <button onClick={() => navigate("/admin/reservations")} className="admin-res-back-btn">
-          <ArrowLeft size={18} />
-          Retour
-        </button>
+        <div className="header-left">
+          <button onClick={() => navigate("/admin/reservations")} className="admin-res-back-btn">
+            <ArrowLeft size={18} />
+            Retour
+          </button>
+          <button onClick={fetchReservationDetails} className="admin-res-refresh-btn">
+            <RefreshCw size={16} />
+            Actualiser
+          </button>
+        </div>
         <div className="admin-res-header-info">
           <h1 className="admin-res-header-title">Détails de la réservation</h1>
           <div className={`admin-res-status-badge ${statusConfig.class}`}>
@@ -290,12 +299,8 @@ export default function AdminReservationDetails() {
           </div>
         </div>
 
-        {/* Client Info Card - Clickable */}
-        <div 
-          className="admin-res-card client-card clickable"
-          onClick={() => navigate(`/admin/users/${client?.id}`)}
-          style={{ cursor: client ? 'pointer' : 'default' }}
-        >
+        {/* Client Info Card */}
+        <div className="admin-res-card client-card">
           <div className="admin-res-card-header">
             <User size={20} />
             <h3 className="admin-res-card-title">Client</h3>
@@ -532,7 +537,11 @@ export default function AdminReservationDetails() {
           flex-wrap: wrap;
           gap: 16px;
         }
-        .admin-res-back-btn {
+        .header-left {
+          display: flex;
+          gap: 12px;
+        }
+        .admin-res-back-btn, .admin-res-refresh-btn {
           display: flex;
           align-items: center;
           gap: 8px;
@@ -545,7 +554,7 @@ export default function AdminReservationDetails() {
           transition: all 0.2s;
           font-weight: 500;
         }
-        .admin-res-back-btn:hover {
+        .admin-res-back-btn:hover, .admin-res-refresh-btn:hover {
           background: #f3f4f6;
           border-color: #d1d5db;
         }
@@ -595,12 +604,9 @@ export default function AdminReservationDetails() {
           overflow: hidden;
           transition: all 0.3s ease;
         }
-        .admin-res-card.clickable {
-          transition: all 0.3s ease;
-        }
-        .admin-res-card.clickable:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        .admin-res-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
         .admin-res-card-header {
           display: flex;
@@ -619,14 +625,17 @@ export default function AdminReservationDetails() {
           align-items: center;
           gap: 8px;
         }
+        .passagers-count {
+          background: #f59e0b;
+          color: white;
+          font-size: 12px;
+          padding: 2px 8px;
+          border-radius: 20px;
+        }
         .click-icon {
           margin-left: auto;
           color: #9ca3af;
           transition: all 0.2s;
-        }
-        .admin-res-card.clickable:hover .click-icon {
-          transform: translateX(4px);
-          color: #f59e0b;
         }
         .admin-res-card-body {
           padding: 20px;
@@ -646,7 +655,7 @@ export default function AdminReservationDetails() {
           color: #f59e0b;
         }
         .admin-res-info-label {
-          font-size: 12px;
+          font-size: 11px;
           color: #6b7280;
           text-transform: uppercase;
           letter-spacing: 0.5px;
@@ -759,12 +768,6 @@ export default function AdminReservationDetails() {
           border-radius: 12px;
           font-weight: 500;
         }
-        .passager-cin, .passager-passport {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          color: #6b7280;
-        }
         .date-range {
           display: flex;
           align-items: center;
@@ -839,6 +842,7 @@ export default function AdminReservationDetails() {
           flex-wrap: wrap;
           gap: 16px;
           padding-top: 16px;
+          border-top: 1px solid #e5e7eb;
         }
         .status-buttons, .action-buttons {
           display: flex;
@@ -920,9 +924,6 @@ export default function AdminReservationDetails() {
           padding: 32px;
           color: #9ca3af;
         }
-        .no-client-icon, .no-passagers-icon {
-          margin-bottom: 12px;
-        }
         .admin-res-details-loading, .admin-res-details-error {
           display: flex;
           flex-direction: column;
@@ -959,6 +960,10 @@ export default function AdminReservationDetails() {
           .admin-res-details-page {
             padding: 16px;
           }
+          .admin-res-details-header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
           .admin-res-details-grid {
             grid-template-columns: 1fr;
           }
@@ -971,9 +976,6 @@ export default function AdminReservationDetails() {
           .status-buttons button, .action-buttons a, .action-buttons button {
             flex: 1;
             justify-content: center;
-          }
-          .admin-res-header-title {
-            font-size: 20px;
           }
         }
       `}</style>

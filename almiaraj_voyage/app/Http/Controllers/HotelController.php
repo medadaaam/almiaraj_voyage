@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 class HotelController extends Controller
 {
 
-
     public function index()
     {
         $hotels = Hotel::with(['service', 'destination'])
@@ -24,12 +23,19 @@ class HotelController extends Controller
         ]);
     }
 
-
     public function indexCl()
     {
         $hotels = Hotel::with(['service', 'destination'])->paginate(6);
 
         $data = $hotels->getCollection()->map(function ($h) {
+            // Convert JSON string to comma-separated string for display
+            $amenities = $h->amenities;
+            if (is_string($amenities) && str_starts_with($amenities, '[')) {
+                // It's JSON, decode it
+                $amenitiesArray = json_decode($amenities, true);
+                $amenities = is_array($amenitiesArray) ? implode(',', $amenitiesArray) : '';
+            }
+            
             return [
                 'id' => $h->id,
                 'name' => $h->service->nomServ,
@@ -39,7 +45,7 @@ class HotelController extends Controller
                 'oldPrix' => $h->service->oldPrix,
                 'rating' => $h->service->rating,
                 'enVedette' => $h->service->enVedette,
-                'amenities' => explode(',', $h->amenities ?? ''),
+                'amenities' => explode(',', $amenities ?? ''),
             ];
         });
 
@@ -51,70 +57,85 @@ class HotelController extends Controller
         ]);
     }
 
+    public function store(Request $request)
+    {
+        try {
+            DB::beginTransaction();
 
-   public function store(Request $request)
-{
-    try {
-        DB::beginTransaction();
+            $validated = $request->validate([
+                'nomServ' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'prix' => 'required|numeric|min:0',
+                'rating' => 'nullable|numeric|min:0|max:5',
+                'destination_id' => 'required|exists:destinations,id',
+                'amenities' => 'nullable|json',
+            ]);
 
-        // Simple validation like voyage (no image validation here)
-        $validated = $request->validate([
-            'nomServ' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'prix' => 'required|numeric|min:0',
-            'rating' => 'nullable|numeric|min:0|max:5',
-            'destination_id' => 'required|exists:destinations,id',
-            'amenities' => 'nullable|json',
-        ]);
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $image = $request->file('image');
+                $imagePath = $image->store('hotels', 'public');
+            }
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imagePath = $image->store('hotels', 'public');
+            // Create service
+            $service = Service::create([
+                'nomServ' => $request->nomServ,
+                'description' => $request->description,
+                'prix' => $request->prix,
+                'type' => 'hotel',
+                'image' => $imagePath,
+                'rating' => $request->rating ?? 0,
+            ]);
+
+            // Convert amenities from JSON to comma-separated string
+            $amenitiesString = $request->amenities;
+            if (is_string($amenitiesString) && str_starts_with($amenitiesString, '[')) {
+                // It's JSON, decode and convert to comma-separated
+                $amenitiesArray = json_decode($amenitiesString, true);
+                $amenitiesString = is_array($amenitiesArray) ? implode(',', $amenitiesArray) : '';
+            }
+
+            // Create hotel
+            $hotel = Hotel::create([
+                'id' => $service->id,
+                'destination_id' => $request->destination_id,
+                'amenities' => $amenitiesString,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Hôtel créé avec succès',
+                'data' => $service->load('hotel.destination')
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de la création de l\'hôtel',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Create service (same as voyage)
-        $service = Service::create([
-            'nomServ' => $request->nomServ,
-            'description' => $request->description,
-            'prix' => $request->prix,
-            'type' => 'hotel',
-            'image' => $imagePath,
-            'rating' => $request->rating ?? 0,
-        ]);
-
-
-        $amenitiesString = $request->amenities;
-
-        // Create hotel
-        $hotel = Hotel::create([
-            'id' => $service->id,
-            'destination_id' => $request->destination_id,
-            'amenities' => $amenitiesString,
-        ]);
-
-        DB::commit();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Hôtel créé avec succès',
-            'data' => $service->load('hotel.destination')
-        ], 201);
-    } catch (\Exception $e) {
-        DB::rollBack();
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la création de l\'hôtel',
-            'error' => $e->getMessage()
-        ], 500);
     }
-}
 
     public function showCl($id)
     {
         try {
             $hotel = Hotel::with(['service', 'destination'])->findOrFail($id);
+
+            // Convert amenities from JSON or comma-separated to array for frontend
+            $amenities = $hotel->amenities;
+            if (is_string($amenities)) {
+                if (str_starts_with($amenities, '[')) {
+                    // It's JSON
+                    $amenities = json_decode($amenities, true);
+                } else {
+                    // It's comma-separated
+                    $amenities = explode(',', $amenities);
+                }
+            }
 
             $chambreTypes = [
                 ['value' => 'single', 'label' => 'Single (1 personne)', 'prix' => $hotel->service->prix ?? 800, 'max_personnes' => 1],
@@ -126,7 +147,7 @@ class HotelController extends Controller
             $responseData = [
                 'id' => $hotel->id,
                 'villeHotel' => $hotel->villeHotel,
-                'amenities' => $hotel->amenities,
+                'amenities' => $amenities,
                 'destination_id' => $hotel->destination_id,
                 'chambre_types' => $chambreTypes,
                 'service' => $hotel->service ? [
@@ -218,10 +239,16 @@ class HotelController extends Controller
                 $service->save();
             }
 
+            // Convert amenities from JSON to comma-separated string
+            $amenitiesString = $request->amenities;
+            if (is_string($amenitiesString) && str_starts_with($amenitiesString, '[')) {
+                $amenitiesArray = json_decode($amenitiesString, true);
+                $amenitiesString = is_array($amenitiesArray) ? implode(',', $amenitiesArray) : '';
+            }
 
             $hotel->update([
                 'destination_id' => $request->destination_id,
-                'amenities' => $request->amenities,
+                'amenities' => $amenitiesString,
             ]);
 
             DB::commit();

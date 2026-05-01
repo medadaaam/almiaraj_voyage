@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   Users, 
   Calendar, 
@@ -20,6 +20,7 @@ import { axiosClient } from "@/api/axios";
 import "./adminDashboard.css";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalReservations: 0,
     totalClients: 0,
@@ -118,6 +119,10 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRowClick = (reservationId) => {
+    navigate(`/admin/reservations/${reservationId}`);
   };
 
   const statCards = [
@@ -335,7 +340,12 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {recentReservations.map((res) => (
-                <tr key={res.id}>
+                <tr 
+                  key={res.id} 
+                  onClick={() => handleRowClick(res.id)}
+                  className="clickable-row"
+                  style={{ cursor: 'pointer' }}
+                >
                   <td className="reference">#{res.reference || res.id}</td>
                   <td>
                     <div className="client-cell">
@@ -351,9 +361,16 @@ export default function AdminDashboard() {
                   <td className="price">{formatPrice(res.prixTotal || 0)}</td>
                   <td>{getStatusBadge(res.status)}</td>
                   <td>
-                    <Link to={`/admin/reservations/${res.id}`} className="view-link">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRowClick(res.id);
+                      }} 
+                      className="view-link"
+                      title="Voir les détails"
+                    >
                       <Eye size={16} />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}

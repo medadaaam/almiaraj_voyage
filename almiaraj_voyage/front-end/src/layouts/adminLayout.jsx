@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
@@ -12,13 +12,7 @@ import {
   X,
   LogOut,
   ChevronRight,
-  Bell,
-  Moon,
-  Sun,
-  User,
-  Settings,
-  HelpCircle,
-  Star,
+  Home,
   MessageCircle,
   Globe,
 } from "lucide-react";
@@ -28,7 +22,6 @@ import "./adminLayout.css";
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
   const location = useLocation();
   const { logout, user } = useAuth();
 
@@ -43,28 +36,26 @@ export default function AdminLayout() {
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/admin/dashboard') return 'Dashboard';
-    if (path === '/admin/users') return 'Utilisateurs';
+    if (path === '/admin/users') return 'Clients';
     if (path === '/admin/reservations') return 'Réservations';
     if (path === '/admin/destinations') return 'Destinations';
     if (path === '/admin/voyages') return 'Voyages';
     if (path === '/admin/hotels') return 'Hôtels';
     if (path === '/admin/hajj-omras') return 'Hajj & Omra';
     if (path === '/admin/billets') return 'Billets';
-    if (path === '/admin/avis') return 'Avis';
     if (path === '/admin/messages') return 'Messages';
     return 'Administration';
   };
 
   const navItems = [
     { path: "/admin/dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard" },
-    { path: "/admin/reservations", icon: <Calendar size={20} />, label: "Réservations", badge: notifications },
+    { path: "/admin/reservations", icon: <Calendar size={20} />, label: "Réservations" },
     { path: "/admin/users", icon: <Users size={20} />, label: "Clients" },
     { path: "/admin/destinations", icon: <Globe size={20} />, label: "Destinations" },
     { path: "/admin/voyages", icon: <Plane size={20} />, label: "Voyages" },
     { path: "/admin/hotels", icon: <Hotel size={20} />, label: "Hôtels" },
     { path: "/admin/hajj-omras", icon: <ChartNoAxesCombined size={20} />, label: "Hajj & Omra" },
     { path: "/admin/billets", icon: <Ticket size={20} />, label: "Billets" },
-    { path: "/admin/avis", icon: <Star size={20} />, label: "Avis" },
     { path: "/admin/messages", icon: <MessageCircle size={20} />, label: "Messages" },
   ];
 
@@ -106,7 +97,18 @@ export default function AdminLayout() {
           )}
         </div>
 
+        {/* Home Page Link - Added at the top of navigation */}
         <nav className="admin-sidebar-nav">
+          {/* Home Link */}
+          <Link to="/" className="admin-home-link" target="_blank">
+            <Home size={20} />
+            {sidebarOpen && <span className="admin-home-label">Aller à l'accueil</span>}
+          </Link>
+
+          {/* Divider */}
+          {sidebarOpen && <div className="admin-nav-divider"></div>}
+
+          {/* Navigation Items */}
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -116,9 +118,6 @@ export default function AdminLayout() {
             >
               <span className="admin-nav-icon">{item.icon}</span>
               {sidebarOpen && <span className="admin-nav-label">{item.label}</span>}
-              {sidebarOpen && item.badge && (
-                <span className="admin-nav-badge">{item.badge}</span>
-              )}
             </NavLink>
           ))}
         </nav>
@@ -133,30 +132,13 @@ export default function AdminLayout() {
 
       {/* Main Content */}
       <div className="admin-main">
-        {/* Topbar */}
+        {/* Topbar - Simplified without notifications and avatar */}
         <header className="admin-topbar">
           <div className="admin-topbar-left">
             <button className="admin-mobile-menu-btn" onClick={toggleMobileMenu}>
               <Menu size={24} />
             </button>
             <h1 className="admin-page-title">{getPageTitle()}</h1>
-          </div>
-
-          <div className="admin-topbar-right">
-            <div className="admin-notifications">
-              <button className="admin-notif-btn">
-                <Bell size={20} />
-                {notifications > 0 && <span className="admin-notif-badge">{notifications}</span>}
-              </button>
-            </div>
-
-            <div className="admin-user-dropdown">
-              <button className="admin-user-btn">
-                <div className="admin-user-avatar-small">
-                  {user?.name?.charAt(0) || 'A'}
-                </div>
-              </button>
-            </div>
           </div>
         </header>
 

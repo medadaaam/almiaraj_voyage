@@ -482,3 +482,29 @@ body.dark-mode .recent-table tr:hover {
     display: none;
   }
 }
+.clickable-row {
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background-color: #fff8dc !important; /* Orange/amber background on hover */
+}
+
+.view-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  color: #6b7280;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.view-link:hover {
+  background: #f59e0b;
+  color: white;
+}

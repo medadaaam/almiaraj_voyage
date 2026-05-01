@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Mail,
   Trash2,
-  Eye,
   Search,
   Filter,
   X,
@@ -15,11 +14,14 @@ import {
   AlertCircle,
   RefreshCw,
   Send,
-  Reply
+  Reply,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
 export default function AdminMessages() {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [filteredMessages, setFilteredMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,11 @@ export default function AdminMessages() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchMessages();
@@ -56,7 +63,9 @@ export default function AdminMessages() {
     }
 
     setFilteredMessages(result);
-  }, [messages, searchTerm, selectedStatus]);
+    setCurrentPage(1);
+    setTotalPages(Math.ceil(result.length / itemsPerPage));
+  }, [messages, searchTerm, selectedStatus, itemsPerPage]);
 
   const fetchMessages = async () => {
     try {
@@ -77,7 +86,8 @@ export default function AdminMessages() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
     if (!confirm("Supprimer ce message ?")) return;
     
     try {
@@ -123,6 +133,10 @@ export default function AdminMessages() {
     }
   };
 
+  const handleRowClick = (messageId) => {
+    navigate(`/admin/messages/${messageId}`);
+  };
+
   const getStatusBadge = (status) => {
     switch(status) {
       case 'lu':
@@ -150,60 +164,121 @@ export default function AdminMessages() {
     setSelectedStatus("");
   };
 
+  // Pagination functions
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredMessages.slice(startIndex, endIndex);
+  };
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    const newItemsPerPage = parseInt(e.target.value);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+    setTotalPages(Math.ceil(filteredMessages.length / newItemsPerPage));
+  };
+
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+    
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+    
+    return pageNumbers;
+  };
+
   if (loading) {
     return (
-      <div className="admin-messages-loading">
-        <div className="loading-spinner"></div>
-        <p>Chargement des messages...</p>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
       </div>
     );
   }
 
+  const currentItems = getCurrentPageItems();
+
   return (
-    <div className="admin-messages-container">
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="messages-header">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="messages-title">Gestion des Messages</h1>
-          <p className="messages-subtitle">{filteredMessages.length} message(s) trouvé(s)</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Gestion des Messages</h1>
+          <p className="text-gray-500 text-sm mt-1">{filteredMessages.length} message(s) trouvé(s)</p>
         </div>
-        <button onClick={fetchMessages} className="refresh-btn">
-          <RefreshCw size={16} />
-          Actualiser
-        </button>
+        <div className="flex gap-3">
+          <select 
+            value={itemsPerPage} 
+            onChange={handleItemsPerPageChange} 
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
+          >
+            <option value={5}>5 par page</option>
+            <option value={10}>10 par page</option>
+            <option value={20}>20 par page</option>
+            <option value={50}>50 par page</option>
+          </select>
+          <button onClick={fetchMessages} className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-sm">
+            <RefreshCw size={14} />
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="error-alert">
-          <AlertCircle size={16} />
-          <span>{error}</span>
-          <button onClick={fetchMessages}>Réessayer</button>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+          <button onClick={fetchMessages} className="ml-4 text-red-700 underline">Réessayer</button>
         </div>
       )}
 
       {/* Search and Filters */}
-      <div className="filters-section">
-        <div className="search-bar">
-          <Search size={18} className="search-icon" />
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
             placeholder="Rechercher par nom, email ou contenu..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f59e0b] text-sm"
           />
           {searchTerm && (
-            <button onClick={() => setSearchTerm("")} className="clear-search">
-              <X size={16} />
+            <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2">
+              <X size={16} className="text-gray-400 hover:text-gray-600" />
             </button>
           )}
         </div>
 
-        <div className="filters-row">
+        <div className="flex flex-wrap gap-3">
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="filter-select"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
           >
             <option value="">Tous les statuts</option>
             <option value="non_lu">Non lus</option>
@@ -213,15 +288,16 @@ export default function AdminMessages() {
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`filter-toggle ${showFilters ? 'active' : ''}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
+              showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
           >
-            <Filter size={16} />
+            <Filter size={14} />
             Filtres
           </button>
 
           {(searchTerm || selectedStatus) && (
-            <button onClick={clearFilters} className="clear-filters">
-              <X size={14} />
+            <button onClick={clearFilters} className="px-3 py-1.5 text-red-500 hover:text-red-700 text-sm">
               Effacer les filtres
             </button>
           )}
@@ -230,152 +306,182 @@ export default function AdminMessages() {
 
       {/* Messages List */}
       {filteredMessages.length === 0 ? (
-        <div className="empty-state">
-          <Mail size={48} />
-          <h3>Aucun message trouvé</h3>
-          <p>Les messages des clients apparaîtront ici</p>
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <Mail size={48} className="mx-auto text-gray-400 mb-3" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">Aucun message trouvé</h3>
+          <p className="text-gray-500 text-sm">Les messages des clients apparaîtront ici</p>
         </div>
       ) : (
-        <div className="messages-list">
-          {filteredMessages.map((m) => (
-            <div key={m.id} className={`message-card ${m.statusM !== 'non_lu' ? 'read' : 'unread'}`}>
-              <div className="message-card-header">
-                <div className="sender-info">
-                  <div className="sender-avatar">
-                    {m.client?.prenomCl?.charAt(0) || m.nomM?.charAt(0) || "M"}
+        <>
+          <div className="space-y-4">
+            {currentItems.map((m) => (
+              <div 
+                key={m.id} 
+                onClick={() => handleRowClick(m.id)}
+                className={`bg-white rounded-lg shadow p-5 cursor-pointer transition-all hover:shadow-md ${m.statusM !== 'non_lu' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-orange-500'}`}
+              >
+                <div className="flex justify-between items-start flex-wrap gap-4 mb-3 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#f59e0b] to-[#f97316] flex items-center justify-center text-white font-semibold">
+                      {m.client?.prenomCl?.charAt(0) || m.nomM?.charAt(0) || "M"}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-800">
+                        {m.client?.prenomCl} {m.client?.nomCl} {!m.client && m.nomM && <span>({m.nomM})</span>}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                        <span className="flex items-center gap-1"><Mail size={12} /> {m.emailM}</span>
+                        {m.numTelM && <span className="flex items-center gap-1"><Phone size={12} /> {m.numTelM}</span>}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="sender-name">
-                      {m.client?.prenomCl} {m.client?.nomCl} {!m.client && m.nomM && <span>({m.nomM})</span>}
-                    </div>
-                    <div className="sender-contact">
-                      <Mail size={12} />
-                      <span>{m.emailM}</span>
-                      {m.numTelM && (
-                        <>
-                          <Phone size={12} />
-                          <span>{m.numTelM}</span>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400">{formatDate(m.created_at)}</span>
+                    {getStatusBadge(m.statusM)}
                   </div>
                 </div>
-                <div className="message-meta">
-                  <span className="message-date">{formatDate(m.created_at)}</span>
-                  {getStatusBadge(m.statusM)}
+
+                <div className="mb-3">
+                  <p className="text-gray-700 line-clamp-2">{m.contenu}</p>
+                </div>
+
+                {m.reply && (
+                  <div className="mt-3 p-3 bg-green-50 rounded-lg border-l-3 border-l-green-500">
+                    <div className="flex items-center gap-2 text-xs font-medium text-green-600 mb-2">
+                      <Reply size={14} />
+                      Réponse de l'administrateur:
+                    </div>
+                    <p className="text-sm text-gray-700">{m.reply}</p>
+                    <div className="text-xs text-gray-400 mt-2">Répondu le {formatDate(m.replied_at)}</div>
+                  </div>
+                )}
+
+                <div className="flex justify-end mt-4 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => {
+                      setSelectedMessage(m);
+                      setReplyText("");
+                      setShowDetailsModal(true);
+                      if (m.statusM !== 'lu') {
+                        handleUpdateStatus(m.id, 'lu');
+                      }
+                    }}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition text-sm"
+                  >
+                    <MessageCircle size={14} />
+                    Voir & Répondre
+                  </button>
+                  <button
+                    onClick={(e) => handleDelete(m.id, e)}
+                    disabled={deletingId === m.id}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition text-sm ml-2"
+                  >
+                    {deletingId === m.id ? (
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                    Supprimer
+                  </button>
                 </div>
               </div>
+            ))}
+          </div>
 
-              <div className="message-content">
-                <p>{m.contenu}</p>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+              <div className="text-sm text-gray-500">
+                Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredMessages.length)} sur {filteredMessages.length}
               </div>
-
-              {m.reply && (
-                <div className="message-reply">
-                  <div className="reply-badge">
-                    <Reply size={14} />
-                    Réponse de l'administrateur:
-                  </div>
-                  <p>{m.reply}</p>
-                  <div className="reply-date">Répondu le {formatDate(m.replied_at)}</div>
-                </div>
-              )}
-
-              <div className="message-card-footer">
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setSelectedMessage(m);
-                    setReplyText("");
-                    setShowDetailsModal(true);
-                    if (m.statusM !== 'lu') {
-                      handleUpdateStatus(m.id, 'lu');
-                    }
-                  }}
-                  className="view-btn"
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                 >
-                  <Eye size={16} />
-                  Voir détails
+                  <ChevronLeft size={16} />
+                  Précédent
                 </button>
+                <div className="flex gap-1">
+                  {getPageNumbers().map(page => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
+                        currentPage === page
+                          ? 'bg-[#f59e0b] text-white'
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  onClick={() => handleDelete(m.id)}
-                  disabled={deletingId === m.id}
-                  className="delete-btn"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                 >
-                  {deletingId === m.id ? (
-                    <div className="spinner-small"></div>
-                  ) : (
-                    <Trash2 size={16} />
-                  )}
-                  Supprimer
+                  Suivant
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Details & Reply Modal */}
       {showDetailsModal && selectedMessage && (
-        <div className="modal-overlay" onClick={() => setShowDetailsModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Détails du message</h3>
-              <button onClick={() => setShowDetailsModal(false)} className="close-modal">
-                <X size={20} />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowDetailsModal(false)}>
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+              <h3 className="text-lg font-bold">Détails du message</h3>
+              <button onClick={() => setShowDetailsModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={22} />
               </button>
             </div>
-            <div className="modal-body">
-              <div className="detail-section">
-                <h4>Expéditeur</h4>
-                <div className="detail-row">
-                  <span className="detail-label">Nom:</span>
-                  <span className="detail-value">{selectedMessage.nomM || `${selectedMessage.client?.prenomCl} ${selectedMessage.client?.nomCl}`}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Email:</span>
-                  <span className="detail-value">{selectedMessage.emailM}</span>
-                </div>
-                {selectedMessage.client && (
-                  <div className="detail-row">
-                    <span className="detail-label">Client:</span>
-                    <Link to={`/admin/users/${selectedMessage.client.id}`} className="detail-link">
-                      Voir profil client <ChevronRight size={14} />
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <div className="detail-section">
-                <h4>Message</h4>
-                <div className="detail-row">
-                  <span className="detail-label">Date:</span>
-                  <span className="detail-value">{formatDate(selectedMessage.created_at)}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Statut:</span>
-                  <span className="detail-value">{getStatusBadge(selectedMessage.statusM)}</span>
-                </div>
-                <div className="message-content-full">
-                  <p>{selectedMessage.contenu}</p>
+            <div className="p-5">
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-700 mb-2">Expéditeur</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-gray-500">Nom:</span> <span className="font-medium">{selectedMessage.nomM || `${selectedMessage.client?.prenomCl} ${selectedMessage.client?.nomCl}`}</span></div>
+                  <div><span className="text-gray-500">Email:</span> <span className="font-medium">{selectedMessage.emailM}</span></div>
+                  {selectedMessage.numTelM && <div><span className="text-gray-500">Téléphone:</span> <span className="font-medium">{selectedMessage.numTelM}</span></div>}
+                  {selectedMessage.client && (
+                    <div><span className="text-gray-500">Client:</span> <button onClick={() => navigate(`/admin/users/${selectedMessage.client.id}`)} className="text-[#f59e0b] hover:underline">Voir profil</button></div>
+                  )}
                 </div>
               </div>
 
-              <div className="reply-section">
-                <h4>Répondre</h4>
+              <div className="mb-4">
+                <h4 className="font-semibold text-gray-700 mb-2">Message</h4>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700 whitespace-pre-wrap">{selectedMessage.contenu}</p>
+                </div>
+                <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
+                  <span>Reçu le {formatDate(selectedMessage.created_at)}</span>
+                  {getStatusBadge(selectedMessage.statusM)}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Répondre</h4>
                 <textarea
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Écrire une réponse..."
-                  className="reply-textarea"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f59e0b] text-sm"
                   rows={4}
                 />
                 <button
                   onClick={() => handleReply(selectedMessage.id)}
                   disabled={sendingReply}
-                  className="send-reply-btn"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#f59e0b] text-white rounded-lg hover:bg-[#d97706] transition disabled:opacity-50"
                 >
                   {sendingReply ? (
-                    <div className="spinner-small"></div>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   ) : (
                     <Send size={16} />
                   )}
@@ -386,80 +492,6 @@ export default function AdminMessages() {
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .admin-messages-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
-        .messages-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-        .messages-title { font-size: 24px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0; }
-        .messages-subtitle { color: #6b7280; font-size: 14px; margin: 0; }
-        .refresh-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 10px; cursor: pointer; }
-        .error-alert { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fee2e2; border-radius: 10px; color: #dc2626; margin-bottom: 20px; }
-        .filters-section { background: white; border-radius: 16px; padding: 20px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .search-bar { position: relative; margin-bottom: 16px; }
-        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
-        .search-input { width: 100%; padding: 10px 36px 10px 40px; border: 1px solid #e5e7eb; border-radius: 10px; }
-        .search-input:focus { outline: none; border-color: #f59e0b; }
-        .clear-search { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; }
-        .filters-row { display: flex; gap: 12px; flex-wrap: wrap; }
-        .filter-select { padding: 8px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; cursor: pointer; }
-        .filter-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f3f4f6; border: none; border-radius: 8px; cursor: pointer; }
-        .filter-toggle.active { background: #fef3c7; color: #d97706; }
-        .clear-filters { display: flex; align-items: center; gap: 4px; padding: 8px 12px; background: none; border: none; color: #ef4444; cursor: pointer; }
-        .messages-list { display: flex; flex-direction: column; gap: 20px; }
-        .message-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .message-card.unread { border-left: 4px solid #f59e0b; background: #fffbeb; }
-        .message-card.read { border-left: 4px solid #10b981; }
-        .message-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f3f4f6; }
-        .sender-info { display: flex; gap: 12px; }
-        .sender-avatar { width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #f97316); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: white; }
-        .sender-name { font-weight: 600; color: #1f2937; }
-        .sender-contact { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9ca3af; margin-top: 4px; }
-        .message-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .message-date { font-size: 12px; color: #9ca3af; }
-        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-        .status-badge.unread { background: #fef3c7; color: #d97706; }
-        .status-badge.read { background: #d1fae5; color: #059669; }
-        .status-badge.replied { background: #dbeafe; color: #3b82f6; }
-        .message-content p { margin: 0; line-height: 1.6; color: #4b5563; }
-        .message-reply { margin-top: 16px; padding: 12px; background: #f0fdf4; border-radius: 12px; border-left: 3px solid #10b981; }
-        .reply-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #059669; margin-bottom: 8px; }
-        .reply-date { font-size: 11px; color: #9ca3af; margin-top: 6px; }
-        .message-card-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
-        .view-btn, .delete-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
-        .view-btn { background: #f3f4f6; color: #6b7280; }
-        .view-btn:hover { background: #3b82f6; color: white; }
-        .delete-btn { background: #fee2e2; color: #dc2626; }
-        .delete-btn:hover { background: #dc2626; color: white; }
-        .empty-state { text-align: center; padding: 48px; background: white; border-radius: 16px; color: #9ca3af; }
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; border-radius: 16px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
-        .modal-body { padding: 20px; }
-        .detail-section { margin-bottom: 24px; }
-        .detail-section h4 { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; color: #1f2937; }
-        .detail-row { display: flex; margin-bottom: 10px; }
-        .detail-label { width: 100px; font-size: 13px; color: #6b7280; }
-        .detail-value { flex: 1; font-size: 13px; color: #1f2937; }
-        .detail-link { display: inline-flex; align-items: center; gap: 4px; color: #f59e0b; text-decoration: none; font-size: 13px; }
-        .message-content-full { background: #f9fafb; padding: 12px; border-radius: 8px; margin-top: 8px; }
-        .message-content-full p { margin: 0; line-height: 1.5; }
-        .reply-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-        .reply-section h4 { font-size: 16px; font-weight: 600; margin: 0 0 12px 0; }
-        .reply-textarea { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; font-family: inherit; resize: vertical; margin-bottom: 12px; }
-        .reply-textarea:focus { outline: none; border-color: #f59e0b; }
-        .send-reply-btn { display: flex; align-items: center; gap: 8px; justify-content: center; width: 100%; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
-        .send-reply-btn:hover { background: #d97706; }
-        .send-reply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .close-modal { background: none; border: none; cursor: pointer; color: #6b7280; }
-        .loading-spinner { width: 48px; height: 48px; border: 3px solid #e5e7eb; border-top-color: #f59e0b; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-        .admin-messages-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
-        .spinner-small { width: 16px; height: 16px; border: 2px solid #e5e7eb; border-top-color: currentColor; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) {
-          .admin-messages-container { padding: 16px; }
-          .message-card-header { flex-direction: column; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -185,9 +185,9 @@ export default function AdminReservationDetails() {
 
   if (loading) {
     return (
-      <div className="admin-res-details-loading">
-        <div className="admin-res-details-spinner"></div>
-        <p>Chargement des détails...</p>
+      <div className="flex flex-col justify-center items-center h-64 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+        <p className="text-gray-500 text-sm">Chargement des détails de la réservation...</p>
       </div>
     );
   }
@@ -380,7 +380,7 @@ export default function AdminReservationDetails() {
                         {passager.type_passager && (
                           <span className="passager-type" style={{ backgroundColor: statusConfig.bgLight, color: statusConfig.color }}>
                             {passager.type_passager === "adulte" ? "👤 Adulte" :
-                             passager.type_passager === "enfant" ? "🧒 Enfant" : "🍼 Nourrisson"}
+                              passager.type_passager === "enfant" ? "🧒 Enfant" : "🍼 Nourrisson"}
                           </span>
                         )}
                         {passager.cinPas && (

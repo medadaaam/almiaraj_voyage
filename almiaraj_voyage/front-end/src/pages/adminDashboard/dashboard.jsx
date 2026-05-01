@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { 
-  Users, 
-  Calendar, 
-  Hotel, 
-  Plane, 
-  Ticket, 
-  TrendingUp, 
+import {
+  Users,
+  Calendar,
+  Hotel,
+  Plane,
+  Ticket,
+  TrendingUp,
   TrendingDown,
   DollarSign,
   Clock,
@@ -45,39 +45,39 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch reservations
       const reservationsRes = await axiosClient.get('/admin/reservations');
       const reservations = reservationsRes.data?.data || [];
-      
+
       // Fetch clients
       const clientsRes = await axiosClient.get('/admin/clients');
       const clients = clientsRes.data?.data || [];
-      
+
       // Fetch services
       const voyagesRes = await axiosClient.get('/voyages');
       const hotelsRes = await axiosClient.get('/hotels');
       const billetsRes = await axiosClient.get('/billets');
-      
+
       const voyages = voyagesRes.data?.data || [];
       const hotels = hotelsRes.data?.data || [];
       const billets = billetsRes.data?.data || [];
-      
+
       // Calculate stats
       const totalReservations = reservations.length;
       const confirmedReservations = reservations.filter(r => r.status === 'confirmed').length;
       const cancelledReservations = reservations.filter(r => r.status === 'cancelled').length;
       const pendingPayments = reservations.filter(r => r.payment_status === 'unpaid').length;
-      
+
       const totalRevenue = reservations.reduce((sum, r) => sum + (r.prixTotal || 0), 0);
-      
+
       // Calculate monthly revenue (last 30 days)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const monthlyRevenue = reservations
         .filter(r => new Date(r.created_at) >= thirtyDaysAgo)
         .reduce((sum, r) => sum + (r.prixTotal || 0), 0);
-      
+
       // Calculate growth (compare with previous month)
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -87,16 +87,16 @@ export default function AdminDashboard() {
           return date >= sixtyDaysAgo && date < thirtyDaysAgo;
         })
         .reduce((sum, r) => sum + (r.prixTotal || 0), 0);
-      
-      const growth = previousMonthlyRevenue > 0 
-        ? ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100 
+
+      const growth = previousMonthlyRevenue > 0
+        ? ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100
         : monthlyRevenue > 0 ? 100 : 0;
-      
+
       // Get recent reservations
       const recent = [...reservations]
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         .slice(0, 5);
-      
+
       setStats({
         totalReservations,
         totalClients: clients.length,
@@ -110,7 +110,7 @@ export default function AdminDashboard() {
         monthlyRevenue,
         growth: Math.round(growth * 100) / 100
       });
-      
+
       setRecentReservations(recent);
       setError("");
     } catch (err) {
@@ -200,13 +200,13 @@ export default function AdminDashboard() {
   ];
 
   const getStatusBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'confirmed':
-        return <span className="badge confirmed"><CheckCircle size={12}/> Confirmée</span>;
+        return <span className="badge confirmed"><CheckCircle size={12} /> Confirmée</span>;
       case 'pending':
-        return <span className="badge pending"><Clock size={12}/> En attente</span>;
+        return <span className="badge pending"><Clock size={12} /> En attente</span>;
       case 'cancelled':
-        return <span className="badge cancelled"><XCircle size={12}/> Annulée</span>;
+        return <span className="badge cancelled"><XCircle size={12} /> Annulée</span>;
       default:
         return <span className="badge">{status}</span>;
     }
@@ -226,9 +226,9 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="loading-spinner"></div>
-        <p>Chargement du tableau de bord...</p>
+      <div className="flex flex-col justify-center items-center h-64 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+        <p className="text-gray-500 text-sm">Chargement du tableau de bord...</p>
       </div>
     );
   }
@@ -340,8 +340,8 @@ export default function AdminDashboard() {
             </thead>
             <tbody>
               {recentReservations.map((res) => (
-                <tr 
-                  key={res.id} 
+                <tr
+                  key={res.id}
                   onClick={() => handleRowClick(res.id)}
                   className="clickable-row"
                   style={{ cursor: 'pointer' }}
@@ -361,11 +361,11 @@ export default function AdminDashboard() {
                   <td className="price">{formatPrice(res.prixTotal || 0)}</td>
                   <td>{getStatusBadge(res.status)}</td>
                   <td>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleRowClick(res.id);
-                      }} 
+                      }}
                       className="view-link"
                       title="Voir les détails"
                     >

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Star, Camera, Trash2, Edit, MapPin, Globe, Search, Filter, X,  RefreshCw, Wifi } from "lucide-react";
+import { Star, Camera, Trash2, Edit, MapPin, Globe, Search, Filter, X, RefreshCw, Wifi } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
 export default function AdminHotels() {
@@ -11,7 +11,7 @@ export default function AdminHotels() {
     const [error, setError] = useState("");
     const [deletingId, setDeletingId] = useState(null);
     const [imageErrors, setImageErrors] = useState({});
-    
+
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("newest");
@@ -20,7 +20,7 @@ export default function AdminHotels() {
     const [selectedCity, setSelectedCity] = useState("");
     const [countries, setCountries] = useState([]);
     const [cities, setCities] = useState([]);
-    
+
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -41,7 +41,7 @@ export default function AdminHotels() {
     // Filter and sort hotels whenever dependencies change
     useEffect(() => {
         let result = [...hotels];
-        
+
         // Apply search
         if (searchTerm) {
             result = result.filter(hotel => {
@@ -50,27 +50,27 @@ export default function AdminHotels() {
                 const country = (hotel.destination?.pays || "").toLowerCase();
                 const city = (hotel.destination?.ville || "").toLowerCase();
                 const search = searchTerm.toLowerCase();
-                
+
                 return name.includes(search) || country.includes(search) || city.includes(search);
             });
         }
-        
+
         // Apply country filter
         if (selectedCountry) {
             result = result.filter(hotel => hotel.destination?.pays === selectedCountry);
         }
-        
+
         // Apply city filter
         if (selectedCity) {
             result = result.filter(hotel => hotel.destination?.ville === selectedCity);
         }
-        
+
         // Apply sorting
         result.sort((a, b) => {
             const serviceA = a.service || a;
             const serviceB = b.service || b;
-            
-            switch(sortBy) {
+
+            switch (sortBy) {
                 case "price_asc":
                     return (serviceA.prix || 0) - (serviceB.prix || 0);
                 case "price_desc":
@@ -88,7 +88,7 @@ export default function AdminHotels() {
                     return new Date(serviceB.created_at || 0) - new Date(serviceA.created_at || 0);
             }
         });
-        
+
         setFilteredHotels(result);
         setCurrentPage(1);
         setTotalPages(Math.ceil(result.length / itemsPerPage));
@@ -109,13 +109,13 @@ export default function AdminHotels() {
             }
 
             setHotels(hotelsData);
-            
+
             // Extract unique countries and cities for filters
             const uniqueCountries = [...new Set(hotelsData.map(hotel => hotel.destination?.pays).filter(Boolean))];
             const uniqueCities = [...new Set(hotelsData.map(hotel => hotel.destination?.ville).filter(Boolean))];
             setCountries(uniqueCountries);
             setCities(uniqueCities);
-            
+
             setError("");
         } catch (err) {
             console.error('Error:', err);
@@ -212,22 +212,23 @@ export default function AdminHotels() {
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        
+
         if (endPage - startPage + 1 < maxVisible) {
             startPage = Math.max(1, endPage - maxVisible + 1);
         }
-        
+
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(i);
         }
-        
+
         return pageNumbers;
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col justify-center items-center h-64 gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+                <p className="text-gray-500 text-sm">Chargement des hotels...</p>
             </div>
         );
     }
@@ -283,9 +284,9 @@ export default function AdminHotels() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <select 
-                        value={sortBy} 
-                        onChange={(e) => setSortBy(e.target.value)} 
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value="newest">Plus récents</option>
@@ -297,9 +298,9 @@ export default function AdminHotels() {
                         <option value="rating_asc">Note (basse à élevée)</option>
                     </select>
 
-                    <select 
-                        value={itemsPerPage} 
-                        onChange={handleItemsPerPageChange} 
+                    <select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value={5}>5 par page</option>
@@ -308,8 +309,8 @@ export default function AdminHotels() {
                         <option value={50}>50 par page</option>
                     </select>
 
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)} 
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
                     >
                         <Filter size={14} /> Filtres
@@ -388,9 +389,9 @@ export default function AdminHotels() {
                                     const hotelId = hotel.id || hotelData.id;
 
                                     return (
-                                        <tr 
-                                            key={hotelId} 
-                                            onClick={() => handleRowClick(hotelId)} 
+                                        <tr
+                                            key={hotelId}
+                                            onClick={() => handleRowClick(hotelId)}
                                             className="hover:bg-orange-50 cursor-pointer transition-colors"
                                         >
                                             <td className="px-4 py-3">
@@ -477,22 +478,14 @@ export default function AdminHotels() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                    <Link
-                                                        to={`/admin/editHotel/${hotelId}`}
-                                                        className="p-1.5 bg-green-100 rounded-md hover:bg-green-500 hover:text-white transition"
-                                                        title="Modifier"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <Edit size={16} />
-                                                    </Link>
                                                     <button
                                                         onClick={(e) => handleDelete(hotelId, e)}
                                                         disabled={deletingId === hotelId}
-                                                        className="p-1.5 bg-red-100 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                        className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                                                         title="Supprimer"
                                                     >
-                                                        {deletingId === hotelId ? 
-                                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : 
+                                                        {deletingId === hotelId ?
+                                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> :
                                                             <Trash2 size={16} />
                                                         }
                                                     </button>
@@ -524,11 +517,10 @@ export default function AdminHotels() {
                                         <button
                                             key={page}
                                             onClick={() => goToPage(page)}
-                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
-                                                currentPage === page
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${currentPage === page
                                                     ? 'bg-[#f59e0b] text-white'
                                                     : 'hover:bg-gray-100 text-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             {page}
                                         </button>

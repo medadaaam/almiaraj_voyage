@@ -175,9 +175,9 @@ export default function AdminClientDetails() {
 
   if (loading) {
     return (
-      <div className="client-details-loading">
-        <div className="loading-spinner"></div>
-        <p>Chargement des informations...</p>
+      <div className="flex flex-col justify-center items-center h-64 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+        <p className="text-gray-500 text-sm">Chargement des détails du client...</p>
       </div>
     );
   }

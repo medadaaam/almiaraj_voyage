@@ -156,7 +156,7 @@ export default function BilletDetails() {
                     </div>
 
                     {/* Flight Route */}
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="bg-blue-100 rounded-lg p-4 mb-6">
                         <div className="flex items-center justify-between">
                             <div className="text-center flex-1">
                                 <div className="text-sm text-gray-500">Départ</div>

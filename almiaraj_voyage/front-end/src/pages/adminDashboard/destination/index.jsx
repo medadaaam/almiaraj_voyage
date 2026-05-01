@@ -19,7 +19,7 @@ export default function AdminDestinations() {
     const [selectedContinent, setSelectedContinent] = useState("");
     const [featuredOnly, setFeaturedOnly] = useState(false);
     const [continents, setContinents] = useState([]);
-    
+
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -59,7 +59,7 @@ export default function AdminDestinations() {
         }
 
         result.sort((a, b) => {
-            switch(sortBy) {
+            switch (sortBy) {
                 case "name_asc":
                     return (a.ville || "").localeCompare(b.ville || "");
                 case "name_desc":
@@ -129,7 +129,7 @@ export default function AdminDestinations() {
     };
 
     const handleRowClick = (destId) => {
-        navigate(`/admin/editDestination/${destId}`);
+        navigate(`/admin/showDestination/${destId}`);
     };
 
     const clearFilters = () => {
@@ -176,22 +176,23 @@ export default function AdminDestinations() {
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        
+
         if (endPage - startPage + 1 < maxVisible) {
             startPage = Math.max(1, endPage - maxVisible + 1);
         }
-        
+
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(i);
         }
-        
+
         return pageNumbers;
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b] mx-auto"></div>
+            <div className="flex flex-col justify-center items-center h-64 gap-3">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+                <p className="text-gray-500 text-sm">Chargement des destinations...</p>
             </div>
         );
     }
@@ -215,9 +216,9 @@ export default function AdminDestinations() {
                     <p className="text-gray-500 text-sm mt-1">{filteredDestinations.length} destination(s) trouvée(s)</p>
                 </div>
                 <div className="flex gap-3">
-                    <select 
-                        value={itemsPerPage} 
-                        onChange={handleItemsPerPageChange} 
+                    <select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value={5}>5 par page</option>
@@ -267,9 +268,8 @@ export default function AdminDestinations() {
 
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-                            showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
                     >
                         <Filter size={14} />
                         Filtres
@@ -336,15 +336,15 @@ export default function AdminDestinations() {
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Pays</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Continent</th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Statut</th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Action</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {currentItems.map((dest) => {
                                     const destId = dest.id;
                                     return (
-                                        <tr 
-                                            key={destId} 
+                                        <tr
+                                            key={destId}
                                             onClick={() => handleRowClick(destId)}
                                             className="hover:bg-orange-50 cursor-pointer transition-colors"
                                         >
@@ -391,19 +391,18 @@ export default function AdminDestinations() {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                                <div className="flex gap-2">
+                                            <td className="px-4 py-3">
+                                                <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={(e) => handleDelete(destId, e)}
                                                         disabled={deletingId === destId}
-                                                        className="p-1.5 bg-red-100 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                        className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                                                         title="Supprimer"
                                                     >
-                                                        {deletingId === destId ? (
-                                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                                                        ) : (
+                                                        {deletingId === destId ?
+                                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> :
                                                             <Trash2 size={16} />
-                                                        )}
+                                                        }
                                                     </button>
                                                 </div>
                                             </td>
@@ -434,11 +433,10 @@ export default function AdminDestinations() {
                                         <button
                                             key={page}
                                             onClick={() => goToPage(page)}
-                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
-                                                currentPage === page
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${currentPage === page
                                                     ? 'bg-[#f59e0b] text-white'
                                                     : 'hover:bg-gray-100 text-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             {page}
                                         </button>

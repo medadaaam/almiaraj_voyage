@@ -59,7 +59,7 @@ export default function Search() {
     // Get destination suggestions from API (cities with country)
     const getDestinationSuggestions = () => {
         const suggestionsMap = new Map();
-        
+
         destinations.forEach(dest => {
             const city = dest.ville;
             const country = dest.pays;
@@ -71,7 +71,7 @@ export default function Search() {
                 });
             }
         });
-        
+
         return Array.from(suggestionsMap.values());
     };
 
@@ -390,7 +390,7 @@ export default function Search() {
                                 {searchResults.map((hotel) => (
                                     <div key={hotel.id} className="result-card">
                                         <div className="result-image">
-                                            <img src={hotel.image || "/placeholder.jpg"} alt={hotel.name} />
+                                            <img src={`http://127.0.0.1:8000/storage/${hotel.image}`} alt={hotel.name} />
                                             {hotel.enVedette === 1 && <span className="hotel-featured"><StarIcon className="w-3 h-3" />Populaire</span>}
                                             {hotel.oldPrix && <span className="hotel-discount">-{Math.round(((hotel.oldPrix - hotel.prix) / hotel.oldPrix) * 100)}%</span>}
                                         </div>

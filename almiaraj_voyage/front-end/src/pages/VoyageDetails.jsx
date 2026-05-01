@@ -97,7 +97,7 @@ export default function VoyageDetailsCl() {
     return (
         <div className="voyage-details-page">
             {/* Hero Section */}
-            <section className="relative h-[60vh] bg-cover bg-center" style={{ backgroundImage: `url(${service?.image})` }}>
+            <section className="relative h-[60vh] bg-cover bg-center" style={{ backgroundImage: `url('http://127.0.0.1:8000/storage/${destination.image}')` }}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30"></div>
                 <div className="absolute top-6 left-6 right-6 z-10">
                     <button onClick={() => window.history.back()}  className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md hover:bg-white/30 text-white px-4 py-2 rounded-full transition-colors">
@@ -127,10 +127,10 @@ export default function VoyageDetailsCl() {
                             <Calendar className="w-5 h-5" />
                             <span>{duration} jours / {duration - 1} nuits</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Users className="w-5 h-5" />
+{/*                        <div className="flex items-center gap-2">
+                             <Users className="w-5 h-5" />
                             <span>Groupe de {voyage.groupSize || 20} pers</span>
-                        </div>
+                        </div> */}
                         <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span>{service?.rating} / 5</span>

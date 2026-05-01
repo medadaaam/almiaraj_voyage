@@ -489,3 +489,54 @@ body.dark-mode .admin-user-btn {
 .admin-layout [data-radix-popper-content-wrapper] {
   z-index: 1000 !important;
 }
+
+/* Home Link Styles */
+.admin-home-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(249, 115, 22, 0.1));
+  color: var(--primary);
+  text-decoration: none;
+  transition: var(--admin-transition);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.admin-home-link:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(249, 115, 22, 0.2));
+  transform: translateX(4px);
+}
+
+.admin-home-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Nav Divider */
+.admin-nav-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+/* Adjust collapsed sidebar styles */
+.admin-sidebar.collapsed .admin-home-link {
+  justify-content: center;
+  padding: 12px;
+}
+
+.admin-sidebar.collapsed .admin-home-link:hover {
+  transform: translateX(0);
+}
+
+/* Sidebar user section adjustments */
+.admin-sidebar-user {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}

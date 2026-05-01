@@ -89,7 +89,7 @@ class DestinationController extends Controller
                 'continente' => 'required|string|max:60',
                 'en_vedette' => 'nullable|boolean',
                 'description' => 'nullable|string',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
             ]);
 
             // Handle image upload

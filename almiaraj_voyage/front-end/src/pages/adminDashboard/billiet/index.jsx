@@ -1,9 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Camera, Trash2, Edit, Eye, Calendar, Plane, MapPin, Search, Filter, X } from "lucide-react";
+import { Camera, Trash2, Edit, Calendar, Plane, MapPin, Search, Filter, X, RefreshCw } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
 export default function AdminBillets() {
+    const navigate = useNavigate();
     const [items, setItems] = useState([]);
     const [filteredItems, setFilteredItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -17,6 +18,11 @@ export default function AdminBillets() {
     const [selectedType, setSelectedType] = useState("");
     const [selectedDepartCity, setSelectedDepartCity] = useState("");
     const [departCities, setDepartCities] = useState([]);
+    
+    // Pagination states
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         fetchItems();
@@ -80,7 +86,9 @@ export default function AdminBillets() {
         });
         
         setFilteredItems(result);
-    }, [items, searchTerm, sortBy, selectedType, selectedDepartCity]);
+        setCurrentPage(1);
+        setTotalPages(Math.ceil(result.length / itemsPerPage));
+    }, [items, searchTerm, sortBy, selectedType, selectedDepartCity, itemsPerPage]);
 
     const fetchItems = async () => {
         try {
@@ -121,7 +129,8 @@ export default function AdminBillets() {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id, e) => {
+        e.stopPropagation();
         if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce billet ?")) {
             return;
         }
@@ -139,6 +148,10 @@ export default function AdminBillets() {
         }
     };
 
+    const handleRowClick = (itemId) => {
+        navigate(`/admin/showBillet/${itemId}`);
+    };
+
     const getTypeLabel = (type) => {
         switch (type) {
             case 'aller_simple': return 'Aller simple';
@@ -154,13 +167,59 @@ export default function AdminBillets() {
         setSelectedDepartCity("");
     };
 
+    // Pagination functions
+    const getCurrentPageItems = () => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filteredItems.slice(startIndex, endIndex);
+    };
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const goToPreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    };
+
+    const goToNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handleItemsPerPageChange = (e) => {
+        const newItemsPerPage = parseInt(e.target.value);
+        setItemsPerPage(newItemsPerPage);
+        setCurrentPage(1);
+        setTotalPages(Math.ceil(filteredItems.length / newItemsPerPage));
+    };
+
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(i);
+        }
+        
+        return pageNumbers;
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#fb923c] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Chargement...</p>
-                </div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
             </div>
         );
     }
@@ -176,201 +235,260 @@ export default function AdminBillets() {
         );
     }
 
+    const currentItems = getCurrentPageItems();
+
     return (
-        <div className="service-billets">
-            <div className="flex justify-between items-center mb-4">
-                <h1 className="text-2xl font-bold text-gray-800">Gestion des Billets</h1>
-                <Link
-                    to="/admin/ajouterBillet"
-                    className="bg-[#fb923c] text-white px-4 py-2 rounded-md hover:bg-[#ea580c] transition flex items-center gap-2"
-                >
-                    + Ajouter un billet
-                </Link>
+        <div className="p-4 md:p-6">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800">Gestion des Billets</h1>
+                    <p className="text-gray-500 text-sm mt-1">{filteredItems.length} billet(s) trouvé(s)</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={fetchItems} className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition text-sm">
+                        <RefreshCw size={14} />
+                        Actualiser
+                    </button>
+                    <Link
+                        to="/admin/ajouterBillet"
+                        className="bg-[#f59e0b] text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-[#d97706] transition flex items-center gap-2 text-sm"
+                    >
+                        + Ajouter
+                    </Link>
+                </div>
             </div>
 
             {/* Search and Filter Bar */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-wrap gap-4 items-center">
-                    <div className="flex-1 min-w-[200px]">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Rechercher par nom, départ ou arrivée..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                            />
-                            {searchTerm && (
-                                <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                    <X size={16} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Rechercher par nom, départ ou arrivée..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#f59e0b] text-sm"
+                    />
+                    {searchTerm && (
+                        <button onClick={() => setSearchTerm("")} className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <X size={16} className="text-gray-400 hover:text-gray-600" />
+                        </button>
+                    )}
+                </div>
 
-                    <div className="w-48">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                        >
-                            <option value="newest">Plus récents</option>
-                            <option value="date_asc">Plus anciens</option>
-                            <option value="name_asc">Nom (A-Z)</option>
-                            <option value="name_desc">Nom (Z-A)</option>
-                            <option value="price_asc">Prix (croissant)</option>
-                            <option value="price_desc">Prix (décroissant)</option>
-                        </select>
-                    </div>
-
-                    <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md transition ${
-                            showFilters ? "bg-[#fb923c] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                <div className="flex flex-wrap gap-3">
+                    <select 
+                        value={sortBy} 
+                        onChange={(e) => setSortBy(e.target.value)} 
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
-                        <Filter size={18} />
-                        Filtres
-                        {(selectedType || selectedDepartCity) && (
-                            <span className="ml-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        )}
+                        <option value="newest">Plus récents</option>
+                        <option value="date_asc">Plus anciens</option>
+                        <option value="name_asc">Nom (A-Z)</option>
+                        <option value="name_desc">Nom (Z-A)</option>
+                        <option value="price_asc">Prix (croissant)</option>
+                        <option value="price_desc">Prix (décroissant)</option>
+                    </select>
+
+                    <select 
+                        value={itemsPerPage} 
+                        onChange={handleItemsPerPageChange} 
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
+                    >
+                        <option value={5}>5 par page</option>
+                        <option value={10}>10 par page</option>
+                        <option value={20}>20 par page</option>
+                        <option value={50}>50 par page</option>
+                    </select>
+
+                    <button 
+                        onClick={() => setShowFilters(!showFilters)} 
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
+                    >
+                        <Filter size={14} /> Filtres
                     </button>
 
                     {(searchTerm || selectedType || selectedDepartCity) && (
-                        <button onClick={clearFilters} className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1">
-                            <X size={14} /> Effacer les filtres
+                        <button onClick={clearFilters} className="px-3 py-1.5 text-red-500 hover:text-red-700 text-sm">
+                            Effacer les filtres
                         </button>
                     )}
                 </div>
 
                 {showFilters && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Type de billet</label>
-                                <select
-                                    value={selectedType}
-                                    onChange={(e) => setSelectedType(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                                >
-                                    <option value="">Tous les types</option>
-                                    <option value="aller_simple">Aller simple</option>
-                                    <option value="aller_retour">Aller-retour</option>
-                                </select>
-                            </div>
+                    <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Type de billet</label>
+                            <select
+                                value={selectedType}
+                                onChange={(e) => setSelectedType(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
+                            >
+                                <option value="">Tous les types</option>
+                                <option value="aller_simple">Aller simple</option>
+                                <option value="aller_retour">Aller-retour</option>
+                            </select>
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Ville de départ</label>
-                                <select
-                                    value={selectedDepartCity}
-                                    onChange={(e) => setSelectedDepartCity(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#fb923c]"
-                                >
-                                    <option value="">Toutes les villes</option>
-                                    {departCities.map(city => (
-                                        <option key={city} value={city}>{city}</option>
-                                    ))}
-                                </select>
-                            </div>
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Ville de départ</label>
+                            <select
+                                value={selectedDepartCity}
+                                onChange={(e) => setSelectedDepartCity(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
+                            >
+                                <option value="">Toutes les villes</option>
+                                {departCities.map(city => (
+                                    <option key={city} value={city}>{city}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                 )}
-
-                <div className="mt-3 text-sm text-gray-500">
-                    {filteredItems.length} billet(s) trouvé(s)
-                </div>
             </div>
 
             {filteredItems.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-lg shadow">
+                    <div className="text-5xl mb-3">✈️</div>
                     <p className="text-gray-500">Aucun billet trouvé</p>
                     {(searchTerm || selectedType || selectedDepartCity) && (
-                        <button onClick={clearFilters} className="text-[#fb923c] hover:underline mt-2 inline-block">
+                        <button onClick={clearFilters} className="mt-3 text-[#f59e0b] hover:underline text-sm">
                             Effacer les filtres
                         </button>
                     )}
                 </div>
             ) : (
-                <div className="overflow-x-auto bg-white rounded-xl shadow">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-100 text-gray-600 text-sm">
-                            <tr>
-                                <th className="p-3">Nom</th>
-                                <th className="p-3">Type</th>
-                                <th className="p-3">Départ</th>
-                                <th className="p-3">Destination</th>
-                                <th className="p-3">Date départ</th>
-                                <th className="p-3">Prix</th>
-                                <th className="p-3">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredItems.map((item) => {
-                                const itemId = item.id;
-                                const serviceData = item.service || {};
-                                const billetData = item.billet || item;
+                <>
+                    <div className="overflow-x-auto bg-white rounded-lg shadow">
+                        <table className="w-full min-w-[800px]">
+                            <thead className="bg-gray-50 border-b">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Nom</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Départ</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Destination</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date départ</th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Prix</th>
+                                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {currentItems.map((item) => {
+                                    const itemId = item.id;
+                                    const serviceData = item.service || {};
+                                    const billetData = item.billet || item;
 
-                                return (
-                                    <tr key={itemId} className="border-b hover:bg-gray-50 transition">
-                                        <td className="p-3 font-semibold">
-                                            {serviceData.nomServ || item.nomServ || "Sans titre"}
-                                        </td>
-                                        <td className="p-3">
-                                            <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                                                {getTypeLabel(billetData.typeBi || item.typeBi)}
-                                            </span>
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="flex items-center gap-1">
-                                                <Plane size={14} className="text-[#fb923c]" />
-                                                {billetData.villeDepartBi || item.villeDepartBi || "-"}
-                                            </div>
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="flex items-center gap-1">
-                                                <MapPin size={14} className="text-[#fb923c]" />
-                                                {billetData.villeArriveeBi || item.villeArriveeBi || "-"}
-                                            </div>
-                                        </td>
-                                        <td className="p-3 text-sm">
-                                            <div className="flex items-center gap-1">
-                                                <Calendar size={14} />
-                                                {billetData.dateDepartBi || item.dateDepartBi ?
-                                                    new Date(billetData.dateDepartBi || item.dateDepartBi).toLocaleDateString('fr-FR') :
-                                                    "-"}
-                                            </div>
-                                        </td>
-                                        <td className="p-3 font-bold text-[#fb923c]">
-                                            {serviceData.prix || item.prix || 0} DH
-                                        </td>
-                                        <td className="p-3">
-                                            <div className="flex gap-2">
-                                                <Link to={`/admin/showBillet/${itemId}`} className="bg-gray-100 text-gray-600 p-2 rounded-md hover:bg-gray-600 hover:text-white transition" title="Détails">
-                                                    <Eye size={16} />
-                                                </Link>
-                                                <Link to={`/admin/editBillet/${itemId}`} className="bg-green-100 text-green-600 p-2 rounded-md hover:bg-green-600 hover:text-white transition" title="Modifier">
-                                                    <Edit size={16} />
-                                                </Link>
-                                                <button
-                                                    onClick={() => handleDelete(itemId)}
-                                                    disabled={deletingId === itemId}
-                                                    className="bg-red-100 text-red-600 p-2 rounded-md hover:bg-red-600 hover:text-white transition disabled:opacity-50"
-                                                    title="Supprimer"
-                                                >
-                                                    {deletingId === itemId ?
-                                                        <div className="animate-spin h-4 w-4 border-2 border-red-600 rounded-full border-t-transparent"></div> :
-                                                        <Trash2 size={16} />
-                                                    }
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
+                                    return (
+                                        <tr 
+                                            key={itemId} 
+                                            onClick={() => handleRowClick(itemId)} 
+                                            className="hover:bg-orange-50 cursor-pointer transition-colors"
+                                        >
+                                            <td className="px-4 py-3">
+                                                <div className="font-medium text-gray-800">{serviceData.nomServ || item.nomServ || "Sans titre"}</div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className="inline-flex px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                                                    {getTypeLabel(billetData.typeBi || item.typeBi)}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Plane size={14} className="text-[#f59e0b]" />
+                                                    <span className="text-sm text-gray-700">{billetData.villeDepartBi || item.villeDepartBi || "-"}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <MapPin size={14} className="text-[#f59e0b]" />
+                                                    <span className="text-sm text-gray-700">{billetData.villeArriveeBi || item.villeArriveeBi || "-"}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Calendar size={14} className="text-gray-400" />
+                                                    <span className="text-sm text-gray-600 whitespace-nowrap">
+                                                        {billetData.dateDepartBi || item.dateDepartBi ? 
+                                                            new Date(billetData.dateDepartBi || item.dateDepartBi).toLocaleDateString('fr-FR') : "-"}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-semibold text-[#f59e0b]">{serviceData.prix || item.prix || 0} DH</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                                    <Link
+                                                        to={`/admin/editBillet/${itemId}`}
+                                                        className="p-1.5 bg-green-100 rounded-md hover:bg-green-500 hover:text-white transition"
+                                                        title="Modifier"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Edit size={16} />
+                                                    </Link>
+                                                    <button
+                                                        onClick={(e) => handleDelete(itemId, e)}
+                                                        disabled={deletingId === itemId}
+                                                        className="p-1.5 bg-red-100 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                        title="Supprimer"
+                                                    >
+                                                        {deletingId === itemId ? 
+                                                            <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : 
+                                                            <Trash2 size={16} />
+                                                        }
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
+                            <div className="text-sm text-gray-500">
+                                Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredItems.length)} sur {filteredItems.length}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={goToPreviousPage}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                                >
+                                    Précédent
+                                </button>
+                                <div className="flex gap-1">
+                                    {getPageNumbers().map(page => (
+                                        <button
+                                            key={page}
+                                            onClick={() => goToPage(page)}
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
+                                                currentPage === page
+                                                    ? 'bg-[#f59e0b] text-white'
+                                                    : 'hover:bg-gray-100 text-gray-700'
+                                            }`}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={goToNextPage}
+                                    disabled={currentPage === totalPages}
+                                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                                >
+                                    Suivant
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

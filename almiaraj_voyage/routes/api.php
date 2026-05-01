@@ -32,14 +32,14 @@ Route::prefix('admin')->group(function () {
     Route::delete('/clients/{id}', [ClientController::class, 'adminDestroy']);
 
     // Avis
-    Route::get('/admin/avis', [AvisController::class, 'adminIndex']);
-    Route::get('/admin/avis/{id}', [AvisController::class, 'adminShow']);
-    Route::delete('/admin/avis/{id}', [AvisController::class, 'adminDestroy']);
+    Route::get('/avis', [AvisController::class, 'adminIndex']);
+    Route::get('/avis/{id}', [AvisController::class, 'adminShow']);
+    Route::delete('/avis/{id}', [AvisController::class, 'adminDestroy']);
 
     // Messages
-    Route::get('/admin/messages', [MessageController::class, 'adminIndex']);
-    Route::get('/admin/messages/{id}', [MessageController::class, 'adminShow']);
-    Route::delete('/admin/messages/{id}', [MessageController::class, 'adminDestroy']);
+    Route::get('/messages', [MessageController::class, 'adminIndex']);
+    Route::get('/messages/{id}', [MessageController::class, 'adminShow']);
+    Route::delete('/messages/{id}', [MessageController::class, 'adminDestroy']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

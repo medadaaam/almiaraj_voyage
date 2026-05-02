@@ -53,9 +53,9 @@ export default function AdminClientDetails() {
     try {
       setLoading(true);
       setError("");
-      
-      const response = await axiosClient.get(`/admin/clients/${id}`);
-      
+
+      const response = await axiosClient.get(`/admin/clients`);
+
       if (response.data?.success) {
         const clientData = response.data.data;
         setClient(clientData);
@@ -73,7 +73,7 @@ export default function AdminClientDetails() {
 
   const handleDeleteReservation = async (reservationId) => {
     if (!confirm("Supprimer cette réservation ?")) return;
-    
+
     try {
       setDeletingId(reservationId);
       await axiosClient.delete(`/admin/reservations/${reservationId}`);
@@ -121,7 +121,7 @@ export default function AdminClientDetails() {
   };
 
   const getPaymentStatusBadge = (status) => {
-    return status === 'paid' 
+    return status === 'paid'
       ? <span className="payment-badge paid">Payé</span>
       : <span className="payment-badge unpaid">Non payé</span>;
   };
@@ -317,8 +317,8 @@ export default function AdminClientDetails() {
                     <td>{getPaymentStatusBadge(res.payment_status)}</td>
                     <td>
                       <div className="actions">
-                        <Link 
-                          to={`/admin/reservations/${res.id}`} 
+                        <Link
+                          to={`/admin/reservations/${res.id}`}
                           className="action-btn view"
                           title="Voir détails"
                         >

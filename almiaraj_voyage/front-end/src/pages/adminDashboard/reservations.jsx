@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Trash2, 
-  Search, 
-  X, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle,
-  ChevronRight,
-  ChevronLeft,
-  Calendar,
-  DollarSign,
-  RefreshCw,
-  Filter,
-  User
+import {
+    Trash2,
+    Search,
+    X,
+    Clock,
+    CheckCircle,
+    AlertCircle,
+    ChevronRight,
+    ChevronLeft,
+    Calendar,
+    DollarSign,
+    RefreshCw,
+    Filter,
+    User
 } from "lucide-react";
 import { axiosClient } from "@/api/axios";
 
@@ -30,7 +30,7 @@ export default function AdminReservations() {
     const [selectedStatus, setSelectedStatus] = useState("");
     const [selectedServiceType, setSelectedServiceType] = useState("");
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
-    
+
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -42,7 +42,7 @@ export default function AdminReservations() {
 
     useEffect(() => {
         let result = [...reservations];
-        
+
         if (searchTerm) {
             const search = searchTerm.toLowerCase();
             result = result.filter(res => {
@@ -52,15 +52,15 @@ export default function AdminReservations() {
                 return clientName.includes(search) || reference.includes(search) || serviceName.includes(search);
             });
         }
-        
+
         if (selectedStatus) {
             result = result.filter(res => res.status === selectedStatus);
         }
-        
+
         if (selectedServiceType) {
             result = result.filter(res => res.service?.type === selectedServiceType);
         }
-        
+
         if (dateRange.start) {
             const startDate = new Date(dateRange.start);
             result = result.filter(res => new Date(res.created_at) >= startDate);
@@ -70,9 +70,9 @@ export default function AdminReservations() {
             endDate.setHours(23, 59, 59);
             result = result.filter(res => new Date(res.created_at) <= endDate);
         }
-        
+
         result.sort((a, b) => {
-            switch(sortBy) {
+            switch (sortBy) {
                 case "date_asc":
                     return new Date(a.created_at) - new Date(b.created_at);
                 case "price_desc":
@@ -92,7 +92,7 @@ export default function AdminReservations() {
                     return new Date(b.created_at) - new Date(a.created_at);
             }
         });
-        
+
         setFilteredReservations(result);
         setCurrentPage(1);
         setTotalPages(Math.ceil(result.length / itemsPerPage));
@@ -103,7 +103,7 @@ export default function AdminReservations() {
             setLoading(true);
             setError("");
             const response = await axiosClient.get('/admin/reservations');
-            
+
             if (response.data && response.data.success === true) {
                 setReservations(response.data.data || []);
             } else if (response.data && Array.isArray(response.data)) {
@@ -124,7 +124,7 @@ export default function AdminReservations() {
     const handleDelete = async (id, e) => {
         e.stopPropagation();
         if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette réservation ?")) return;
-        
+
         try {
             setDeletingId(id);
             await axiosClient.delete(`/admin/reservations/${id}`);
@@ -195,22 +195,23 @@ export default function AdminReservations() {
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        
+
         if (endPage - startPage + 1 < maxVisible) {
             startPage = Math.max(1, endPage - maxVisible + 1);
         }
-        
+
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(i);
         }
-        
+
         return pageNumbers;
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col justify-center items-center h-64 gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+                <p className="text-gray-500 text-sm">Chargement des réservations...</p>
             </div>
         );
     }
@@ -257,9 +258,9 @@ export default function AdminReservations() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <select 
-                        value={sortBy} 
-                        onChange={(e) => setSortBy(e.target.value)} 
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value="newest">Plus récentes</option>
@@ -270,9 +271,9 @@ export default function AdminReservations() {
                         <option value="client_desc">Client (Z-A)</option>
                     </select>
 
-                    <select 
-                        value={itemsPerPage} 
-                        onChange={handleItemsPerPageChange} 
+                    <select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value={5}>5 par page</option>
@@ -281,8 +282,8 @@ export default function AdminReservations() {
                         <option value={50}>50 par page</option>
                     </select>
 
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)} 
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
                         className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
                     >
                         <Filter size={14} /> Filtres
@@ -299,9 +300,9 @@ export default function AdminReservations() {
                     <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Statut</label>
-                            <select 
-                                value={selectedStatus} 
-                                onChange={(e) => setSelectedStatus(e.target.value)} 
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             >
                                 <option value="">Tous les statuts</option>
@@ -312,9 +313,9 @@ export default function AdminReservations() {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Type de service</label>
-                            <select 
-                                value={selectedServiceType} 
-                                onChange={(e) => setSelectedServiceType(e.target.value)} 
+                            <select
+                                value={selectedServiceType}
+                                onChange={(e) => setSelectedServiceType(e.target.value)}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             >
                                 <option value="">Tous les types</option>
@@ -325,19 +326,19 @@ export default function AdminReservations() {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Date réservation (début)</label>
-                            <input 
-                                type="date" 
-                                value={dateRange.start} 
-                                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })} 
+                            <input
+                                type="date"
+                                value={dateRange.start}
+                                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             />
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Date réservation (fin)</label>
-                            <input 
-                                type="date" 
-                                value={dateRange.end} 
-                                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })} 
+                            <input
+                                type="date"
+                                value={dateRange.end}
+                                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             />
                         </div>
@@ -374,9 +375,9 @@ export default function AdminReservations() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {currentItems.map((res) => (
-                                    <tr 
-                                        key={res.id} 
-                                        onClick={() => handleRowClick(res.id)} 
+                                    <tr
+                                        key={res.id}
+                                        onClick={() => handleRowClick(res.id)}
                                         className="hover:bg-orange-50 cursor-pointer transition-colors"
                                     >
                                         <td className="px-4 py-3 text-orange-600 font-mono text-sm font-medium">
@@ -400,13 +401,12 @@ export default function AdminReservations() {
                                             <span className="text-sm text-gray-700">{res.service?.nomServ || "N/A"}</span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                                                res.service?.type === 'voyage' ? 'bg-blue-100 text-blue-700' :
-                                                res.service?.type === 'hotel' ? 'bg-orange-100 text-orange-700' :
-                                                'bg-purple-100 text-purple-700'
-                                            }`}>
+                                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${res.service?.type === 'voyage' ? 'bg-blue-100 text-blue-700' :
+                                                    res.service?.type === 'hotel' ? 'bg-orange-100 text-orange-700' :
+                                                        'bg-purple-100 text-purple-700'
+                                                }`}>
                                                 {res.service?.type === 'voyage' ? 'Voyage' :
-                                                 res.service?.type === 'hotel' ? 'Hôtel' : 'Billet'}
+                                                    res.service?.type === 'hotel' ? 'Hôtel' : 'Billet'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
@@ -422,28 +422,27 @@ export default function AdminReservations() {
                                             </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                                                res.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                                res.status === 'confirmed' ? 'bg-green-100 text-green-700' :
-                                                'bg-red-100 text-red-700'
-                                            }`}>
+                                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${res.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                                    res.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                                        'bg-red-100 text-red-700'
+                                                }`}>
                                                 {res.status === 'pending' && <Clock size={10} />}
                                                 {res.status === 'confirmed' && <CheckCircle size={10} />}
                                                 {res.status === 'cancelled' && <AlertCircle size={10} />}
                                                 {res.status === 'pending' ? 'En attente' :
-                                                 res.status === 'confirmed' ? 'Confirmée' : 'Annulée'}
+                                                    res.status === 'confirmed' ? 'Confirmée' : 'Annulée'}
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button 
-                                                    onClick={(e) => handleDelete(res.id, e)} 
-                                                    disabled={deletingId === res.id} 
-                                                    className="p-1.5 bg-red-100 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
+                                                <button
+                                                    onClick={(e) => handleDelete(res.id, e)}
+                                                    disabled={deletingId === res.id}
+                                                    className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                                                     title="Supprimer"
                                                 >
-                                                    {deletingId === res.id ? 
-                                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : 
+                                                    {deletingId === res.id ?
+                                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> :
                                                         <Trash2 size={16} />
                                                     }
                                                 </button>
@@ -457,7 +456,7 @@ export default function AdminReservations() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                        <div className="flex flex-col sm:flex-row justify-around items-center gap-4 mt-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6">
                             <div className="text-sm text-gray-500">
                                 Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, filteredReservations.length)} sur {filteredReservations.length}
                             </div>
@@ -474,11 +473,10 @@ export default function AdminReservations() {
                                         <button
                                             key={page}
                                             onClick={() => goToPage(page)}
-                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
-                                                currentPage === page
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${currentPage === page
                                                     ? 'bg-[#f59e0b] text-white'
                                                     : 'hover:bg-gray-100 text-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             {page}
                                         </button>

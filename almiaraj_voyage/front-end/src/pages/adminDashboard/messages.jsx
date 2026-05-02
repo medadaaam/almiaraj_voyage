@@ -34,7 +34,7 @@ export default function AdminMessages() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -49,7 +49,7 @@ export default function AdminMessages() {
 
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      result = result.filter(m => 
+      result = result.filter(m =>
         m.contenu?.toLowerCase().includes(search) ||
         m.nomM?.toLowerCase().includes(search) ||
         m.emailM?.toLowerCase().includes(search) ||
@@ -71,7 +71,7 @@ export default function AdminMessages() {
     try {
       setLoading(true);
       const response = await axiosClient.get('/admin/messages');
-      
+
       if (response.data?.success) {
         setMessages(response.data.data || []);
       } else {
@@ -89,7 +89,7 @@ export default function AdminMessages() {
   const handleDelete = async (id, e) => {
     e.stopPropagation();
     if (!confirm("Supprimer ce message ?")) return;
-    
+
     try {
       setDeletingId(id);
       await axiosClient.delete(`/admin/messages/${id}`);
@@ -108,7 +108,7 @@ export default function AdminMessages() {
       alert("Veuillez écrire une réponse");
       return;
     }
-    
+
     setSendingReply(true);
     try {
       await axiosClient.put(`/admin/messages/${id}/reply`, { reply: replyText });
@@ -138,13 +138,13 @@ export default function AdminMessages() {
   };
 
   const getStatusBadge = (status) => {
-    switch(status) {
+    switch (status) {
       case 'lu':
-        return <span className="status-badge read"><CheckCircle size={12}/> Lu</span>;
+        return <span className="status-badge read"><CheckCircle size={12} /> Lu</span>;
       case 'repondu':
-        return <span className="status-badge replied"><Reply size={12}/> Répondu</span>;
+        return <span className="status-badge replied"><Reply size={12} /> Répondu</span>;
       default:
-        return <span className="status-badge unread"><Clock size={12}/> Non lu</span>;
+        return <span className="status-badge unread"><Clock size={12} /> Non lu</span>;
     }
   };
 
@@ -201,22 +201,23 @@ export default function AdminMessages() {
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    
+
     if (endPage - startPage + 1 < maxVisible) {
       startPage = Math.max(1, endPage - maxVisible + 1);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i);
     }
-    
+
     return pageNumbers;
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex flex-col justify-center items-center h-64 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#f59e0b]"></div>
+        <p className="text-gray-500 text-sm">Chargement des messages...</p>
       </div>
     );
   }
@@ -232,9 +233,9 @@ export default function AdminMessages() {
           <p className="text-gray-500 text-sm mt-1">{filteredMessages.length} message(s) trouvé(s)</p>
         </div>
         <div className="flex gap-3">
-          <select 
-            value={itemsPerPage} 
-            onChange={handleItemsPerPageChange} 
+          <select
+            value={itemsPerPage}
+            onChange={handleItemsPerPageChange}
             className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
           >
             <option value={5}>5 par page</option>
@@ -288,9 +289,8 @@ export default function AdminMessages() {
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-              showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
           >
             <Filter size={14} />
             Filtres
@@ -315,8 +315,8 @@ export default function AdminMessages() {
         <>
           <div className="space-y-4">
             {currentItems.map((m) => (
-              <div 
-                key={m.id} 
+              <div
+                key={m.id}
                 onClick={() => handleRowClick(m.id)}
                 className={`bg-white rounded-lg shadow p-5 cursor-pointer transition-all hover:shadow-md ${m.statusM !== 'non_lu' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-orange-500'}`}
               >
@@ -408,11 +408,10 @@ export default function AdminMessages() {
                     <button
                       key={page}
                       onClick={() => goToPage(page)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${
-                        currentPage === page
+                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm transition ${currentPage === page
                           ? 'bg-[#f59e0b] text-white'
                           : 'hover:bg-gray-100 text-gray-700'
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

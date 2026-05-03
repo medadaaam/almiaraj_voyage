@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Trash2, 
-  Search, 
-  X, 
+import {
+  Trash2,
+  Search,
+  X,
   ChevronLeft,
   ChevronRight,
   Calendar,
@@ -29,7 +29,7 @@ export default function AdminClients() {
     const [selectedNationality, setSelectedNationality] = useState("");
     const [nationalities, setNationalities] = useState([]);
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
-    
+
     // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -41,7 +41,7 @@ export default function AdminClients() {
 
     useEffect(() => {
         let result = [...clients];
-        
+
         if (searchTerm) {
             const search = searchTerm.toLowerCase();
             result = result.filter(client => {
@@ -52,11 +52,11 @@ export default function AdminClients() {
                 return fullName.includes(search) || email.includes(search) || phone.includes(search) || cin.includes(search);
             });
         }
-        
+
         if (selectedNationality) {
             result = result.filter(client => client.natCl === selectedNationality);
         }
-        
+
         if (dateRange.start) {
             const startDate = new Date(dateRange.start);
             result = result.filter(client => new Date(client.dateInscription) >= startDate);
@@ -66,7 +66,7 @@ export default function AdminClients() {
             endDate.setHours(23, 59, 59);
             result = result.filter(client => new Date(client.dateInscription) <= endDate);
         }
-        
+
         result.sort((a, b) => {
             switch(sortBy) {
                 case "name_asc":
@@ -80,7 +80,7 @@ export default function AdminClients() {
                     return new Date(b.dateInscription) - new Date(a.dateInscription);
             }
         });
-        
+
         setFilteredClients(result);
         setCurrentPage(1);
         setTotalPages(Math.ceil(result.length / itemsPerPage));
@@ -91,7 +91,7 @@ export default function AdminClients() {
             setLoading(true);
             setError("");
             const response = await axiosClient.get('/admin/clients');
-            
+
             if (response.data && response.data.success === true) {
                 setClients(response.data.data || []);
             } else if (response.data && Array.isArray(response.data)) {
@@ -99,11 +99,11 @@ export default function AdminClients() {
             } else {
                 setClients([]);
             }
-            
+
             const clientsData = response.data?.data || response.data || [];
             const uniqueNationalities = [...new Set(clientsData.map(c => c.natCl).filter(Boolean))];
             setNationalities(uniqueNationalities);
-            
+
             setError("");
         } catch (err) {
             console.error('Error:', err);
@@ -117,7 +117,7 @@ export default function AdminClients() {
     const handleDelete = async (id, e) => {
         e.stopPropagation();
         if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce client ? Toutes ses réservations seront également supprimées.")) return;
-        
+
         try {
             setDeletingId(id);
             await axiosClient.delete(`/admin/users/${id}`);
@@ -187,15 +187,15 @@ export default function AdminClients() {
         const maxVisible = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
         let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        
+
         if (endPage - startPage + 1 < maxVisible) {
             startPage = Math.max(1, endPage - maxVisible + 1);
         }
-        
+
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(i);
         }
-        
+
         return pageNumbers;
     };
 
@@ -219,9 +219,9 @@ export default function AdminClients() {
                     <p className="text-gray-500 text-sm mt-1">{filteredClients.length} client(s) trouvé(s)</p>
                 </div>
                 <div className="flex gap-3">
-                    <select 
-                        value={itemsPerPage} 
-                        onChange={handleItemsPerPageChange} 
+                    <select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value={5}>5 par page</option>
@@ -262,9 +262,9 @@ export default function AdminClients() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <select 
-                        value={sortBy} 
-                        onChange={(e) => setSortBy(e.target.value)} 
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                     >
                         <option value="newest">Plus récents</option>
@@ -273,8 +273,8 @@ export default function AdminClients() {
                         <option value="name_desc">Nom (Z-A)</option>
                     </select>
 
-                    <button 
-                        onClick={() => setShowFilters(!showFilters)} 
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${showFilters ? "bg-[#f59e0b] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
                     >
                         <Filter size={14} />
@@ -293,9 +293,9 @@ export default function AdminClients() {
                     <div className="mt-4 pt-4 border-t grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Nationalité</label>
-                            <select 
-                                value={selectedNationality} 
-                                onChange={(e) => setSelectedNationality(e.target.value)} 
+                            <select
+                                value={selectedNationality}
+                                onChange={(e) => setSelectedNationality(e.target.value)}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             >
                                 <option value="">Toutes les nationalités</option>
@@ -306,19 +306,19 @@ export default function AdminClients() {
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Date inscription (début)</label>
-                            <input 
-                                type="date" 
-                                value={dateRange.start} 
-                                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })} 
+                            <input
+                                type="date"
+                                value={dateRange.start}
+                                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             />
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Date inscription (fin)</label>
-                            <input 
-                                type="date" 
-                                value={dateRange.end} 
-                                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })} 
+                            <input
+                                type="date"
+                                value={dateRange.end}
+                                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                                 className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#f59e0b]"
                             />
                         </div>
@@ -355,9 +355,9 @@ export default function AdminClients() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                                 {currentItems.map((client) => (
-                                    <tr 
-                                        key={client.id} 
-                                        onClick={() => handleRowClick(client.id)} 
+                                    <tr
+                                        key={client.id}
+                                        onClick={() => handleRowClick(client.id)}
                                         className="hover:bg-orange-50 cursor-pointer transition-colors"
                                     >
                                         <td className="px-4 py-3 text-orange-600 font-mono text-sm font-medium">#{client.id}</td>
@@ -399,14 +399,14 @@ export default function AdminClients() {
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="flex justify-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                                <button 
-                                                    onClick={(e) => handleDelete(client.id, e)} 
-                                                    disabled={deletingId === client.id} 
+                                                <button
+                                                    onClick={(e) => handleDelete(client.id, e)}
+                                                    disabled={deletingId === client.id}
                                                     className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-500 hover:text-white transition disabled:opacity-50"
                                                     title="Supprimer"
                                                 >
-                                                    {deletingId === client.id ? 
-                                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : 
+                                                    {deletingId === client.id ?
+                                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> :
                                                         <Trash2 size={16} />
                                                     }
                                                 </button>

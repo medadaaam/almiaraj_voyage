@@ -25,13 +25,11 @@ class ClientController extends Controller
             ], 401);
         }
 
-        // ✅ جلب العميل باستخدام id المشترك
         $client = Client::where('id', $user->id)->first();
 
         if (!$client) {
-            // ✅ إذا غير موجود، ننشئه بنفس id المستخدم
             $client = Client::create([
-                'id' => $user->id,  // نفس id المستخدم
+                'id' => $user->id,  
                 'nomCl' => explode(' ', $user->name)[0] ?? '',
                 'prenomCl' => explode(' ', $user->name)[1] ?? '',
                 'email' => $user->email,
@@ -58,7 +56,7 @@ class ClientController extends Controller
         $clients = Client::whereHas('user', function($query) {
             $query->where('role', 'user');
         })->orderBy('created_at', 'desc')->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $clients

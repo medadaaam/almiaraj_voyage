@@ -59,7 +59,7 @@ export default function Search() {
     // Get destination suggestions from API (cities with country)
     const getDestinationSuggestions = () => {
         const suggestionsMap = new Map();
-        
+
         destinations.forEach(dest => {
             const city = dest.ville;
             const country = dest.pays;
@@ -71,7 +71,7 @@ export default function Search() {
                 });
             }
         });
-        
+
         return Array.from(suggestionsMap.values());
     };
 

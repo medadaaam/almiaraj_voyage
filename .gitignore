@@ -1,0 +1,11 @@
+.env
+.env.*
+.env copy
+/vendor/
+/node_modules/
+public/storage
+storage/*.log
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

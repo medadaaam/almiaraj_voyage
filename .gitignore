@@ -9,3 +9,9 @@ storage/*.log
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Ignore dependencies and storage
+node_modules/
+vendor/
+public/storage/
+storage/
